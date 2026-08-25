@@ -14,7 +14,9 @@ import { toast } from 'sonner';
 type SectionDefinition = { key: string; name: string; route: string | null; reserve?: boolean };
 
 const homepageSections: SectionDefinition[] = [
+  { key: 'home', name: 'Home', route: '/' },
   { key: 'worship', name: 'Worship', route: '/worship' },
+
   { key: 'songs', name: 'Songs', route: '/songs' },
   { key: 'setlists', name: 'Setlists', route: '/setlists' },
   { key: 'team', name: 'Team', route: '/team' },
