@@ -15,10 +15,10 @@ import { KEYS, transposeChord, getSemitoneDifference, chordToNumber } from '@/ut
 import { WorshipSong } from '@/types/songs';
 import { toast } from 'sonner';
 import { AddToSetlistButton } from '@/components/setlists/AddToSetlistDialog';
-import { SetlistSongNav, useSetlistSequence, useSetlistSwipe } from '@/components/setlists/SetlistNav';
+import { SetlistSongNav, useSetlistSequence, useSetlistSwipe, useSetlistNeighborPrefetch } from '@/components/setlists/SetlistNav';
 import { useSetlistAbilities } from '@/components/setlists/setlist-hooks';
 import { updateSetlistItem } from '@/lib/db-setlists.functions';
-import { useOnlineStatus } from '@/lib/offline';
+import { useOnlineStatus, cacheSongsOffline, getCachedSongChart, type CachedChart } from '@/lib/offline';
 
 export const Route = createFileRoute('/_public/songs/$id')({
   head: () => ({
@@ -47,7 +47,7 @@ function SongDetailPage() {
   const rawSong = (songs || []).find((s: any) => s.id === (id as string));
 
   // Offline fallback: the full chart body kept in IndexedDB by prefetch / "Save offline".
-  const [cachedChart, setCachedChart] = useState<any>(null);
+  const [cachedChart, setCachedChart] = useState<CachedChart | null>(null);
   useEffect(() => {
     if (rawSong) { void cacheSongsOffline([rawSong]); return; }
     let active = true;
@@ -97,6 +97,7 @@ function SongDetailPage() {
   const goPrevious = useCallback(() => sequence.goTo(sequence.previous), [sequence]);
   const goNext = useCallback(() => sequence.goTo(sequence.next), [sequence]);
   useSetlistSwipe(sequence.index >= 0 && sequence.items.length > 1, goPrevious, goNext);
+  useSetlistNeighborPrefetch(songs as any[], sequence);
   // Device-wide reader defaults: RED chords + 75% text size (12px of 16px base),
   // chords and lyrics visible. A saved device preference always wins.
   const readPref = (key: string) => {
