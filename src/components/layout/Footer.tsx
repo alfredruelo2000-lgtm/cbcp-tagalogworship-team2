@@ -25,6 +25,18 @@ function LinkList({ items, to }: { items: string[]; to: (item: string) => string
   );
 }
 
+/** Minimal one-line footer for practice surfaces (Songs, Setlists) — keeps the screen for content. */
+export function MiniFooter() {
+  return (
+    <footer className="w-full border-t border-accent/10 bg-background px-4 py-3 text-center">
+      <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+        “Let everything that has breath praise the LORD.” — Psalm 150:6
+      </p>
+    </footer>
+  );
+}
+
+
 export function Footer() {
   const currentYear = new Date().getFullYear();
 
