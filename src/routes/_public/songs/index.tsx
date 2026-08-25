@@ -37,7 +37,7 @@ function SongLibraryPage() {
   const [themeFilter, setThemeFilter] = useState('All');
   const [keyFilter, setKeyFilter] = useState('All');
   const [showFilters, setShowFilters] = useState(false);
-  useEffect(() => { if (!viewTouched) setViewMode(isMobile ? 'list' : 'grid'); }, [isMobile, viewTouched]);
+  useEffect(() => { if (!viewTouched) setViewMode('list'); }, [isMobile, viewTouched]);
   const pickView = (mode: ViewMode) => { setViewTouched(true); setViewMode(mode); };
   const { data: songs = [], isLoading } = useQuery({ queryKey: ['songs-public'], queryFn: getSongsPublic });
   const allThemes = useMemo(() => ['All', ...Array.from(new Set(songs.flatMap((s: any) => s.themes || []))).sort()], [songs]);
