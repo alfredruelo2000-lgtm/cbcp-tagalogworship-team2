@@ -45,7 +45,18 @@ function SongDetailPage() {
 
   const { id } = Route.useParams();
   const rawSong = (songs || []).find((s: any) => s.id === (id as string));
-  const song = useMemo(() => rawSong as unknown as WorshipSong, [rawSong]);
+
+  // Offline fallback: the full chart body kept in IndexedDB by prefetch / "Save offline".
+  const [cachedChart, setCachedChart] = useState<any>(null);
+  useEffect(() => {
+    if (rawSong) { void cacheSongsOffline([rawSong]); return; }
+    let active = true;
+    void getCachedSongChart(id as string).then((chart) => { if (active && chart) setCachedChart(chart); });
+    return () => { active = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, rawSong]);
+
+  const song = useMemo(() => (rawSong ?? cachedChart) as unknown as WorshipSong, [rawSong, cachedChart]);
   
   const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   
