@@ -30,7 +30,7 @@ export function MediaGallery({ items }: { items: MediaItem[] }) {
 
           <div className="max-w-5xl w-full h-full flex flex-col items-center justify-center relative">
             {selectedItem.mediaType === 'Photo' ? (
-              <img 
+              <img loading="lazy" decoding="async" 
                 src={selectedItem.fileUrl} 
                 alt={selectedItem.title}
                 className="max-h-[80vh] w-auto object-contain border border-white/10"
