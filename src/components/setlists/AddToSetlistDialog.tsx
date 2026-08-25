@@ -163,8 +163,8 @@ export function AddToSetlistButton({ song, className, label = "Add to Setlist", 
           setOpen(true);
         }}
       >
-        <ListPlus className={iconOnly ? "h-4 w-4" : "h-4 w-4 sm:mr-1.5"} />
-        {!iconOnly && <span className="hidden sm:inline">{label}</span>}
+        <ListPlus className={iconOnly ? "h-4 w-4" : "h-4 w-4 mr-1.5"} />
+        {!iconOnly && <span>{label}</span>}
       </Button>
       {open && <AddToSetlistDialog open={open} onOpenChange={setOpen} song={song} />}
     </>
