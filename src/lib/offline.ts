@@ -7,14 +7,15 @@
  *   (newest change per record wins) as soon as the connection returns.
  */
 import { useEffect, useState } from "react";
-import type { QueryClient } from "@tanstack/react-query";
+import { dehydrate, hydrate, type QueryClient } from "@tanstack/react-query";
 import { createStore, get, set, del } from "idb-keyval";
-import { persistQueryClient } from "@tanstack/react-query-persist-client";
-import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 
 const store = createStore("cbcp-offline", "kv");
 const CACHE_KEY = "react-query-cache";
 const OUTBOX_KEY = "outbox";
+const CACHE_MAX_AGE = 1000 * 60 * 60 * 24 * 60; // keep downloaded charts for 60 days
+const PERSISTED_ROOTS = ["songs-public", "setlists", "setlist", "setlist-permissions", "services"];
+
 
 export type SyncStatus = "synced" | "offline" | "pending" | "syncing" | "saved-local";
 
