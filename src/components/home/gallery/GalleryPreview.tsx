@@ -35,7 +35,7 @@ export function GalleryPreview() {
                to="/media"
                className={`group relative aspect-[4/5] overflow-hidden ${i === 0 ? "md:col-span-2 md:row-span-2" : ""}`}
              >
-                <img 
+                <img loading="lazy" decoding="async" 
                   src={item.file_url || item.fileUrl} 
                   alt={item.title} 
 

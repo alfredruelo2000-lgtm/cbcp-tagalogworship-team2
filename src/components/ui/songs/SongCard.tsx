@@ -28,7 +28,7 @@ export function SongCard({ song, viewMode = 'grid' }: SongProps) {
       >
         <div className="h-13 w-13 shrink-0 overflow-hidden border border-accent/10 bg-primary/5 sm:h-14 sm:w-14" style={{ height: 56, width: 56 }}>
           {song.artworkUrl ? (
-            <img
+            <img loading="lazy" decoding="async"
               src={song.artworkUrl}
               alt=""
               width={56}
@@ -70,7 +70,7 @@ export function SongCard({ song, viewMode = 'grid' }: SongProps) {
       <Link to="/songs/$id" params={{ id: song.id }} preload="intent">
         <div className="aspect-square w-full mb-4 overflow-hidden bg-muted relative border border-accent/5 group-hover:border-accent/30 transition-all duration-500">
           {song.artworkUrl ? (
-            <img 
+            <img loading="lazy" decoding="async" 
               src={song.artworkUrl} 
               alt={`${song.title} cover art`} 
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 

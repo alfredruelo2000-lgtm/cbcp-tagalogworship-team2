@@ -210,7 +210,7 @@ function TeamDirectoryLayout() {
                   className="group block"
                 >
                   <div className="relative aspect-[4/5] overflow-hidden bg-muted mb-4">
-                    <img 
+                    <img loading="lazy" decoding="async" 
                       src={member.avatar_url || member.photoUrl} 
                       alt={member.full_name || member.fullName} 
 
@@ -251,7 +251,7 @@ function TeamDirectoryLayout() {
                   className="group flex flex-col sm:flex-row sm:items-center gap-6 p-6 bg-muted/20 border border-accent/5 hover:border-accent/10 transition-all"
                 >
                   <div className="h-16 w-16 overflow-hidden bg-muted flex-shrink-0">
-                    <img src={member.avatar_url || member.photoUrl} alt={member.full_name || member.fullName} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" />
+                    <img loading="lazy" decoding="async" src={member.avatar_url || member.photoUrl} alt={member.full_name || member.fullName} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-serif text-2xl text-foreground group-hover:text-accent transition-colors truncate">{member.full_name || member.fullName}</h3>

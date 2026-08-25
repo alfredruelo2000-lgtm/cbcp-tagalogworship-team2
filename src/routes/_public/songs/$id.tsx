@@ -45,34 +45,41 @@ function SongDetailPage() {
   const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   
   const [currentKey, setCurrentKey] = useState(searchParams.get('key') || song?.defaultKey || 'C');
+  // Device-wide reader defaults: RED chords + 75% text size (12px of 16px base),
+  // chords and lyrics visible. A saved device preference always wins.
+  const readPref = (key: string) => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem(`song-pref-${key}`) ?? localStorage.getItem(`song-pref-${key}-${id}`);
+  };
+
   const [showChords, setShowChords] = useState(() => {
     const fromUrl = searchParams.get('chords');
     if (fromUrl !== null) return fromUrl === 'true';
-    const saved = localStorage.getItem(`song-pref-showChords-${id}`);
+    const saved = readPref('showChords');
     return saved !== null ? JSON.parse(saved) : true;
   });
   const [showLyrics, setShowLyrics] = useState(() => {
     const fromUrl = searchParams.get('lyrics');
     if (fromUrl !== null) return fromUrl === 'true';
-    const saved = localStorage.getItem(`song-pref-showLyrics-${id}`);
+    const saved = readPref('showLyrics');
     return saved !== null ? JSON.parse(saved) : true;
   });
   const [numberNotation, setNumberNotation] = useState(false);
   const [isSplit, setIsSplit] = useState(() => {
     const fromUrl = searchParams.get('split');
     if (fromUrl !== null) return fromUrl === 'true';
-    const saved = localStorage.getItem(`song-pref-isSplit-${id}`);
+    const saved = readPref('isSplit');
     return saved !== null ? JSON.parse(saved) : false;
   });
   const [fontSize, setFontSize] = useState(() => {
-    const saved = localStorage.getItem(`song-pref-fontSize-${id}`);
-    const parsed = saved ? Number(saved) : 16;
-    return Number.isFinite(parsed) ? Math.min(22, Math.max(12, parsed)) : 16;
+    const saved = readPref('fontSize');
+    const parsed = saved ? Number(saved) : 12;
+    return Number.isFinite(parsed) ? Math.min(22, Math.max(12, parsed)) : 12;
   });
   const [chordColor, setChordColor] = useState(() => {
     const fromUrl = searchParams.get('color');
     if (fromUrl !== null) return `text-${fromUrl}`;
-    return localStorage.getItem(`song-pref-chordColor-${id}`) || 'text-accent';
+    return readPref('chordColor') || 'text-red-600';
   });
   
   // Metronome state
@@ -94,7 +101,7 @@ function SongDetailPage() {
   });
   const [autoScroll, setAutoScroll] = useState(false);
   const [scrollSpeed, setScrollSpeed] = useState(() => {
-    const saved = Number(localStorage.getItem(`song-pref-scrollSpeed-${id}`));
+    const saved = Number(readPref('scrollSpeed'));
     return Number.isFinite(saved) ? Math.min(5, Math.max(1, saved)) : 3;
   });
   const [latency, setLatency] = useState(0); // in ms
@@ -122,30 +129,30 @@ function SongDetailPage() {
   const beatCountRef = useRef<number>(0);
 
 
-  // Persistence effects
+  // Persistence effects — reader preferences are stored per device (not per song).
   useEffect(() => {
-    localStorage.setItem(`song-pref-scrollSpeed-${id}`, String(scrollSpeed));
-  }, [scrollSpeed, id]);
+    localStorage.setItem('song-pref-scrollSpeed', String(scrollSpeed));
+  }, [scrollSpeed]);
 
   useEffect(() => {
-    localStorage.setItem(`song-pref-fontSize-${id}`, String(fontSize));
-  }, [fontSize, id]);
+    localStorage.setItem('song-pref-fontSize', String(fontSize));
+  }, [fontSize]);
 
   useEffect(() => {
-    localStorage.setItem(`song-pref-showChords-${id}`, JSON.stringify(showChords));
-  }, [showChords, id]);
+    localStorage.setItem('song-pref-showChords', JSON.stringify(showChords));
+  }, [showChords]);
 
   useEffect(() => {
-    localStorage.setItem(`song-pref-showLyrics-${id}`, JSON.stringify(showLyrics));
-  }, [showLyrics, id]);
+    localStorage.setItem('song-pref-showLyrics', JSON.stringify(showLyrics));
+  }, [showLyrics]);
 
   useEffect(() => {
-    localStorage.setItem(`song-pref-isSplit-${id}`, JSON.stringify(isSplit));
-  }, [isSplit, id]);
+    localStorage.setItem('song-pref-isSplit', JSON.stringify(isSplit));
+  }, [isSplit]);
 
   useEffect(() => {
-    localStorage.setItem(`song-pref-chordColor-${id}`, chordColor);
-  }, [chordColor, id]);
+    localStorage.setItem('song-pref-chordColor', chordColor);
+  }, [chordColor]);
 
   // Full View: persist and hide the public site chrome (header/footer) via a root class.
   useEffect(() => {

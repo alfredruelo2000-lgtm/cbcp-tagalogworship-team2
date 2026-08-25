@@ -97,7 +97,7 @@ function MediaPage() {
               {(featuredAlbums || []).map((album: any) => (
                 <div key={album.id} className="group cursor-pointer space-y-6">
                   <div className="aspect-[4/5] overflow-hidden border border-accent/10 relative">
-                    <img 
+                    <img loading="lazy" decoding="async" 
                       src={album.cover_image_url || album.coverImageUrl} 
                       alt={album.title}
                       className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105"
