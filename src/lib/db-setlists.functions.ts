@@ -208,7 +208,7 @@ export async function addSongToSetlist(params: {
   songId: string;
   title: string;
   selectedKey?: string | null;
-  allowDuplicate?: boolean;
+  allowDuplicate?: boolean | undefined;
 }) {
   const { data: existing, error: existingError } = await supabase
     .from("service_items")
