@@ -17,6 +17,8 @@ import {
 import { SETLIST_KEYS, useSetlistAbilities } from '@/components/setlists/setlist-hooks';
 import { SetlistFormDialog } from '@/components/setlists/SetlistFormDialog';
 import { KEYS } from '@/utils/transposition';
+import { markSetlistSavedOffline, useOnlineStatus, useSyncStatus } from '@/lib/offline';
+import { WifiOff, CloudOff, Download, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export const Route = createFileRoute('/_public/setlists/$id')({
@@ -57,6 +59,24 @@ function SetlistDetailPage() {
     queryClient.invalidateQueries({ queryKey: ['setlist', id] });
     queryClient.invalidateQueries({ queryKey: SETLIST_KEYS.all });
     queryClient.invalidateQueries({ queryKey: ['services'] });
+  };
+
+  const online = useOnlineStatus();
+  const syncStatus = useSyncStatus();
+  const [savedOffline, setSavedOffline] = useState(false);
+
+  const saveOffline = async () => {
+    try {
+      await Promise.all([
+        queryClient.prefetchQuery({ queryKey: ['setlist', id], queryFn: () => getSetlist(id) }),
+        queryClient.prefetchQuery({ queryKey: ['songs-public'], queryFn: getSongsPublic }),
+      ]);
+      await markSetlistSavedOffline(id);
+      setSavedOffline(true);
+      toast.success('Saved for offline use — songs and keys stay on this device.');
+    } catch {
+      toast.error('Could not save this setlist offline.');
+    }
   };
 
   const songById = useMemo(() => new Map((songs as any[]).map((s) => [s.id, s])), [songs]);
@@ -118,6 +138,8 @@ function SetlistDetailPage() {
         <div className="flex items-start gap-2">
           <h1 className="min-w-0 flex-1 font-serif text-2xl leading-tight text-foreground sm:text-4xl">{setlist.title}</h1>
           <span className={cn('shrink-0 border px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest', statusStyle(setlist.status))}>{setlist.status}</span>
+          {!online && <span className="inline-flex shrink-0 items-center gap-1 border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-amber-700"><WifiOff className="h-3 w-3" /> Offline</span>}
+          {online && syncStatus === 'pending' && <span className="inline-flex shrink-0 items-center gap-1 border border-accent/30 bg-accent/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-accent"><CloudOff className="h-3 w-3" /> Syncing</span>}
         </div>
         <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground sm:text-xs">
           <span className="inline-flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5 text-accent/60" />{new Date(setlist.service_date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })} · {(setlist.service_time || '').slice(0, 5)}</span>
@@ -129,6 +151,10 @@ function SetlistDetailPage() {
 
         <div className="mt-3 flex flex-wrap gap-2">
           {editable && <Button size="sm" className="h-11 rounded-none px-3 text-[11px] font-bold uppercase tracking-widest" onClick={() => setPickerOpen(true)}><ListPlus className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Add song</span></Button>}
+          <Button size="sm" variant="outline" className="h-11 rounded-none px-3 text-[11px] font-bold uppercase tracking-widest" disabled={savedOffline} onClick={saveOffline}>
+            {savedOffline ? <CheckCircle2 className="h-4 w-4 text-green-600 sm:mr-2" /> : <Download className="h-4 w-4 sm:mr-2" />}
+            <span className="hidden sm:inline">{savedOffline ? 'Available offline' : 'Save offline'}</span>
+          </Button>
           {editable && <Button size="sm" variant="outline" className="h-11 rounded-none px-3 text-[11px] font-bold uppercase tracking-widest" onClick={() => setEditOpen(true)}><Edit3 className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Edit</span></Button>}
           {canDuplicate(setlist) && <Button size="sm" variant="outline" className="h-11 rounded-none px-3 text-[11px] font-bold uppercase tracking-widest" disabled={duplicate.isPending} onClick={() => duplicate.mutate()}><Copy className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Duplicate</span></Button>}
           {editable && setlist.status !== 'Archived' && (
@@ -170,7 +196,7 @@ function SetlistDetailPage() {
                     <Link
                       to="/songs/$id"
                       params={{ id: item.song_id }}
-                      search={{ key } as never}
+                      search={{ key, setlist: setlist.id } as never}
                       preload="intent"
                       className="min-w-0 flex-1 py-1.5"
                     >
