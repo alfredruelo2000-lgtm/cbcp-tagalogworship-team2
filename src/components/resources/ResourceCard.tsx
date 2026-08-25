@@ -16,7 +16,7 @@ export function ResourceCard({ resource }: ResourceCardProps) {
     >
       {resource.coverImage && (
         <div className="aspect-[16/9] overflow-hidden">
-          <img loading="lazy" decoding="async" 
+          <img 
             src={resource.coverImage} 
             alt={resource.title}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
