@@ -88,12 +88,19 @@ function convertSingle(chord: string, key: string): string | null {
   let degree = scale.indexOf(interval);
   let accidental = '';
   if (degree === -1) {
-    degree = scale.indexOf((interval + 11) % 12);
-    if (degree !== -1) {
+    // Prefer flats (bIII, bVI, bVII) except the tritone, conventionally written #IV/#iv.
+    const preferSharp = interval === 6 && !isMinorKey;
+    const sharpDegree = scale.indexOf((interval + 11) % 12);
+    const flatDegree = scale.indexOf((interval + 1) % 12);
+    if (preferSharp && sharpDegree !== -1) {
+      degree = sharpDegree;
       accidental = '#';
-    } else {
-      degree = scale.indexOf((interval + 1) % 12);
+    } else if (flatDegree !== -1) {
+      degree = flatDegree;
       accidental = 'b';
+    } else {
+      degree = sharpDegree;
+      accidental = '#';
     }
   }
   if (degree === -1) return null;
