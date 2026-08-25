@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, useLocation, useNavigate } from '@tanstack/react-router';
 import { Navbar } from '@/components/layout/Navbar';
-import { Footer } from '@/components/layout/Footer';
+import { Footer, MiniFooter } from '@/components/layout/Footer';
 import { usePublicRealtime } from '@/lib/use-public-realtime';
 import { usePublicSectionVisibility, type PublicSectionKey } from '@/lib/public-section-visibility';
 
@@ -41,7 +41,12 @@ function PublicLayout() {
           </section>
         ) : <Outlet />}
       </main>
-      {!location.pathname.startsWith('/songs') && <Footer />}
+      {(() => {
+        const isPracticeSurface = ['/songs', '/setlists'].some(
+          (prefix) => location.pathname === prefix || location.pathname.startsWith(`${prefix}/`),
+        );
+        return isPracticeSurface ? <MiniFooter /> : <Footer />;
+      })()}
     </div>
   );
 }
