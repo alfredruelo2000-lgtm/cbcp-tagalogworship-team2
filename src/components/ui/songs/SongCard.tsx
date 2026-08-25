@@ -141,6 +141,10 @@ export function SongCard({ song, viewMode = 'grid' }: SongProps) {
             {(song.themes ?? [])[0]}
           </span>
         </div>
+        <AddToSetlistButton
+          song={{ id: song.id, title: song.title, defaultKey: song.defaultKey }}
+          className="h-11 w-full rounded-none border-accent/20 text-[10px] font-bold uppercase tracking-widest"
+        />
         <div className="flex items-center gap-2">
           {(song.scriptureReferences?.length ?? 0) > 0 && song.scriptureReferences?.[0] && (
             <p className="text-[10px] text-muted-foreground italic border-l border-accent/20 pl-3">
