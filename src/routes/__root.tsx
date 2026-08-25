@@ -13,6 +13,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import NotFound from "@/components/layout/NotFound";
 import { PostLoginRedirect } from "@/components/auth/PostLoginRedirect";
 import { BrandEntrance } from "@/components/layout/BrandEntrance";
+import { setupPwa } from "@/lib/pwa";
 
 
 import appCss from "../styles.css?url";
