@@ -111,36 +111,46 @@ export async function pendingWriteCount() {
 export function setupOfflinePersistence(queryClient: QueryClient) {
   if (typeof window === "undefined") return;
 
-  const persister = createAsyncStoragePersister({
-    key: CACHE_KEY,
-    throttleTime: 800,
-    storage: {
-      getItem: (key) => get<string>(key, store).then((value) => value ?? null),
-      setItem: (key, value) => set(key, value, store),
-      removeItem: (key) => del(key, store),
-    },
-  });
+  let restored = false;
 
-  void persistQueryClient({
-    queryClient,
-    persister,
-    maxAge: 1000 * 60 * 60 * 24 * 60, // keep downloaded charts for 60 days
-    dehydrateOptions: {
-      shouldDehydrateQuery: (query) => {
-        const root = String(query.queryKey?.[0] ?? "");
-        return ["songs-public", "setlists", "setlist", "setlist-permissions", "services"].includes(root);
-      },
-    },
-  });
+  const persist = () => {
+    if (!restored) return;
+    const state = dehydrate(queryClient, {
+      shouldDehydrateQuery: (query) =>
+        query.state.status === "success" && PERSISTED_ROOTS.includes(String(query.queryKey?.[0] ?? "")),
+    });
+    void set(CACHE_KEY, { savedAt: Date.now(), state: JSON.stringify(state) }, store);
+  };
 
-  const sync = () => void flushOutbox(queryClient);
-  window.addEventListener("online", sync);
-  window.addEventListener("offline", () => setStatus("offline"));
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const schedulePersist = () => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(persist, 800);
+  };
+
   void (async () => {
+    try {
+      const saved = await get<{ savedAt: number; state: string }>(CACHE_KEY, store);
+      if (saved && Date.now() - saved.savedAt < CACHE_MAX_AGE) {
+        hydrate(queryClient, JSON.parse(saved.state));
+      } else if (saved) {
+        await del(CACHE_KEY, store);
+      }
+    } catch {
+      await del(CACHE_KEY, store).catch(() => undefined);
+    }
+    restored = true;
+    queryClient.getQueryCache().subscribe(schedulePersist);
+
     setStatus(isOnline() ? ((await pendingWriteCount()) > 0 ? "pending" : "synced") : "offline");
-    sync();
+    void flushOutbox(queryClient);
   })();
+
+  window.addEventListener("online", () => void flushOutbox(queryClient));
+  window.addEventListener("offline", () => setStatus("offline"));
+  window.addEventListener("pagehide", persist);
 }
+
 
 /** Marks a setlist as intentionally kept on this device (for the “Available offline” pill). */
 export async function markSetlistSavedOffline(setlistId: string) {
