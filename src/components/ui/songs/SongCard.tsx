@@ -67,7 +67,7 @@ export function SongCard({ song, viewMode = 'grid' }: SongProps) {
 
   return (
     <div className="group animate-in fade-in slide-in-from-bottom-6 duration-700">
-      <Link to="/songs/$id" params={{ id: song.id }}>
+      <Link to="/songs/$id" params={{ id: song.id }} preload="intent">
         <div className="aspect-square w-full mb-4 overflow-hidden bg-muted relative border border-accent/5 group-hover:border-accent/30 transition-all duration-500">
           {song.artworkUrl ? (
             <img 
@@ -118,7 +118,7 @@ export function SongCard({ song, viewMode = 'grid' }: SongProps) {
       <div className="space-y-3">
         <div className="flex justify-between items-start">
           <div className="min-w-0 pr-2">
-            <Link to="/songs/$id" params={{ id: song.id }}>
+            <Link to="/songs/$id" params={{ id: song.id }} preload="intent">
               <h4 className="text-xl font-serif text-foreground leading-tight group-hover:text-accent transition-colors truncate">
                 {song.title}
               </h4>
