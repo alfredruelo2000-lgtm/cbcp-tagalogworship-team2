@@ -129,30 +129,30 @@ function SongDetailPage() {
   const beatCountRef = useRef<number>(0);
 
 
-  // Persistence effects
+  // Persistence effects — reader preferences are stored per device (not per song).
   useEffect(() => {
-    localStorage.setItem(`song-pref-scrollSpeed-${id}`, String(scrollSpeed));
-  }, [scrollSpeed, id]);
+    localStorage.setItem('song-pref-scrollSpeed', String(scrollSpeed));
+  }, [scrollSpeed]);
 
   useEffect(() => {
-    localStorage.setItem(`song-pref-fontSize-${id}`, String(fontSize));
-  }, [fontSize, id]);
+    localStorage.setItem('song-pref-fontSize', String(fontSize));
+  }, [fontSize]);
 
   useEffect(() => {
-    localStorage.setItem(`song-pref-showChords-${id}`, JSON.stringify(showChords));
-  }, [showChords, id]);
+    localStorage.setItem('song-pref-showChords', JSON.stringify(showChords));
+  }, [showChords]);
 
   useEffect(() => {
-    localStorage.setItem(`song-pref-showLyrics-${id}`, JSON.stringify(showLyrics));
-  }, [showLyrics, id]);
+    localStorage.setItem('song-pref-showLyrics', JSON.stringify(showLyrics));
+  }, [showLyrics]);
 
   useEffect(() => {
-    localStorage.setItem(`song-pref-isSplit-${id}`, JSON.stringify(isSplit));
-  }, [isSplit, id]);
+    localStorage.setItem('song-pref-isSplit', JSON.stringify(isSplit));
+  }, [isSplit]);
 
   useEffect(() => {
-    localStorage.setItem(`song-pref-chordColor-${id}`, chordColor);
-  }, [chordColor, id]);
+    localStorage.setItem('song-pref-chordColor', chordColor);
+  }, [chordColor]);
 
   // Full View: persist and hide the public site chrome (header/footer) via a root class.
   useEffect(() => {
