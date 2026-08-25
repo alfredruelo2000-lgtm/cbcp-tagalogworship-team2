@@ -144,20 +144,20 @@ export async function createSetlist(input: SetlistInput) {
 }
 
 export async function updateSetlist(id: string, patch: Partial<SetlistInput> & { allowPublicDuplicate?: boolean }) {
-  const update: Record<string, any> = { updated_at: new Date().toISOString() };
-  if (patch.title !== undefined) update.title = patch.title;
-  if (patch.serviceDate !== undefined) update.service_date = patch.serviceDate;
-  if (patch.serviceTime !== undefined) update.service_time = patch.serviceTime;
-  if (patch.serviceType !== undefined) update.service_type = patch.serviceType;
-  if (patch.theme !== undefined) update.theme = patch.theme || null;
-  if (patch.notes !== undefined) update.notes = patch.notes || null;
-  if (patch.worshipLeaderId !== undefined) update.worship_leader_id = patch.worshipLeaderId || null;
-  if (patch.status !== undefined) update.status = patch.status;
-  if (patch.isPublic !== undefined) update.is_public = patch.isPublic;
-  if (patch.isOfficial !== undefined) update.is_official = patch.isOfficial;
-  if (patch.allowPublicDuplicate !== undefined) update.allow_public_duplicate = patch.allowPublicDuplicate;
+  const update: Record<string, any> = { ['updated_at']: new Date().toISOString() };
+  if (patch.title !== undefined) update['title'] = patch.title;
+  if (patch.serviceDate !== undefined) update['service_date'] = patch.serviceDate;
+  if (patch.serviceTime !== undefined) update['service_time'] = patch.serviceTime;
+  if (patch.serviceType !== undefined) update['service_type'] = patch.serviceType;
+  if (patch.theme !== undefined) update['theme'] = patch.theme || null;
+  if (patch.notes !== undefined) update['notes'] = patch.notes || null;
+  if (patch.worshipLeaderId !== undefined) update['worship_leader_id'] = patch.worshipLeaderId || null;
+  if (patch.status !== undefined) update['status'] = patch.status;
+  if (patch.isPublic !== undefined) update['is_public'] = patch.isPublic;
+  if (patch.isOfficial !== undefined) update['is_official'] = patch.isOfficial;
+  if (patch.allowPublicDuplicate !== undefined) update['allow_public_duplicate'] = patch.allowPublicDuplicate;
 
-  const { error } = await supabase.from("services").update(update).eq("id", id);
+  const { error } = await supabase.from("services").update(update as any).eq("id", id);
   if (error) throw error;
 }
 
