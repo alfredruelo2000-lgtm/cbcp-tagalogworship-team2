@@ -18,10 +18,17 @@ import { toast } from 'sonner';
 export const Route = createFileRoute('/_public/songs/$id')({
   head: () => ({
     meta: [
-      { title: `Worship Song | Radiant Worship` },
-      { name: "description", content: "View chords, lyrics, and biblical foundation." },
+      { title: "Song Chords, Lyrics & Keys | CBCP Tagalog Worship Team" },
+      { name: "description", content: "Practice-ready worship chart: transpose keys, toggle chords and lyrics, use number notation, metronome, and auto-scroll." },
+      { property: "og:title", content: "Worship Song Chart | CBCP Tagalog Worship Team" },
+      { property: "og:description", content: "Transpose keys, switch to number notation, and practice with metronome and auto-scroll." },
+      { property: "og:type", content: "article" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Worship Song Chart | CBCP Tagalog Worship Team" },
+      { name: "twitter:description", content: "Transpose keys, switch to number notation, and practice with metronome and auto-scroll." },
     ],
   }),
+
   component: SongDetailPage,
 });
 
