@@ -17,7 +17,7 @@ import {
 import { SETLIST_KEYS, useSetlistAbilities } from '@/components/setlists/setlist-hooks';
 import { SetlistFormDialog } from '@/components/setlists/SetlistFormDialog';
 import { KEYS } from '@/utils/transposition';
-import { markSetlistSavedOffline, useOnlineStatus, useSyncStatus } from '@/lib/offline';
+import { markSetlistSavedOffline, cacheSongsOffline, useOnlineStatus, useSyncStatus } from '@/lib/offline';
 import { WifiOff, CloudOff, Download, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -71,9 +71,17 @@ function SetlistDetailPage() {
         queryClient.prefetchQuery({ queryKey: ['setlist', id], queryFn: () => getSetlist(id) }),
         queryClient.prefetchQuery({ queryKey: ['songs-public'], queryFn: getSongsPublic }),
       ]);
+      // Store every chord sheet in this setlist so the reader works with no network.
+      const list = queryClient.getQueryData<any>(['setlist', id]);
+      const allSongs = queryClient.getQueryData<any[]>(['songs-public']) ?? [];
+      const byId = new Map(allSongs.map((song: any) => [song.id, song]));
+      const setlistSongs = ((list?.service_items ?? []) as any[])
+        .map((item) => byId.get(item.song_id))
+        .filter(Boolean);
+      await cacheSongsOffline(setlistSongs);
       await markSetlistSavedOffline(id);
       setSavedOffline(true);
-      toast.success('Saved for offline use — songs and keys stay on this device.');
+      toast.success('Saved for offline use — full chord sheets and keys stay on this device.');
     } catch {
       toast.error('Could not save this setlist offline.');
     }

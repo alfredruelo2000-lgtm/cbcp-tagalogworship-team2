@@ -161,3 +161,68 @@ export async function markSetlistSavedOffline(setlistId: string) {
 export async function getSavedOfflineSetlists(): Promise<string[]> {
   return (await get<string[]>("saved-setlists", store)) ?? [];
 }
+
+/* --------------------------- chord sheet cache --------------------------- */
+
+/** Everything the reader needs to render a chart with no network at all. */
+export type CachedChart = {
+  id: string;
+  title?: string;
+  artist?: string;
+  defaultKey?: string;
+  bpm?: number;
+  timeSignature?: string;
+  lyrics?: string;
+  chords?: string;
+  artworkUrl?: string;
+  cachedAt: number;
+};
+
+const chartKey = (songId: string) => `chart-${songId}`;
+
+/** Stores the full chord/lyric body of a song so the chart opens offline. */
+export async function cacheSongChart(song: any): Promise<void> {
+  if (!song?.id) return;
+  const entry: CachedChart = {
+    id: song.id,
+    title: song.title,
+    artist: song.artist,
+    defaultKey: song.defaultKey ?? song.default_key,
+    bpm: song.bpm,
+    timeSignature: song.timeSignature ?? song.time_signature,
+    lyrics: song.lyrics ?? "",
+    chords: song.chords ?? "",
+    artworkUrl: song.artworkUrl ?? song.artwork_url,
+    cachedAt: Date.now(),
+  };
+  await set(chartKey(entry.id), entry, store);
+}
+
+export async function getCachedSongChart(songId: string): Promise<CachedChart | undefined> {
+  return await get<CachedChart>(chartKey(songId), store);
+}
+
+/** Warms the service-worker asset cache for a song's artwork/audio (best effort). */
+async function warmSongAssets(song: any) {
+  if (typeof caches === "undefined") return;
+  const urls = [song?.artworkUrl ?? song?.artwork_url, song?.audioUrl ?? song?.audio_url].filter(
+    (url): url is string => typeof url === "string" && url.startsWith("http"),
+  );
+  if (urls.length === 0) return;
+  try {
+    const cache = await caches.open("cbcp-assets");
+    await Promise.allSettled(urls.map((url) => cache.add(new Request(url, { mode: "no-cors" }))));
+  } catch {
+    /* asset warm-up is optional */
+  }
+}
+
+/** Caches charts (and assets) for a list of songs — used by neighbour prefetch and Save offline. */
+export async function cacheSongsOffline(songs: any[]): Promise<void> {
+  await Promise.allSettled(
+    songs.filter(Boolean).map(async (song) => {
+      await cacheSongChart(song);
+      await warmSongAssets(song);
+    }),
+  );
+}
