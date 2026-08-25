@@ -1,212 +1,205 @@
+import { useMemo, useState } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { 
-  ListMusic, 
-  Search, 
-  Plus, 
-  Filter, 
-  MoreVertical,
-  Edit,
-  Copy,
-  Archive,
-  Eye,
-  Clock,
-  Music,
-  FileText
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import {
+  Archive, Copy, Edit, Eye, EyeOff, ListMusic, MoreVertical, Music, Plus, Search, ShieldCheck, User,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getServices } from '@/lib/db-services.functions';
-import { supabase } from '@/integrations/supabase/client';
-import { cn } from "@/lib/utils";
-import { toast } from 'sonner';
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
+  DropdownMenuSeparator, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  DEFAULT_SETLIST_PERMISSIONS, duplicateSetlist, getSetlistPermissions, getSetlists,
+  saveSetlistPermissions, updateSetlist, type SetlistPermissions,
+} from '@/lib/db-setlists.functions';
+import { SETLIST_KEYS } from '@/components/setlists/setlist-hooks';
+import { SetlistFormDialog } from '@/components/setlists/SetlistFormDialog';
+import { cn } from '@/lib/utils';
 
-export const Route = createFileRoute('/_authenticated/dashboard/setlists')({
+export const Route = createFileRoute('/_authenticated/dashboard/setlists/')({
   component: SetlistManagementPage,
 });
 
 function SetlistManagementPage() {
   const queryClient = useQueryClient();
-  const { data: services = [], isLoading } = useQuery({
-    queryKey: ['services'],
-    queryFn: () => getServices(),
-  });
+  const [search, setSearch] = useState('');
+  const [scope, setScope] = useState<'official' | 'personal' | 'archived'>('official');
+  const [createOpen, setCreateOpen] = useState(false);
 
-  const archiveMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('services')
-        .update({ status: 'Archived' })
-        .eq('id', id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['services'] });
-      toast.success('Setlist archived');
-    },
-    onError: (error: any) => {
-      toast.error('Failed to archive setlist: ' + error.message);
-    }
-  });
+  const { data: setlists = [], isLoading } = useQuery({ queryKey: SETLIST_KEYS.all, queryFn: getSetlists });
+  const { data: permissions = DEFAULT_SETLIST_PERMISSIONS } = useQuery({ queryKey: SETLIST_KEYS.permissions, queryFn: getSetlistPermissions });
 
-  const handleArchive = (id: string) => {
-    if (confirm('Are you sure you want to archive this setlist? This will move the service to the archives.')) {
-      archiveMutation.mutate(id);
-    }
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: SETLIST_KEYS.all });
+    queryClient.invalidateQueries({ queryKey: ['services'] });
   };
 
+  const savePermissions = useMutation({
+    mutationFn: (next: SetlistPermissions) => saveSetlistPermissions(next),
+    onMutate: (next) => { queryClient.setQueryData(SETLIST_KEYS.permissions, next); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: SETLIST_KEYS.permissions }); toast.success('Permissions updated'); },
+    onError: (error: any) => { queryClient.invalidateQueries({ queryKey: SETLIST_KEYS.permissions }); toast.error(error?.message || 'Could not save permissions'); },
+  });
+
+  const patch = useMutation({
+    mutationFn: ({ id, values }: { id: string; values: Parameters<typeof updateSetlist>[1] }) => updateSetlist(id, values),
+    onSuccess: () => { invalidate(); toast.success('Setlist updated'); },
+    onError: (error: any) => toast.error(error?.message || 'Could not update setlist'),
+  });
+
+  const duplicate = useMutation({
+    mutationFn: (id: string) => duplicateSetlist(id),
+    onSuccess: () => { invalidate(); toast.success('Setlist duplicated'); },
+    onError: (error: any) => toast.error(error?.message || 'Could not duplicate setlist'),
+  });
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return setlists
+      .filter((s) => (scope === 'archived' ? s.status === 'Archived' : s.status !== 'Archived' && (scope === 'official' ? s.is_official : !s.is_official)))
+      .filter((s) => !q || [s.title, s.theme, s.service_type, s.service_date].filter(Boolean).join(' ').toLowerCase().includes(q))
+      .sort((a, b) => b.service_date.localeCompare(a.service_date));
+  }, [setlists, scope, search]);
+
   return (
-    <div className="container mx-auto px-6 py-12 space-y-12 animate-in fade-in duration-700">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div className="space-y-4">
-          <Badge variant="outline" className="rounded-none uppercase text-[10px] tracking-widest border-accent/20 text-accent">
-            Planning & Content
-          </Badge>
-          <h1 className="font-serif text-5xl text-foreground">Setlist Management</h1>
-          <p className="text-muted-foreground text-sm max-w-2xl">
-            Curate song selections, manage flow, and organize worship setlists for all services.
+    <div className="container mx-auto space-y-6 px-4 py-6 sm:px-6 md:space-y-10 md:py-12">
+      <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 md:flex md:items-end md:justify-between">
+        <div className="min-w-0 space-y-1.5 md:space-y-3">
+          <Badge variant="outline" className="rounded-none border-accent/20 text-[10px] uppercase tracking-widest text-accent">Planning &amp; Content</Badge>
+          <h1 className="truncate font-serif text-2xl text-foreground sm:text-4xl md:text-5xl">Setlist Management</h1>
+          <p className="hidden max-w-2xl text-sm text-muted-foreground sm:block">
+            One shared source of truth — official setlists publish straight to the public Setlists page.
           </p>
         </div>
-        <div className="flex gap-4">
-          <Button variant="outline" className="rounded-none border-accent/10 px-8 py-6 font-bold text-[10px] uppercase tracking-widest">
-            Browse Archive
-          </Button>
-          <Button asChild className="rounded-none bg-accent text-primary hover:bg-accent/90 px-8 py-6 font-bold text-[10px] uppercase tracking-widest shadow-xl">
-            <Link to="/dashboard/setlists/new">
-              <Plus className="w-4 h-4 mr-2" /> New Setlist
-            </Link>
-          </Button>
-        </div>
+        <Button className="h-11 shrink-0 rounded-none bg-accent px-3 text-[10px] font-bold uppercase tracking-widest text-primary hover:bg-accent/90 sm:px-6" onClick={() => setCreateOpen(true)}>
+          <Plus className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">New Setlist</span>
+        </Button>
       </header>
 
-      {/* Search & Filters */}
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between border-b border-accent/5 pb-6">
-        <div className="relative w-full md:max-w-md group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-accent transition-colors" />
-          <Input 
-            placeholder="Search setlists, themes, or services..." 
-            className="pl-12 h-12 rounded-none border-accent/20 bg-muted/30 focus:bg-background transition-all"
-          />
+      {/* Public permissions */}
+      <section className="border border-accent/10 p-4 md:p-6" aria-label="Public setlist permissions">
+        <h2 className="text-[10px] font-bold uppercase tracking-widest text-accent">Public permissions</h2>
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          {([
+            ['allowPublicCreation', 'Allow public setlist creation'],
+            ['allowDuplicateOfficial', 'Allow duplicating official setlists'],
+            ['allowEditingOfficial', 'Allow editing official setlists'],
+          ] as [keyof SetlistPermissions, string][]).map(([key, label]) => (
+            <div key={key} className="flex min-h-11 items-center justify-between gap-3 border border-accent/10 px-3">
+              <Label htmlFor={`perm-${key}`} className="text-xs text-muted-foreground">{label}</Label>
+              <Switch id={`perm-${key}`} checked={Boolean(permissions[key])} onCheckedChange={(checked) => savePermissions.mutate({ ...permissions, [key]: checked })} />
+            </div>
+          ))}
         </div>
-        <div className="flex gap-2 w-full md:w-auto">
-          <Button variant="outline" className="rounded-none h-12 px-6 tracking-widest uppercase text-[10px] font-bold border-accent/20 flex-1 md:flex-none">
-            <Filter className="w-3 h-3 mr-2" /> Filters
-          </Button>
+      </section>
+
+      {/* Search & scope */}
+      <div className="space-y-2">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input aria-label="Search setlists" placeholder="Search setlists, themes, dates…" className="h-11 rounded-none pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
+        </div>
+        <div className="scrollbar-none flex gap-1.5 overflow-x-auto" role="tablist" aria-label="Setlist scope">
+          {([['official', 'Official'], ['personal', 'Personal'], ['archived', 'Archive']] as const).map(([key, label]) => (
+            <button key={key} role="tab" aria-selected={scope === key} onClick={() => setScope(key)}
+              className={cn('h-9 shrink-0 whitespace-nowrap border px-3 text-[11px] font-bold uppercase tracking-[0.12em] transition-colors',
+                scope === key ? 'border-accent bg-accent text-primary' : 'border-accent/15 text-muted-foreground hover:border-accent/40 hover:text-foreground')}>
+              {label}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Setlists Table */}
-      <div className="border border-accent/5 bg-background overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-transparent border-accent/5">
-              <TableHead className="text-[10px] font-bold uppercase tracking-widest text-accent/50 py-6 px-6">Title & Theme</TableHead>
-              <TableHead className="text-[10px] font-bold uppercase tracking-widest text-accent/50 py-6 px-6">Songs</TableHead>
-              <TableHead className="text-[10px] font-bold uppercase tracking-widest text-accent/50 py-6 px-6">Service Date</TableHead>
-              <TableHead className="text-[10px] font-bold uppercase tracking-widest text-accent/50 py-6 px-6">Status</TableHead>
-              <TableHead className="text-[10px] font-bold uppercase tracking-widest text-accent/50 py-6 px-6 text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={5} className="py-12 text-center text-muted-foreground uppercase text-[10px] tracking-widest italic">
-                  Loading setlists...
-                </TableCell>
-              </TableRow>
-            ) : services.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="py-12 text-center text-muted-foreground uppercase text-[10px] tracking-widest italic">
-                  No setlists found.
-                </TableCell>
-              </TableRow>
-            ) : services.map((setlist: any) => (
-              <TableRow key={setlist.id} className="group border-accent/5 hover:bg-muted/10 transition-colors">
-                <TableCell className="py-6 px-6">
-                  <div className="space-y-1">
-                    <h3 className="font-serif text-lg leading-tight">{setlist.title}</h3>
-                    <div className="flex items-center gap-2 text-[9px] text-muted-foreground uppercase tracking-widest">
-                      <FileText className="w-3 h-3" /> {setlist.theme || 'No theme set'}
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell className="py-6 px-6">
-                  <div className="flex items-center gap-2">
-                    <Music className="w-3 h-3 text-accent" />
-                    <span className="text-[10px] font-bold tracking-widest">{setlist.songs.length} Songs</span>
-                  </div>
-                </TableCell>
-                <TableCell className="py-6 px-6">
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-accent">
-                      {new Date(setlist.serviceDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                    </p>
-                    <p className="text-[8px] text-muted-foreground uppercase tracking-widest">{setlist.serviceType}</p>
-                  </div>
-                </TableCell>
-                <TableCell className="py-6 px-6">
-                  <Badge className={cn(
-                    "rounded-none border-none text-[8px] font-bold uppercase tracking-widest",
-                    setlist.status === 'Ready' ? "bg-green-500/10 text-green-500" : 
-                    setlist.status === 'Preparing' ? "bg-amber-500/10 text-amber-500" :
-                    setlist.status === 'Draft' ? "bg-accent/10 text-accent" :
-                    "bg-muted text-muted-foreground"
-                  )}>
-                    {setlist.status}
-                  </Badge>
-                </TableCell>
-                <TableCell className="py-6 px-6 text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-accent/40 hover:text-accent rounded-none">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="rounded-none border-accent/10 bg-primary text-primary-foreground">
-                      <DropdownMenuLabel className="text-[9px] uppercase tracking-widest text-accent/50 font-bold">Options</DropdownMenuLabel>
-                      <DropdownMenuItem asChild className="text-[10px] uppercase tracking-widest font-bold focus:bg-accent focus:text-primary cursor-pointer">
-                        <Link to="/setlists/$id" params={{ id: setlist.id }}>
-                          <Eye className="w-3 h-3 mr-2" /> View Setlist
-                        </Link>
+      {/* Setlists */}
+      {isLoading ? (
+        <div className="space-y-2">{[0, 1, 2].map((i) => <div key={i} className="h-16 animate-pulse bg-muted/30" />)}</div>
+      ) : filtered.length === 0 ? (
+        <div className="border border-dashed border-accent/20 py-14 text-center">
+          <ListMusic className="mx-auto mb-3 h-8 w-8 text-muted-foreground/40" />
+          <p className="text-sm text-muted-foreground">No setlists in this view.</p>
+        </div>
+      ) : (
+        <ul className="divide-y divide-accent/10 border-y border-accent/10">
+          {filtered.map((setlist) => (
+            <li key={setlist.id} className="flex items-center gap-2 py-2.5">
+              <div className="flex h-11 w-11 shrink-0 flex-col items-center justify-center border border-accent/15 bg-primary/5 text-accent">
+                <span className="text-[9px] font-bold uppercase tracking-widest">{new Date(setlist.service_date).toLocaleDateString(undefined, { month: 'short' })}</span>
+                <span className="font-serif text-base leading-none">{new Date(setlist.service_date).getDate()}</span>
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <div className="flex min-w-0 items-center gap-2">
+                  <h3 className="truncate font-serif text-[15px] leading-snug sm:text-lg">{setlist.title}</h3>
+                  {setlist.is_official ? <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-accent" aria-label="Official" /> : <User className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" aria-label="Personal" />}
+                </div>
+                <p className="mt-0.5 flex items-center gap-1.5 truncate text-[11px] text-muted-foreground">
+                  <Music className="h-3 w-3 shrink-0 text-accent/60" />{setlist.service_items.length} song{setlist.service_items.length === 1 ? '' : 's'}
+                  <span className="h-1 w-1 shrink-0 rounded-full bg-accent/30" />{setlist.status}
+                  {setlist.theme ? <><span className="hidden h-1 w-1 shrink-0 rounded-full bg-accent/30 sm:inline-block" /><span className="hidden truncate sm:inline">{setlist.theme}</span></> : null}
+                </p>
+              </div>
+
+              {setlist.is_official && (
+                <Button
+                  variant="outline" size="sm"
+                  className={cn('hidden h-11 rounded-none px-2.5 text-[10px] font-bold uppercase tracking-widest sm:inline-flex', setlist.is_public && 'border-green-500/40 text-green-700')}
+                  onClick={() => patch.mutate({ id: setlist.id, values: { isPublic: !setlist.is_public } })}
+                >
+                  {setlist.is_public ? <><Eye className="mr-1.5 h-3.5 w-3.5" /> Published</> : <><EyeOff className="mr-1.5 h-3.5 w-3.5" /> Hidden</>}
+                </Button>
+              )}
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-11 w-11 shrink-0 rounded-none text-accent/60 hover:text-accent" aria-label={`Options for ${setlist.title}`}>
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="rounded-none border-accent/10">
+                  <DropdownMenuLabel className="text-[9px] font-bold uppercase tracking-widest text-accent/60">Options</DropdownMenuLabel>
+                  <DropdownMenuItem asChild className="cursor-pointer text-[11px] font-bold uppercase tracking-widest">
+                    <Link to="/setlists/$id" params={{ id: setlist.id }}><Eye className="mr-2 h-3.5 w-3.5" /> Open / Plan</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="cursor-pointer text-[11px] font-bold uppercase tracking-widest">
+                    <Link to="/dashboard/setlists/$id" params={{ id: setlist.id }}><Edit className="mr-2 h-3.5 w-3.5" /> Service details</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer text-[11px] font-bold uppercase tracking-widest" onClick={() => duplicate.mutate(setlist.id)}>
+                    <Copy className="mr-2 h-3.5 w-3.5" /> Duplicate
+                  </DropdownMenuItem>
+                  {setlist.is_official && (
+                    <>
+                      <DropdownMenuItem className="cursor-pointer text-[11px] font-bold uppercase tracking-widest" onClick={() => patch.mutate({ id: setlist.id, values: { isPublic: !setlist.is_public } })}>
+                        {setlist.is_public ? <><EyeOff className="mr-2 h-3.5 w-3.5" /> Unpublish</> : <><Eye className="mr-2 h-3.5 w-3.5" /> Publish</>}
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="text-[10px] uppercase tracking-widest font-bold focus:bg-accent focus:text-primary cursor-pointer">
-                        <Edit className="w-3 h-3 mr-2" /> Edit Setlist
+                      <DropdownMenuItem className="cursor-pointer text-[11px] font-bold uppercase tracking-widest" onClick={() => patch.mutate({ id: setlist.id, values: { allowPublicDuplicate: !setlist.allow_public_duplicate } })}>
+                        <Copy className="mr-2 h-3.5 w-3.5" /> {setlist.allow_public_duplicate ? 'Block copying' : 'Allow copying'}
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="text-[10px] uppercase tracking-widest font-bold focus:bg-accent focus:text-primary cursor-pointer">
-                        <Copy className="w-3 h-3 mr-2" /> Duplicate
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator className="bg-accent/10" />
-                      <DropdownMenuItem 
-                        onClick={() => handleArchive(setlist.id)}
-                        className="text-[10px] uppercase tracking-widest font-bold text-red-400 focus:bg-red-400/10 focus:text-red-400 cursor-pointer"
-                      >
-                        <Archive className="w-3 h-3 mr-2" /> Archive
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+                    </>
+                  )}
+                  <DropdownMenuSeparator className="bg-accent/10" />
+                  <DropdownMenuItem
+                    className="cursor-pointer text-[11px] font-bold uppercase tracking-widest text-destructive"
+                    onClick={() => {
+                      if (!window.confirm(setlist.status === 'Archived' ? 'Restore this setlist to Draft?' : 'Archive this setlist?')) return;
+                      patch.mutate({ id: setlist.id, values: { status: setlist.status === 'Archived' ? 'Draft' : 'Archived' } });
+                    }}
+                  >
+                    <Archive className="mr-2 h-3.5 w-3.5" /> {setlist.status === 'Archived' ? 'Restore' : 'Archive'}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <SetlistFormDialog open={createOpen} onOpenChange={setCreateOpen} onSaved={(id) => { invalidate(); patch.mutate({ id, values: { isOfficial: true } }); }} />
     </div>
   );
 }
