@@ -12,6 +12,7 @@ export function Navbar() {
   const { navItems } = usePublicSectionVisibility();
 
   return (
+    <>
     <nav className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:h-20 lg:px-8">
         <Link to="/" className="flex min-w-0 items-center gap-2" onClick={() => setIsOpen(false)}>
@@ -54,6 +55,8 @@ export function Navbar() {
         </button>
       </div>
 
+    </nav>
+
       {/* Mobile Navigation */}
       {isOpen && (
         <div className="fixed inset-0 top-16 z-40 flex flex-col overflow-y-auto bg-background lg:hidden animate-in fade-in slide-in-from-top-2 duration-200">
@@ -82,6 +85,6 @@ export function Navbar() {
           </div>
         </div>
       )}
-    </nav>
+    </>
   );
 }
