@@ -15,6 +15,10 @@ import { KEYS, transposeChord, getSemitoneDifference, chordToNumber } from '@/ut
 import { WorshipSong } from '@/types/songs';
 import { toast } from 'sonner';
 import { AddToSetlistButton } from '@/components/setlists/AddToSetlistDialog';
+import { SetlistSongNav, useSetlistSequence, useSetlistSwipe } from '@/components/setlists/SetlistNav';
+import { useSetlistAbilities } from '@/components/setlists/setlist-hooks';
+import { updateSetlistItem } from '@/lib/db-setlists.functions';
+import { useOnlineStatus } from '@/lib/offline';
 
 export const Route = createFileRoute('/_public/songs/$id')({
   head: () => ({
@@ -46,6 +50,42 @@ function SongDetailPage() {
   const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   
   const [currentKey, setCurrentKey] = useState(searchParams.get('key') || song?.defaultKey || 'C');
+
+  // ----- Setlist context: sequence navigation + per-setlist key persistence -----
+  const sequence = useSetlistSequence(id as string);
+  const { canEdit } = useSetlistAbilities();
+  const online = useOnlineStatus();
+  const canSaveSetlistKey = Boolean(sequence.current) && canEdit(sequence.setlist ?? null);
+  const setlistItemKey = sequence.current?.selected_key ?? null;
+
+  // Moving to another song in the setlist (or opening one) adopts that song's setlist key.
+  useEffect(() => {
+    const fromUrl = new URLSearchParams(window.location.search).get('key');
+    const nextKey = setlistItemKey || fromUrl || song?.defaultKey;
+    if (nextKey) setCurrentKey(nextKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, setlistItemKey]);
+
+  // Any later key change is saved straight back to this setlist (queued while offline).
+  const savedSetlistKey = useRef<string | null>(null);
+  useEffect(() => {
+    if (!canSaveSetlistKey || !sequence.current) return;
+    if (!currentKey || currentKey === setlistItemKey) { savedSetlistKey.current = currentKey; return; }
+    if (savedSetlistKey.current === currentKey) return;
+    savedSetlistKey.current = currentKey;
+    const itemId = sequence.current.id;
+    const timer = setTimeout(() => {
+      void updateSetlistItem(itemId, { selected_key: currentKey })
+        .then(() => toast.success(online ? `Key saved to setlist (${currentKey})` : `Key saved on this device (${currentKey})`))
+        .catch(() => toast.error('Could not save the key to this setlist'));
+    }, 600);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentKey, canSaveSetlistKey, setlistItemKey]);
+
+  const goPrevious = useCallback(() => sequence.goTo(sequence.previous), [sequence]);
+  const goNext = useCallback(() => sequence.goTo(sequence.next), [sequence]);
+  useSetlistSwipe(sequence.index >= 0 && sequence.items.length > 1, goPrevious, goNext);
   // Device-wide reader defaults: RED chords + 75% text size (12px of 16px base),
   // chords and lyrics visible. A saved device preference always wins.
   const readPref = (key: string) => {
@@ -459,6 +499,18 @@ function SongDetailPage() {
 
   return (
     <div className="song-reader min-h-screen bg-background text-foreground pb-16">
+      {sequence.setlistId && sequence.index >= 0 && (
+        <SetlistSongNav
+          setlistId={sequence.setlistId}
+          setlistTitle={sequence.setlist?.title}
+          index={sequence.index}
+          total={sequence.items.length}
+          previousTitle={sequence.previous?.title}
+          nextTitle={sequence.next?.title}
+          onPrevious={goPrevious}
+          onNext={goNext}
+        />
+      )}
       {/* Compact reader header — hidden in Full View */}
       {!fullView && (
         <div className="bg-white border-b border-border sticky top-0 z-50 print:hidden">
