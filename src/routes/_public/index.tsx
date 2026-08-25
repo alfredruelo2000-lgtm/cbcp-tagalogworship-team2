@@ -1,6 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo } from "react";
-import { usePublicRealtime } from "@/lib/use-public-realtime";
 import { HeroSection } from "@/components/layout/HeroSection";
 import { ScriptureBlock } from "@/components/ui/ScriptureBlock";
 import { MinistryIntro } from "@/components/home/MinistryIntro";
@@ -39,7 +38,6 @@ export const Route = createFileRoute("/_public/")({
 });
 
 function Index() {
-  usePublicRealtime();
 
   const { data: songs = [] } = useQuery({
     queryKey: ['songs-public'],
