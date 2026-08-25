@@ -173,7 +173,7 @@ function SettingsPage() {
                <p className="text-sm text-muted-foreground">Control which existing sections are visible to public visitors.</p>
              </div>
              <div className="divide-y divide-border border-y border-border">
-               {(localSettings['homepage_sections']?.order ?? defaultOrder).map((key: string, index: number, order: string[]) => {
+               {mergeOrder(localSettings['homepage_sections']?.order).map((key: string, index: number, order: string[]) => {
                  const section = homepageSections.find((item) => item.key === key) ?? { key, name: key, route: null };
                  const config = localSettings['homepage_sections']?.[key] ?? {};
                  const visible = typeof config === 'boolean' ? config : config.published !== false && !section.reserve;
