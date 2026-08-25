@@ -19,7 +19,7 @@ import { GalleryPreview } from "@/components/home/gallery/GalleryPreview";
 import { JoinCTA } from "@/components/home/cta/JoinCTA";
 import { PrepareHeart } from "@/components/home/cta/PrepareHeart";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_public/")({
   head: () => ({
     meta: [
       { title: "CBCP Tagalog Worship Team | Worship Him in Spirit and in Truth" },
