@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo } from "react";
 import { usePublicRealtime } from "@/lib/use-public-realtime";
 import { HeroSection } from "@/components/layout/HeroSection";
 import { ScriptureBlock } from "@/components/ui/ScriptureBlock";
@@ -10,7 +10,7 @@ import { SongCard } from "@/components/ui/songs/SongCard";
 import { WorshipSetlist } from "@/components/ui/setlists/WorshipSetlist";
 import { useQuery } from "@tanstack/react-query";
 import { getSongsPublic, getUpcomingServicePublic } from "@/lib/db-public.functions";
-import { usePublicSectionVisibility } from "@/lib/public-section-visibility";
+import { usePublicSectionVisibility, SECTION_META } from "@/lib/public-section-visibility";
 
 
 import { TeamPreview } from "@/components/ui/team/TeamPreview";
@@ -63,8 +63,6 @@ function Index() {
     }
   }, [homeHidden, firstAvailable, navigate]);
 
-  if (homeHidden) return null;
-
 
 
 
@@ -92,6 +90,8 @@ function Index() {
     };
   }, [upcomingService]);
 
+
+  if (homeHidden) return null;
 
   return (
     <div className="overflow-x-hidden selection:bg-accent selection:text-primary">
