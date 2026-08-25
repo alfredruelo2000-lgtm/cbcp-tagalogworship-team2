@@ -195,7 +195,7 @@ function SetlistDetailPage() {
         <ol className="mt-4 divide-y divide-accent/10 border-y border-accent/10">
           {items.map((item, index) => {
             const song = item.song_id ? songById.get(item.song_id) : null;
-            const key = item.selected_key || song?.defaultKey || '';
+            const key = resolveSetlistKey(setlist.id, item.id, item.selected_key, song?.defaultKey);
             return (
               <li key={item.id} className="py-2">
                 <div className="flex items-center gap-2.5">
@@ -218,18 +218,23 @@ function SetlistDetailPage() {
                     </div>
                   )}
 
-                  {item.song_id && (editable ? (
+                  {item.song_id && (
                     <select
                       aria-label={`Key for ${item.title}`}
                       className="h-9 w-16 shrink-0 border border-accent/20 bg-background px-1 text-center text-xs font-bold text-accent"
                       value={key}
-                      onChange={(e) => itemMutation.mutate(() => updateSetlistItem(item.id, { selected_key: e.target.value }))}
+                      onChange={(e) => {
+                        const next = e.target.value;
+                        // Instant, sticky on this device — then persisted to the setlist when allowed.
+                        setLocalSetlistKey(setlist.id, item.id, next);
+                        setKeyVersion((v) => v + 1);
+                        if (editable) itemMutation.mutate(() => updateSetlistItem(item.id, { selected_key: next }));
+                      }}
                     >
                       {KEYS.map((k: string) => <option key={k} value={k}>{k}</option>)}
                     </select>
-                  ) : (
-                    <span className="shrink-0 border border-accent/20 px-2 py-1 text-[11px] font-bold uppercase tracking-widest text-accent">{key}</span>
-                  ))}
+                  )}
+
 
                   {editable && (
                     <div className="flex shrink-0 items-center">
