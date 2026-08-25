@@ -254,9 +254,18 @@ export async function addCustomItemToSetlist(params: { setlistId: string; title:
 }
 
 export async function updateSetlistItem(id: string, patch: Partial<Pick<SetlistItem, "selected_key" | "notes" | "assigned_person" | "transition_note" | "title" | "sort_order">>) {
+  const { isOnline, queueOfflineWrite } = await import("@/lib/offline");
+
+  if (!isOnline()) {
+    // Saved on-device now, replayed automatically when the connection returns.
+    await queueOfflineWrite({ id: `service_items:${id}:${Object.keys(patch).sort().join("+")}`, table: "service_items", rowId: id, patch });
+    return;
+  }
+
   const { error } = await supabase.from("service_items").update(patch as any).eq("id", id);
   if (error) throw error;
 }
+
 
 export async function removeSetlistItem(id: string) {
   const { error } = await supabase.from("service_items").delete().eq("id", id);
