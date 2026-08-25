@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { Link, useLocation, useNavigate } from '@tanstack/react-router';
+import { Link, useLocation, useNavigate, useRouter } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, ListMusic } from 'lucide-react';
 import { getSetlist, type SetlistItem } from '@/lib/db-setlists.functions';
+import { cacheSongsOffline } from '@/lib/offline';
 
 /**
  * Reads the `?setlist=` context of a song chart and exposes the ordered
