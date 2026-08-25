@@ -24,7 +24,7 @@ export function MediaCard({ item, onClick }: MediaCardProps) {
     >
       {/* Thumbnail */}
       {(isPhoto || isVideo) && item.thumbnailUrl ? (
-        <img loading="lazy" decoding="async" 
+        <img 
           src={item.thumbnailUrl} 
           alt={item.title}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
