@@ -14,6 +14,7 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { KEYS, transposeChord, getSemitoneDifference, chordToNumber } from '@/utils/transposition';
 import { WorshipSong } from '@/types/songs';
 import { toast } from 'sonner';
+import { AddToSetlistButton } from '@/components/setlists/AddToSetlistDialog';
 
 export const Route = createFileRoute('/_public/songs/$id')({
   head: () => ({
@@ -470,6 +471,7 @@ function SongDetailPage() {
               <Button variant="outline" size="sm" onClick={() => window.print()} className="h-9 rounded-none px-2.5 sm:px-3" aria-label="Print"><Printer className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Print</span></Button>
               <Button variant="outline" size="sm" onClick={() => setIsSplit(!isSplit)} className={`h-9 rounded-none px-2.5 sm:px-3 ${isSplit ? 'bg-accent/20 text-accent-foreground' : ''}`} aria-label="Split view"><Split className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Split{isSplit ? ' ✓' : ''}</span></Button>
               <Button variant="outline" size="sm" onClick={handleShare} className="h-9 rounded-none px-2.5 sm:px-3" aria-label="Share practice link"><Share2 className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Share</span></Button>
+              <AddToSetlistButton song={{ id: song.id, title: song.title, defaultKey: currentKey }} className="h-9 rounded-none px-2.5 sm:px-3" />
               <Button variant="default" size="sm" onClick={() => setFullView(true)} className="h-9 rounded-none bg-primary px-2.5 text-primary-foreground sm:px-3" aria-label="Enter full view"><Maximize2 className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Full View</span></Button>
             </div>
           </div>
