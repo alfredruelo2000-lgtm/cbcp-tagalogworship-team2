@@ -23,7 +23,6 @@ export default defineConfig({
         devOptions: { enabled: false },
         manifest: false,
         workbox: {
-          globDirectory: undefined,
           navigateFallback: null,
           runtimeCaching: [
             {
