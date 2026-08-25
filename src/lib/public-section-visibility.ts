@@ -64,11 +64,21 @@ export function usePublicSectionVisibility() {
   };
 
   // Ordered list of section keys following the admin-configured order.
-  const orderedKeys: PublicSectionKey[] = [
-    ...configuredOrder.filter((key): key is PublicSectionKey =>
-      (PUBLIC_SECTION_KEYS as readonly string[]).includes(key)),
-    ...PUBLIC_SECTION_KEYS.filter((key) => !configuredOrder.includes(key)),
-  ];
+  const rank = (key: PublicSectionKey) => {
+    const configuredIndex = configuredOrder.indexOf(key);
+    if (configuredIndex >= 0) return configuredIndex;
+    // Unconfigured keys keep their canonical position relative to configured ones.
+    const canonicalIndex = PUBLIC_SECTION_KEYS.indexOf(key);
+    for (let i = canonicalIndex - 1; i >= 0; i -= 1) {
+      const previous = PUBLIC_SECTION_KEYS[i]!;
+      const previousIndex = configuredOrder.indexOf(previous);
+      if (previousIndex >= 0) return previousIndex + 0.5;
+    }
+    return -1;
+  };
+
+  const orderedKeys: PublicSectionKey[] = [...PUBLIC_SECTION_KEYS].sort((a, b) => rank(a) - rank(b));
+
 
   const navItems = orderedKeys
     .filter((key) => isNavVisible(key))
