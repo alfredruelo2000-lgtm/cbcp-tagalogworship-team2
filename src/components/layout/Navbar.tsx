@@ -30,7 +30,7 @@ export function Navbar() {
                 to={link.to}
                 className="relative group py-2 text-[11px] font-bold tracking-[0.15em] text-muted-foreground transition-all duration-300 hover:text-foreground"
                 activeProps={{ className: "text-foreground active-nav" }}
-                activeOptions={link.to === "/" ? { exact: true } : undefined}
+                activeOptions={{ exact: link.to === "/" }}
               >
                 {link.label}
                 <span className="absolute bottom-0 left-0 h-px w-0 bg-accent transition-all duration-300 group-hover:w-full [.active-nav_&]:w-full" />
@@ -64,7 +64,7 @@ export function Navbar() {
                 to={link.to}
                 onClick={() => setIsOpen(false)}
                 activeProps={{ className: "text-accent" }}
-                activeOptions={link.to === "/" ? { exact: true } : undefined}
+                activeOptions={{ exact: link.to === "/" }}
                 className="flex min-h-[52px] items-center justify-between border-b border-border/60 text-[13px] font-bold tracking-[0.15em] text-foreground transition-colors active:bg-muted/40"
               >
                 <span className="flex items-center gap-3">
