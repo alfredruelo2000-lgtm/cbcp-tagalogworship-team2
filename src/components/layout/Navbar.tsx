@@ -71,7 +71,7 @@ export function Navbar() {
 
       {/* Mobile Navigation */}
       {isOpen && (
-        <div className="fixed inset-0 top-20 z-40 bg-background p-6 lg:hidden animate-in fade-in slide-in-from-top-4 duration-300">
+        <div className="fixed inset-0 top-16 z-40 overflow-y-auto bg-background p-6 lg:hidden animate-in fade-in slide-in-from-top-4 duration-300">
           <div className="flex flex-col gap-6">
             {visibleNavLinks.map((link) => (
               <Link
