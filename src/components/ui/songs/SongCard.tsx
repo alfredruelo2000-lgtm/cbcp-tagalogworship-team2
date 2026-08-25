@@ -1,6 +1,7 @@
 import { WorshipSong } from '@/types/songs';
 import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
+import { ChevronRight } from 'lucide-react';
 
 interface SongProps {
   song: WorshipSong;
