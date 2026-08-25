@@ -41,7 +41,7 @@ function PublicLayout() {
           </section>
         ) : <Outlet />}
       </main>
-      {!location.pathname.startsWith('/songs/') && <Footer />}
+      {!location.pathname.startsWith('/songs') && <Footer />}
     </div>
   );
 }
