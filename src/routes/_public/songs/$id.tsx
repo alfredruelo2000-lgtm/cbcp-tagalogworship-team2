@@ -101,7 +101,7 @@ function SongDetailPage() {
   });
   const [autoScroll, setAutoScroll] = useState(false);
   const [scrollSpeed, setScrollSpeed] = useState(() => {
-    const saved = Number(localStorage.getItem(`song-pref-scrollSpeed-${id}`));
+    const saved = Number(readPref('scrollSpeed'));
     return Number.isFinite(saved) ? Math.min(5, Math.max(1, saved)) : 3;
   });
   const [latency, setLatency] = useState(0); // in ms
