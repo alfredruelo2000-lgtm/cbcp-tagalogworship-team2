@@ -9,11 +9,11 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as PublicRouteImport } from './routes/_public'
 import { Route as AuthenticatedAwaitingApprovalRouteImport } from './routes/_authenticated/awaiting-approval'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as PublicIndexRouteImport } from './routes/_public/index'
 import { Route as PublicAboutRouteImport } from './routes/_public/about'
 import { Route as PublicContactRouteImport } from './routes/_public/contact'
 import { Route as PublicLoginRouteImport } from './routes/_public/login'
@@ -56,11 +56,6 @@ import { Route as AuthenticatedDashboardTeamIdRouteImport } from './routes/_auth
 import { Route as AuthenticatedDashboardUsersNewRouteImport } from './routes/_authenticated/dashboard/users/new'
 import { Route as AuthenticatedDashboardTeamEditIdRouteImport } from './routes/_authenticated/dashboard/team/edit/$id'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
@@ -79,6 +74,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
+} as any)
+const PublicIndexRoute = PublicIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PublicRoute,
 } as any)
 const PublicAboutRoute = PublicAboutRouteImport.update({
   id: '/about',
@@ -314,7 +314,7 @@ const AuthenticatedDashboardTeamEditIdRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof PublicIndexRoute
   '/awaiting-approval': typeof AuthenticatedAwaitingApprovalRoute
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/about': typeof PublicAboutRoute
@@ -360,7 +360,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/team/edit/$id': typeof AuthenticatedDashboardTeamEditIdRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
+  '/': typeof PublicIndexRoute
   '/awaiting-approval': typeof AuthenticatedAwaitingApprovalRoute
   '/about': typeof PublicAboutRoute
   '/contact': typeof PublicContactRoute
@@ -404,7 +404,6 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/_public': typeof PublicRouteWithChildren
   '/_authenticated/awaiting-approval': typeof AuthenticatedAwaitingApprovalRoute
@@ -417,6 +416,7 @@ export interface FileRoutesById {
   '/_public/songs': typeof PublicSongsRouteWithChildren
   '/_public/team': typeof PublicTeamRouteWithChildren
   '/_public/worship': typeof PublicWorshipRoute
+  '/_public/': typeof PublicIndexRoute
   '/_authenticated/dashboard/activity': typeof AuthenticatedDashboardActivityRoute
   '/_authenticated/dashboard/media': typeof AuthenticatedDashboardMediaRouteWithChildren
   '/_authenticated/dashboard/profile': typeof AuthenticatedDashboardProfileRoute
@@ -543,7 +543,6 @@ export interface FileRouteTypes {
     | '/dashboard/team/edit/$id'
   id:
     | '__root__'
-    | '/'
     | '/_authenticated'
     | '/_public'
     | '/_authenticated/awaiting-approval'
@@ -556,6 +555,7 @@ export interface FileRouteTypes {
     | '/_public/songs'
     | '/_public/team'
     | '/_public/worship'
+    | '/_public/'
     | '/_authenticated/dashboard/activity'
     | '/_authenticated/dashboard/media'
     | '/_authenticated/dashboard/profile'
@@ -592,20 +592,12 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   PublicRoute: typeof PublicRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -633,6 +625,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/_public/': {
+      id: '/_public/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof PublicIndexRouteImport
+      parentRoute: typeof PublicRoute
     }
     '/_public/about': {
       id: '/_public/about'
@@ -1164,6 +1163,7 @@ interface PublicRouteChildren {
   PublicSongsRoute: typeof PublicSongsRouteWithChildren
   PublicTeamRoute: typeof PublicTeamRouteWithChildren
   PublicWorshipRoute: typeof PublicWorshipRoute
+  PublicIndexRoute: typeof PublicIndexRoute
   PublicSetlistsIdRoute: typeof PublicSetlistsIdRoute
   PublicSetlistsIndexRoute: typeof PublicSetlistsIndexRoute
 }
@@ -1177,6 +1177,7 @@ const PublicRouteChildren: PublicRouteChildren = {
   PublicSongsRoute: PublicSongsRouteWithChildren,
   PublicTeamRoute: PublicTeamRouteWithChildren,
   PublicWorshipRoute: PublicWorshipRoute,
+  PublicIndexRoute: PublicIndexRoute,
   PublicSetlistsIdRoute: PublicSetlistsIdRoute,
   PublicSetlistsIndexRoute: PublicSetlistsIndexRoute,
 }
@@ -1185,7 +1186,6 @@ const PublicRouteWithChildren =
   PublicRoute._addFileChildren(PublicRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   PublicRoute: PublicRouteWithChildren,
 }
