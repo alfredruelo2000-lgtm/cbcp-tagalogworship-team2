@@ -17,7 +17,7 @@ export function usePublicRealtime() {
 
   useEffect(() => {
     const channel = supabase
-      .channel("public-content-sync")
+      .channel(`public-content-sync-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "songs" }, invalidatePublicQueries)
       .on("postgres_changes", { event: "*", schema: "public", table: "services" }, invalidatePublicQueries)
       .on("postgres_changes", { event: "*", schema: "public", table: "service_items" }, invalidatePublicQueries)

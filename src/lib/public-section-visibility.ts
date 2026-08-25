@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getSettingByKey } from "@/lib/db-settings.functions";
 
 export const PUBLIC_SECTION_KEYS = [
+  "home",
   "worship",
   "songs",
   "setlists",
@@ -14,7 +15,21 @@ export const PUBLIC_SECTION_KEYS = [
 
 export type PublicSectionKey = (typeof PUBLIC_SECTION_KEYS)[number];
 
+export const SECTION_META: Record<PublicSectionKey, { label: string; to: string }> = {
+  home: { label: "HOME", to: "/" },
+  worship: { label: "WORSHIP", to: "/worship" },
+  songs: { label: "SONGS", to: "/songs" },
+  setlists: { label: "SETLISTS", to: "/setlists" },
+  team: { label: "TEAM", to: "/team" },
+  resources: { label: "RESOURCES", to: "/resources" },
+  media: { label: "MEDIA", to: "/media" },
+  about: { label: "ABOUT", to: "/about" },
+  contact: { label: "CONTACT", to: "/contact" },
+};
+
 export const publicSectionVisibilityQueryKey = ["homepage-sections-public"] as const;
+
+type SectionConfig = boolean | { published?: boolean; showInNavigation?: boolean; displayOrder?: number };
 
 export function usePublicSectionVisibility() {
   const query = useQuery({
@@ -23,20 +38,58 @@ export function usePublicSectionVisibility() {
   });
 
   const configured = query.data?.value;
-  const sections = configured && typeof configured === "object" && !Array.isArray(configured)
-    ? configured as Record<string, boolean | { published?: boolean }>
+  const raw = configured && typeof configured === "object" && !Array.isArray(configured)
+    ? (configured as Record<string, unknown>)
     : {};
+
+  const sections = raw as Record<string, SectionConfig>;
+  const configuredOrder = Array.isArray(raw["order"]) ? (raw["order"] as string[]) : [];
+
+  const isVisible = (key: PublicSectionKey) => {
+    const setting = sections[key];
+    if (typeof setting === "boolean") return setting;
+    if (setting && typeof setting === "object" && "published" in setting) {
+      return setting.published !== false;
+    }
+    return true;
+  };
+
+  const isNavVisible = (key: PublicSectionKey) => {
+    if (!isVisible(key)) return false;
+    const setting = sections[key];
+    if (setting && typeof setting === "object" && "showInNavigation" in setting) {
+      return setting.showInNavigation !== false;
+    }
+    return true;
+  };
+
+  // Ordered list of section keys following the admin-configured order.
+  const rank = (key: PublicSectionKey) => {
+    const configuredIndex = configuredOrder.indexOf(key);
+    if (configuredIndex >= 0) return configuredIndex;
+    // Unconfigured keys keep their canonical position relative to configured ones.
+    const canonicalIndex = PUBLIC_SECTION_KEYS.indexOf(key);
+    for (let i = canonicalIndex - 1; i >= 0; i -= 1) {
+      const previous = PUBLIC_SECTION_KEYS[i]!;
+      const previousIndex = configuredOrder.indexOf(previous);
+      if (previousIndex >= 0) return previousIndex + 0.5;
+    }
+    return -1;
+  };
+
+  const orderedKeys: PublicSectionKey[] = [...PUBLIC_SECTION_KEYS].sort((a, b) => rank(a) - rank(b));
+
+
+  const navItems = orderedKeys
+    .filter((key) => isNavVisible(key))
+    .map((key) => ({ key, ...SECTION_META[key] }));
 
   return {
     ...query,
     sections,
-    isVisible: (key: PublicSectionKey) => {
-      const setting = sections[key];
-      if (typeof setting === "boolean") return setting;
-      if (setting && typeof setting === "object" && "published" in setting) {
-        return setting.published !== false;
-      }
-      return true;
-    },
+    orderedKeys,
+    navItems,
+    isVisible,
+    isNavVisible,
   };
 }

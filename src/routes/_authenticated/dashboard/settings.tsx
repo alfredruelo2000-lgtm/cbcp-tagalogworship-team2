@@ -14,7 +14,9 @@ import { toast } from 'sonner';
 type SectionDefinition = { key: string; name: string; route: string | null; reserve?: boolean };
 
 const homepageSections: SectionDefinition[] = [
+  { key: 'home', name: 'Home', route: '/' },
   { key: 'worship', name: 'Worship', route: '/worship' },
+
   { key: 'songs', name: 'Songs', route: '/songs' },
   { key: 'setlists', name: 'Setlists', route: '/setlists' },
   { key: 'team', name: 'Team', route: '/team' },
@@ -29,6 +31,25 @@ const homepageSections: SectionDefinition[] = [
 
 
 const defaultOrder = homepageSections.map((section) => section.key);
+
+// Keeps saved ordering while surfacing any section keys added later (e.g. Home).
+function mergeOrder(savedOrder: unknown): string[] {
+  const saved = Array.isArray(savedOrder) ? (savedOrder as string[]).filter((key) => defaultOrder.includes(key)) : [];
+  if (saved.length === 0) return defaultOrder;
+  const missing = defaultOrder.filter((key) => !saved.includes(key));
+  const merged = [...saved];
+  for (const key of missing) {
+    const canonicalIndex = defaultOrder.indexOf(key);
+    let insertAt = 0;
+    for (let i = canonicalIndex - 1; i >= 0; i -= 1) {
+      const previousIndex = merged.indexOf(defaultOrder[i]!);
+      if (previousIndex >= 0) { insertAt = previousIndex + 1; break; }
+    }
+    merged.splice(insertAt, 0, key);
+  }
+  return merged;
+}
+
 
 
 export const Route = createFileRoute('/_authenticated/dashboard/settings')({
@@ -171,7 +192,7 @@ function SettingsPage() {
                <p className="text-sm text-muted-foreground">Control which existing sections are visible to public visitors.</p>
              </div>
              <div className="divide-y divide-border border-y border-border">
-               {(localSettings['homepage_sections']?.order ?? defaultOrder).map((key: string, index: number, order: string[]) => {
+               {mergeOrder(localSettings['homepage_sections']?.order).map((key: string, index: number, order: string[]) => {
                  const section = homepageSections.find((item) => item.key === key) ?? { key, name: key, route: null };
                  const config = localSettings['homepage_sections']?.[key] ?? {};
                  const visible = typeof config === 'boolean' ? config : config.published !== false && !section.reserve;

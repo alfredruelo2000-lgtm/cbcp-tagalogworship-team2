@@ -1,6 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
-import { usePublicRealtime } from "@/lib/use-public-realtime";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo } from "react";
 import { HeroSection } from "@/components/layout/HeroSection";
 import { ScriptureBlock } from "@/components/ui/ScriptureBlock";
 import { MinistryIntro } from "@/components/home/MinistryIntro";
@@ -10,7 +9,7 @@ import { SongCard } from "@/components/ui/songs/SongCard";
 import { WorshipSetlist } from "@/components/ui/setlists/WorshipSetlist";
 import { useQuery } from "@tanstack/react-query";
 import { getSongsPublic, getUpcomingServicePublic } from "@/lib/db-public.functions";
-import { usePublicSectionVisibility } from "@/lib/public-section-visibility";
+import { usePublicSectionVisibility, SECTION_META } from "@/lib/public-section-visibility";
 
 
 import { TeamPreview } from "@/components/ui/team/TeamPreview";
@@ -19,7 +18,7 @@ import { GalleryPreview } from "@/components/home/gallery/GalleryPreview";
 import { JoinCTA } from "@/components/home/cta/JoinCTA";
 import { PrepareHeart } from "@/components/home/cta/PrepareHeart";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_public/")({
   head: () => ({
     meta: [
       { title: "CBCP Tagalog Worship Team | Worship Him in Spirit and in Truth" },
@@ -39,7 +38,6 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  usePublicRealtime();
 
   const { data: songs = [] } = useQuery({
     queryKey: ['songs-public'],
@@ -51,7 +49,19 @@ function Index() {
     queryFn: () => getUpcomingServicePublic()
   });
 
-  const { isVisible } = usePublicSectionVisibility();
+  const { isVisible, orderedKeys, isFetched } = usePublicSectionVisibility();
+  const navigate = useNavigate();
+  const homeHidden = isFetched && !isVisible('home');
+  const firstAvailable = orderedKeys.find((key) => key !== 'home' && isVisible(key));
+
+  // When the homepage is unpublished, send visitors to the first published section.
+  useEffect(() => {
+    if (homeHidden && firstAvailable) {
+      void navigate({ to: SECTION_META[firstAvailable].to, replace: true });
+    }
+  }, [homeHidden, firstAvailable, navigate]);
+
+
 
 
   const featuredSongs = useMemo(() => {
@@ -78,6 +88,8 @@ function Index() {
     };
   }, [upcomingService]);
 
+
+  if (homeHidden) return null;
 
   return (
     <div className="overflow-x-hidden selection:bg-accent selection:text-primary">
