@@ -55,6 +55,9 @@ function SetlistDetailPage() {
 
   const [editOpen, setEditOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  // Bumped whenever a per-setlist key is chosen so the row re-renders instantly.
+  const [, setKeyVersion] = useState(0);
+
 
   const editable = canEdit(setlist ?? null);
   const invalidate = () => {
