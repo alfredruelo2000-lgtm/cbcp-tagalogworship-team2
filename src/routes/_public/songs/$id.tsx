@@ -18,6 +18,8 @@ import { AddToSetlistButton } from '@/components/setlists/AddToSetlistDialog';
 import { SetlistSongNav, useSetlistSequence, useSetlistSwipe, useSetlistNeighborPrefetch } from '@/components/setlists/SetlistNav';
 import { useSetlistAbilities } from '@/components/setlists/setlist-hooks';
 import { updateSetlistItem } from '@/lib/db-setlists.functions';
+import { getLocalSetlistKey, setLocalSetlistKey } from '@/lib/setlist-key-prefs';
+
 import { useOnlineStatus, cacheSongsOffline, getCachedSongChart, type CachedChart } from '@/lib/offline';
 
 export const Route = createFileRoute('/_public/songs/$id')({
