@@ -1,6 +1,7 @@
 import { WorshipSong } from '@/types/songs';
 import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
+import { ChevronRight } from 'lucide-react';
 
 interface SongProps {
   song: WorshipSong;
@@ -19,36 +20,54 @@ export function SongCard({ song, viewMode = 'grid' }: SongProps) {
 
   if (viewMode === 'list') {
     return (
-      <div className="group flex items-center justify-between p-4 bg-background hover:bg-muted/30 transition-colors duration-300 border-b border-accent/10">
-        <div className="flex-1 min-w-0 pr-4">
-          <div className="flex items-center gap-3 mb-1">
-            <h4 className="text-lg font-serif text-foreground truncate">{song.title}</h4>
-            <span className="text-[10px] font-bold tracking-widest text-accent uppercase px-2 py-0.5 border border-accent/20 rounded">
-              {song.defaultKey}
+      <Link
+        to="/songs/$id"
+        params={{ id: song.id }}
+        preload="intent"
+        className="group flex w-full items-center gap-3 border-b border-accent/10 bg-background px-1 py-2.5 transition-colors hover:bg-muted/40 active:bg-muted/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent sm:gap-4 sm:px-2 sm:py-3"
+      >
+        <div className="h-13 w-13 shrink-0 overflow-hidden border border-accent/10 bg-primary/5 sm:h-14 sm:w-14" style={{ height: 56, width: 56 }}>
+          {song.artworkUrl ? (
+            <img
+              src={song.artworkUrl}
+              alt=""
+              width={56}
+              height={56}
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <span className="flex h-full w-full items-center justify-center font-serif text-lg italic text-accent/60">
+              {song.title.charAt(0)}
             </span>
-          </div>
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-            <span>{song.artist}</span>
-            <span className="h-1 w-1 rounded-full bg-accent/30" />
-            <span>{song.bpm} BPM</span>
-            <span className="hidden sm:inline-flex h-1 w-1 rounded-full bg-accent/30" />
-            <span className="hidden sm:inline text-[10px] uppercase tracking-wider">{(song.themes ?? [])[0]}</span>
-          </div>
+          )}
         </div>
-        <Link 
-          to="/songs/$id"
-          params={{ id: song.id }}
-          className="text-[10px] font-bold tracking-[0.2em] text-accent hover:text-accent/80 uppercase transition-colors whitespace-nowrap"
-        >
-          View Song
-        </Link>
-      </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 items-center gap-2">
+            <h3 className="truncate font-serif text-[15px] leading-snug text-foreground group-hover:text-accent sm:text-lg">{song.title}</h3>
+            {song.defaultKey && (
+              <span className="shrink-0 border border-accent/20 px-1.5 py-px text-[10px] font-bold uppercase tracking-widest text-accent">
+                {song.defaultKey}
+              </span>
+            )}
+          </div>
+          <p className="mt-0.5 flex min-w-0 items-center gap-1.5 truncate text-[11px] text-muted-foreground sm:text-xs">
+            <span className="truncate">{song.artist}</span>
+            {song.bpm ? <><span className="h-1 w-1 shrink-0 rounded-full bg-accent/30" /><span className="shrink-0">{song.bpm} BPM</span></> : null}
+            {(song.themes ?? [])[0] ? <><span className="hidden h-1 w-1 shrink-0 rounded-full bg-accent/30 sm:inline-block" /><span className="hidden shrink-0 uppercase tracking-wider sm:inline">{(song.themes ?? [])[0]}</span></> : null}
+          </p>
+        </div>
+
+        <ChevronRight className="h-4 w-4 shrink-0 text-accent/50 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+      </Link>
     );
   }
 
   return (
     <div className="group animate-in fade-in slide-in-from-bottom-6 duration-700">
-      <Link to="/songs/$id" params={{ id: song.id }}>
+      <Link to="/songs/$id" params={{ id: song.id }} preload="intent">
         <div className="aspect-square w-full mb-4 overflow-hidden bg-muted relative border border-accent/5 group-hover:border-accent/30 transition-all duration-500">
           {song.artworkUrl ? (
             <img 
@@ -99,7 +118,7 @@ export function SongCard({ song, viewMode = 'grid' }: SongProps) {
       <div className="space-y-3">
         <div className="flex justify-between items-start">
           <div className="min-w-0 pr-2">
-            <Link to="/songs/$id" params={{ id: song.id }}>
+            <Link to="/songs/$id" params={{ id: song.id }} preload="intent">
               <h4 className="text-xl font-serif text-foreground leading-tight group-hover:text-accent transition-colors truncate">
                 {song.title}
               </h4>
