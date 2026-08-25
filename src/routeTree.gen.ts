@@ -29,7 +29,6 @@ import { Route as AuthenticatedDashboardProfileRouteImport } from './routes/_aut
 import { Route as AuthenticatedDashboardResourcesRouteImport } from './routes/_authenticated/dashboard/resources'
 import { Route as AuthenticatedDashboardScheduleRouteImport } from './routes/_authenticated/dashboard/schedule'
 import { Route as AuthenticatedDashboardServicesRouteImport } from './routes/_authenticated/dashboard/services'
-import { Route as AuthenticatedDashboardSetlistsRouteImport } from './routes/_authenticated/dashboard/setlists'
 import { Route as AuthenticatedDashboardSettingsRouteImport } from './routes/_authenticated/dashboard/settings'
 import { Route as AuthenticatedDashboardSongsRouteImport } from './routes/_authenticated/dashboard/songs'
 import { Route as AuthenticatedDashboardTeamRouteImport } from './routes/_authenticated/dashboard/team'
@@ -47,6 +46,7 @@ import { Route as AuthenticatedDashboardScheduleIdRouteImport } from './routes/_
 import { Route as AuthenticatedDashboardScheduleNewRouteImport } from './routes/_authenticated/dashboard/schedule/new'
 import { Route as AuthenticatedDashboardServicesIdRouteImport } from './routes/_authenticated/dashboard/services/$id'
 import { Route as AuthenticatedDashboardServicesNewRouteImport } from './routes/_authenticated/dashboard/services/new'
+import { Route as AuthenticatedDashboardSetlistsIndexRouteImport } from './routes/_authenticated/dashboard/setlists/index'
 import { Route as AuthenticatedDashboardSetlistsIdRouteImport } from './routes/_authenticated/dashboard/setlists/$id'
 import { Route as AuthenticatedDashboardSetlistsNewRouteImport } from './routes/_authenticated/dashboard/setlists/new'
 import { Route as AuthenticatedDashboardSongsIndexRouteImport } from './routes/_authenticated/dashboard/songs/index'
@@ -162,12 +162,6 @@ const AuthenticatedDashboardServicesRoute =
     path: '/services',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
-const AuthenticatedDashboardSetlistsRoute =
-  AuthenticatedDashboardSetlistsRouteImport.update({
-    id: '/setlists',
-    path: '/setlists',
-    getParentRoute: () => AuthenticatedDashboardRoute,
-  } as any)
 const AuthenticatedDashboardSettingsRoute =
   AuthenticatedDashboardSettingsRouteImport.update({
     id: '/settings',
@@ -264,17 +258,23 @@ const AuthenticatedDashboardServicesNewRoute =
     path: '/new',
     getParentRoute: () => AuthenticatedDashboardServicesRoute,
   } as any)
+const AuthenticatedDashboardSetlistsIndexRoute =
+  AuthenticatedDashboardSetlistsIndexRouteImport.update({
+    id: '/setlists/',
+    path: '/setlists/',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
 const AuthenticatedDashboardSetlistsIdRoute =
   AuthenticatedDashboardSetlistsIdRouteImport.update({
-    id: '/$id',
-    path: '/$id',
-    getParentRoute: () => AuthenticatedDashboardSetlistsRoute,
+    id: '/setlists/$id',
+    path: '/setlists/$id',
+    getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
 const AuthenticatedDashboardSetlistsNewRoute =
   AuthenticatedDashboardSetlistsNewRouteImport.update({
-    id: '/new',
-    path: '/new',
-    getParentRoute: () => AuthenticatedDashboardSetlistsRoute,
+    id: '/setlists/new',
+    path: '/setlists/new',
+    getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
 const AuthenticatedDashboardSongsIndexRoute =
   AuthenticatedDashboardSongsIndexRouteImport.update({
@@ -331,7 +331,6 @@ export interface FileRoutesByFullPath {
   '/dashboard/resources': typeof AuthenticatedDashboardResourcesRouteWithChildren
   '/dashboard/schedule': typeof AuthenticatedDashboardScheduleRouteWithChildren
   '/dashboard/services': typeof AuthenticatedDashboardServicesRouteWithChildren
-  '/dashboard/setlists': typeof AuthenticatedDashboardSetlistsRouteWithChildren
   '/dashboard/settings': typeof AuthenticatedDashboardSettingsRoute
   '/dashboard/songs': typeof AuthenticatedDashboardSongsRouteWithChildren
   '/dashboard/team': typeof AuthenticatedDashboardTeamRouteWithChildren
@@ -356,6 +355,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/songs/new': typeof AuthenticatedDashboardSongsNewRoute
   '/dashboard/team/$id': typeof AuthenticatedDashboardTeamIdRoute
   '/dashboard/users/new': typeof AuthenticatedDashboardUsersNewRoute
+  '/dashboard/setlists/': typeof AuthenticatedDashboardSetlistsIndexRoute
   '/dashboard/songs/': typeof AuthenticatedDashboardSongsIndexRoute
   '/dashboard/team/edit/$id': typeof AuthenticatedDashboardTeamEditIdRoute
 }
@@ -375,7 +375,6 @@ export interface FileRoutesByTo {
   '/dashboard/resources': typeof AuthenticatedDashboardResourcesRouteWithChildren
   '/dashboard/schedule': typeof AuthenticatedDashboardScheduleRouteWithChildren
   '/dashboard/services': typeof AuthenticatedDashboardServicesRouteWithChildren
-  '/dashboard/setlists': typeof AuthenticatedDashboardSetlistsRouteWithChildren
   '/dashboard/settings': typeof AuthenticatedDashboardSettingsRoute
   '/dashboard/team': typeof AuthenticatedDashboardTeamRouteWithChildren
   '/dashboard/team_new': typeof AuthenticatedDashboardTeam_newRoute
@@ -399,6 +398,7 @@ export interface FileRoutesByTo {
   '/dashboard/songs/new': typeof AuthenticatedDashboardSongsNewRoute
   '/dashboard/team/$id': typeof AuthenticatedDashboardTeamIdRoute
   '/dashboard/users/new': typeof AuthenticatedDashboardUsersNewRoute
+  '/dashboard/setlists': typeof AuthenticatedDashboardSetlistsIndexRoute
   '/dashboard/songs': typeof AuthenticatedDashboardSongsIndexRoute
   '/dashboard/team/edit/$id': typeof AuthenticatedDashboardTeamEditIdRoute
 }
@@ -423,7 +423,6 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/resources': typeof AuthenticatedDashboardResourcesRouteWithChildren
   '/_authenticated/dashboard/schedule': typeof AuthenticatedDashboardScheduleRouteWithChildren
   '/_authenticated/dashboard/services': typeof AuthenticatedDashboardServicesRouteWithChildren
-  '/_authenticated/dashboard/setlists': typeof AuthenticatedDashboardSetlistsRouteWithChildren
   '/_authenticated/dashboard/settings': typeof AuthenticatedDashboardSettingsRoute
   '/_authenticated/dashboard/songs': typeof AuthenticatedDashboardSongsRouteWithChildren
   '/_authenticated/dashboard/team': typeof AuthenticatedDashboardTeamRouteWithChildren
@@ -448,6 +447,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/songs/new': typeof AuthenticatedDashboardSongsNewRoute
   '/_authenticated/dashboard/team/$id': typeof AuthenticatedDashboardTeamIdRoute
   '/_authenticated/dashboard/users/new': typeof AuthenticatedDashboardUsersNewRoute
+  '/_authenticated/dashboard/setlists/': typeof AuthenticatedDashboardSetlistsIndexRoute
   '/_authenticated/dashboard/songs/': typeof AuthenticatedDashboardSongsIndexRoute
   '/_authenticated/dashboard/team/edit/$id': typeof AuthenticatedDashboardTeamEditIdRoute
 }
@@ -471,7 +471,6 @@ export interface FileRouteTypes {
     | '/dashboard/resources'
     | '/dashboard/schedule'
     | '/dashboard/services'
-    | '/dashboard/setlists'
     | '/dashboard/settings'
     | '/dashboard/songs'
     | '/dashboard/team'
@@ -496,6 +495,7 @@ export interface FileRouteTypes {
     | '/dashboard/songs/new'
     | '/dashboard/team/$id'
     | '/dashboard/users/new'
+    | '/dashboard/setlists/'
     | '/dashboard/songs/'
     | '/dashboard/team/edit/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -515,7 +515,6 @@ export interface FileRouteTypes {
     | '/dashboard/resources'
     | '/dashboard/schedule'
     | '/dashboard/services'
-    | '/dashboard/setlists'
     | '/dashboard/settings'
     | '/dashboard/team'
     | '/dashboard/team_new'
@@ -539,6 +538,7 @@ export interface FileRouteTypes {
     | '/dashboard/songs/new'
     | '/dashboard/team/$id'
     | '/dashboard/users/new'
+    | '/dashboard/setlists'
     | '/dashboard/songs'
     | '/dashboard/team/edit/$id'
   id:
@@ -562,7 +562,6 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/resources'
     | '/_authenticated/dashboard/schedule'
     | '/_authenticated/dashboard/services'
-    | '/_authenticated/dashboard/setlists'
     | '/_authenticated/dashboard/settings'
     | '/_authenticated/dashboard/songs'
     | '/_authenticated/dashboard/team'
@@ -587,6 +586,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/songs/new'
     | '/_authenticated/dashboard/team/$id'
     | '/_authenticated/dashboard/users/new'
+    | '/_authenticated/dashboard/setlists/'
     | '/_authenticated/dashboard/songs/'
     | '/_authenticated/dashboard/team/edit/$id'
   fileRoutesById: FileRoutesById
@@ -738,13 +738,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardServicesRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
-    '/_authenticated/dashboard/setlists': {
-      id: '/_authenticated/dashboard/setlists'
-      path: '/setlists'
-      fullPath: '/dashboard/setlists'
-      preLoaderRoute: typeof AuthenticatedDashboardSetlistsRouteImport
-      parentRoute: typeof AuthenticatedDashboardRoute
-    }
     '/_authenticated/dashboard/settings': {
       id: '/_authenticated/dashboard/settings'
       path: '/settings'
@@ -864,19 +857,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardServicesNewRouteImport
       parentRoute: typeof AuthenticatedDashboardServicesRoute
     }
+    '/_authenticated/dashboard/setlists/': {
+      id: '/_authenticated/dashboard/setlists/'
+      path: '/setlists'
+      fullPath: '/dashboard/setlists/'
+      preLoaderRoute: typeof AuthenticatedDashboardSetlistsIndexRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
     '/_authenticated/dashboard/setlists/$id': {
       id: '/_authenticated/dashboard/setlists/$id'
-      path: '/$id'
+      path: '/setlists/$id'
       fullPath: '/dashboard/setlists/$id'
       preLoaderRoute: typeof AuthenticatedDashboardSetlistsIdRouteImport
-      parentRoute: typeof AuthenticatedDashboardSetlistsRoute
+      parentRoute: typeof AuthenticatedDashboardRoute
     }
     '/_authenticated/dashboard/setlists/new': {
       id: '/_authenticated/dashboard/setlists/new'
-      path: '/new'
+      path: '/setlists/new'
       fullPath: '/dashboard/setlists/new'
       preLoaderRoute: typeof AuthenticatedDashboardSetlistsNewRouteImport
-      parentRoute: typeof AuthenticatedDashboardSetlistsRoute
+      parentRoute: typeof AuthenticatedDashboardRoute
     }
     '/_authenticated/dashboard/songs/': {
       id: '/_authenticated/dashboard/songs/'
@@ -988,24 +988,6 @@ const AuthenticatedDashboardServicesRouteWithChildren =
     AuthenticatedDashboardServicesRouteChildren,
   )
 
-interface AuthenticatedDashboardSetlistsRouteChildren {
-  AuthenticatedDashboardSetlistsIdRoute: typeof AuthenticatedDashboardSetlistsIdRoute
-  AuthenticatedDashboardSetlistsNewRoute: typeof AuthenticatedDashboardSetlistsNewRoute
-}
-
-const AuthenticatedDashboardSetlistsRouteChildren: AuthenticatedDashboardSetlistsRouteChildren =
-  {
-    AuthenticatedDashboardSetlistsIdRoute:
-      AuthenticatedDashboardSetlistsIdRoute,
-    AuthenticatedDashboardSetlistsNewRoute:
-      AuthenticatedDashboardSetlistsNewRoute,
-  }
-
-const AuthenticatedDashboardSetlistsRouteWithChildren =
-  AuthenticatedDashboardSetlistsRoute._addFileChildren(
-    AuthenticatedDashboardSetlistsRouteChildren,
-  )
-
 interface AuthenticatedDashboardSongsRouteChildren {
   AuthenticatedDashboardSongsIdRoute: typeof AuthenticatedDashboardSongsIdRoute
   AuthenticatedDashboardSongsNewRoute: typeof AuthenticatedDashboardSongsNewRoute
@@ -1063,13 +1045,15 @@ interface AuthenticatedDashboardRouteChildren {
   AuthenticatedDashboardResourcesRoute: typeof AuthenticatedDashboardResourcesRouteWithChildren
   AuthenticatedDashboardScheduleRoute: typeof AuthenticatedDashboardScheduleRouteWithChildren
   AuthenticatedDashboardServicesRoute: typeof AuthenticatedDashboardServicesRouteWithChildren
-  AuthenticatedDashboardSetlistsRoute: typeof AuthenticatedDashboardSetlistsRouteWithChildren
   AuthenticatedDashboardSettingsRoute: typeof AuthenticatedDashboardSettingsRoute
   AuthenticatedDashboardSongsRoute: typeof AuthenticatedDashboardSongsRouteWithChildren
   AuthenticatedDashboardTeamRoute: typeof AuthenticatedDashboardTeamRouteWithChildren
   AuthenticatedDashboardTeam_newRoute: typeof AuthenticatedDashboardTeam_newRoute
   AuthenticatedDashboardUsersRoute: typeof AuthenticatedDashboardUsersRouteWithChildren
   AuthenticatedDashboardIndexRoute: typeof AuthenticatedDashboardIndexRoute
+  AuthenticatedDashboardSetlistsIdRoute: typeof AuthenticatedDashboardSetlistsIdRoute
+  AuthenticatedDashboardSetlistsNewRoute: typeof AuthenticatedDashboardSetlistsNewRoute
+  AuthenticatedDashboardSetlistsIndexRoute: typeof AuthenticatedDashboardSetlistsIndexRoute
 }
 
 const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
@@ -1084,8 +1068,6 @@ const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
       AuthenticatedDashboardScheduleRouteWithChildren,
     AuthenticatedDashboardServicesRoute:
       AuthenticatedDashboardServicesRouteWithChildren,
-    AuthenticatedDashboardSetlistsRoute:
-      AuthenticatedDashboardSetlistsRouteWithChildren,
     AuthenticatedDashboardSettingsRoute: AuthenticatedDashboardSettingsRoute,
     AuthenticatedDashboardSongsRoute:
       AuthenticatedDashboardSongsRouteWithChildren,
@@ -1095,6 +1077,12 @@ const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
     AuthenticatedDashboardUsersRoute:
       AuthenticatedDashboardUsersRouteWithChildren,
     AuthenticatedDashboardIndexRoute: AuthenticatedDashboardIndexRoute,
+    AuthenticatedDashboardSetlistsIdRoute:
+      AuthenticatedDashboardSetlistsIdRoute,
+    AuthenticatedDashboardSetlistsNewRoute:
+      AuthenticatedDashboardSetlistsNewRoute,
+    AuthenticatedDashboardSetlistsIndexRoute:
+      AuthenticatedDashboardSetlistsIndexRoute,
   }
 
 const AuthenticatedDashboardRouteWithChildren =

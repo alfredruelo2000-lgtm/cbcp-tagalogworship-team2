@@ -432,11 +432,14 @@ export type Database = {
       }
       services: {
         Row: {
+          allow_public_duplicate: boolean
           created_at: string | null
           estimated_duration: number | null
           id: string
+          is_official: boolean
           is_public: boolean | null
           notes: string | null
+          owner_id: string | null
           rehearsal_date: string | null
           rehearsal_location: string | null
           rehearsal_notes: string | null
@@ -452,11 +455,14 @@ export type Database = {
           worship_leader_id: string | null
         }
         Insert: {
+          allow_public_duplicate?: boolean
           created_at?: string | null
           estimated_duration?: number | null
           id?: string
+          is_official?: boolean
           is_public?: boolean | null
           notes?: string | null
+          owner_id?: string | null
           rehearsal_date?: string | null
           rehearsal_location?: string | null
           rehearsal_notes?: string | null
@@ -472,11 +478,14 @@ export type Database = {
           worship_leader_id?: string | null
         }
         Update: {
+          allow_public_duplicate?: boolean
           created_at?: string | null
           estimated_duration?: number | null
           id?: string
+          is_official?: boolean
           is_public?: boolean | null
           notes?: string | null
+          owner_id?: string | null
           rehearsal_date?: string | null
           rehearsal_location?: string | null
           rehearsal_notes?: string | null
@@ -803,6 +812,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_worship_planner: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role:
