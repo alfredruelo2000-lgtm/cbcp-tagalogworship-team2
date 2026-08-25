@@ -32,6 +32,25 @@ const homepageSections: SectionDefinition[] = [
 
 const defaultOrder = homepageSections.map((section) => section.key);
 
+// Keeps saved ordering while surfacing any section keys added later (e.g. Home).
+function mergeOrder(savedOrder: unknown): string[] {
+  const saved = Array.isArray(savedOrder) ? (savedOrder as string[]).filter((key) => defaultOrder.includes(key)) : [];
+  if (saved.length === 0) return defaultOrder;
+  const missing = defaultOrder.filter((key) => !saved.includes(key));
+  const merged = [...saved];
+  for (const key of missing) {
+    const canonicalIndex = defaultOrder.indexOf(key);
+    let insertAt = 0;
+    for (let i = canonicalIndex - 1; i >= 0; i -= 1) {
+      const previousIndex = merged.indexOf(defaultOrder[i]!);
+      if (previousIndex >= 0) { insertAt = previousIndex + 1; break; }
+    }
+    merged.splice(insertAt, 0, key);
+  }
+  return merged;
+}
+
+
 
 export const Route = createFileRoute('/_authenticated/dashboard/settings')({
   component: SettingsPage,
