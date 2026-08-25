@@ -29,9 +29,9 @@ export function Navbar() {
   return (
 
     <nav className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-md">
-      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-8">
-        <Link to="/" className="flex items-center gap-2">
-          <img src={logoAsset.url} alt="CBCP Tagalog Worship Team" className="h-12 w-12 object-contain" />
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:h-20 lg:px-8">
+        <Link to="/" className="flex min-w-0 items-center gap-2">
+          <img src={logoAsset.url} alt="CBCP Tagalog Worship Team" className="h-10 w-10 shrink-0 object-contain lg:h-12 lg:w-12" />
           <span className="hidden font-serif text-lg font-semibold leading-tight text-foreground sm:block">
             CBCP <span className="text-accent">Tagalog</span><br />Worship Team
           </span>
