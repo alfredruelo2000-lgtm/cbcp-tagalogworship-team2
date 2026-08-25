@@ -51,7 +51,21 @@ function Index() {
     queryFn: () => getUpcomingServicePublic()
   });
 
-  const { isVisible } = usePublicSectionVisibility();
+  const { isVisible, orderedKeys, isFetched } = usePublicSectionVisibility();
+  const navigate = useNavigate();
+  const homeHidden = isFetched && !isVisible('home');
+  const firstAvailable = orderedKeys.find((key) => key !== 'home' && isVisible(key));
+
+  // When the homepage is unpublished, send visitors to the first published section.
+  useEffect(() => {
+    if (homeHidden && firstAvailable) {
+      void navigate({ to: SECTION_META[firstAvailable].to, replace: true });
+    }
+  }, [homeHidden, firstAvailable, navigate]);
+
+  if (homeHidden) return null;
+
+
 
 
   const featuredSongs = useMemo(() => {
