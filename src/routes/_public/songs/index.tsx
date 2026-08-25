@@ -1,13 +1,14 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getSongsPublic } from '@/lib/db-public.functions';
 import { SongCard } from '@/components/ui/songs/SongCard';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, LayoutGrid, List, Filter, Music, ChevronDown } from 'lucide-react';
+import { Search, LayoutGrid, List, Filter, Music } from 'lucide-react';
 import { createFileRoute } from '@tanstack/react-router';
+import { useIsMobile } from '@/hooks/use-mobile';
 
-type SortOption = 'title-asc' | 'title-desc' | 'recent' | 'most-used';
+type SortOption = 'title-asc' | 'title-desc' | 'recent' | 'most-used' | 'artist';
 type ViewMode = 'grid' | 'list';
 type GroupMode = 'none' | 'language' | 'alphabetical';
 const languages = ['All', 'Tagalog', 'English', 'Taglish', 'Other'] as const;
