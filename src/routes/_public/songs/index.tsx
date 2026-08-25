@@ -29,7 +29,7 @@ export const Route = createFileRoute('/_public/songs/')({
 function SongLibraryPage() {
   const isMobile = useIsMobile();
   const [search, setSearch] = useState('');
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [viewTouched, setViewTouched] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>('title-asc');
   const [groupBy, setGroupBy] = useState<GroupMode>('none');
