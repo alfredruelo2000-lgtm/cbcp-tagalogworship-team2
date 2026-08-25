@@ -1,0 +1,344 @@
+import { WorshipSong } from '@/types/songs';
+
+export const MOCK_SONGS: WorshipSong[] = [
+  {
+    id: '1',
+    title: 'Holy Forever',
+    artist: 'Chris Tomlin',
+    songwriter: 'Chris Tomlin, Phil Wickham, Brian Johnson, Jenn Johnson, Jason Ingram',
+    defaultKey: 'G',
+    bpm: 72,
+    timeSignature: '4/4',
+    language: 'English',
+    themes: ['Grace', 'Holiness', 'God\'s Faithfulness'],
+    scriptureReferences: [
+      { reference: 'Revelation 4:8', notes: 'The song echoes the eternal cry of "Holy, Holy, Holy".' },
+      { reference: 'Isaiah 6:3' }
+    ],
+    songType: 'Worship',
+    status: 'Active',
+    copyrightOwner: 'Capitol CMG Publishing',
+    copyrightYear: 2022,
+    ccliNumber: '7201044',
+    flow: ['Intro', 'Verse 1', 'Chorus', 'Verse 2', 'Chorus', 'Bridge', 'Chorus', 'Outro'],
+    sections: [
+      {
+        type: 'Intro',
+        lines: [{ type: 'chords', content: 'G / / / | C / / / | Em / / / | D / / /' }]
+      },
+      {
+        type: 'Verse 1',
+        lines: [
+          { type: 'chords', content: 'G           C' },
+          { type: 'lyrics', content: 'A thousand generations falling down in worship' },
+          { type: 'chords', content: 'Em          D           C' },
+          { type: 'lyrics', content: 'To sing the song of ages to the Lamb' }
+        ]
+      },
+      {
+        type: 'Chorus',
+        lines: [
+          { type: 'chords', content: 'C               G' },
+          { type: 'lyrics', content: 'And the angels cry, Holy' },
+          { type: 'chords', content: 'Em              D' },
+          { type: 'lyrics', content: 'All creation sings, Holy' },
+          { type: 'chords', content: 'C               Em' },
+          { type: 'lyrics', content: 'You are lifted high, Holy' },
+          { type: 'chords', content: 'D               G' },
+          { type: 'lyrics', content: 'Holy forever' }
+        ]
+      }
+    ],
+    worshipLeaderNotes: ['Start softly with keys only', 'Build gradually into the first chorus'],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: '2',
+    title: 'King of Kings',
+    artist: 'Hillsong Worship',
+    songwriter: 'Brooke Ligertwood, Jason Ingram, Scott Ligertwood',
+    defaultKey: 'D',
+    bpm: 68,
+    timeSignature: '4/4',
+    language: 'English',
+    themes: ['Resurrection', 'Gospel', 'Salvation'],
+    scriptureReferences: [{ reference: '1 Corinthians 15:57' }, { reference: 'Revelation 19:16' }],
+    songType: 'Praise',
+    status: 'Active',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: '3',
+    title: 'Great Are You Lord',
+    artist: 'All Sons & Daughters',
+    songwriter: 'David Leonard, Jason Ingram, Leslie Jordan',
+    defaultKey: 'A',
+    bpm: 72,
+    timeSignature: '6/8',
+    language: 'English',
+    themes: ['Praise', 'Faith', 'Surrender'],
+    scriptureReferences: [{ reference: 'Psalm 145:3' }, { reference: 'Ezekiel 37:9' }],
+    songType: 'Worship',
+    status: 'Active',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: '4',
+    title: 'Purihin ang Panginoon',
+    artist: 'Traditional',
+    defaultKey: 'C',
+    bpm: 100,
+    timeSignature: '4/4',
+    language: 'Filipino/Tagalog',
+    themes: ['Praise', 'Thanksgiving'],
+    scriptureReferences: [{ reference: 'Psalm 100' }],
+    songType: 'Opening',
+    status: 'Active',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  }
+];
+import { WorshipSetlist } from '@/types/setlists';
+
+export const MOCK_SETLISTS: WorshipSetlist[] = [
+  {
+    id: '1',
+    title: 'Morning Worship: The Holiness of God',
+    serviceDate: '2026-08-30',
+    serviceTime: '09:00 AM',
+    serviceType: 'Sunday Worship',
+    worshipLeader: '1', // Sarah Jenkins
+    theme: 'The Holiness of God',
+    scriptureReference: 'Isaiah 6:1-8',
+    notes: 'Focus on reverence and awe. Start with a quiet piano intro.',
+    status: 'Ready',
+    songs: [
+      {
+        id: 'sl-1',
+        songId: '1',
+        order: 1,
+        selectedKey: 'G',
+        category: 'Opening Praise',
+        duration: 6,
+        leaderNote: 'Build gradually'
+      },
+      {
+        id: 'sl-2',
+        songId: '2',
+        order: 2,
+        selectedKey: 'D',
+        category: 'Thanksgiving',
+        duration: 5
+      },
+      {
+        id: 'sl-3',
+        songId: '3',
+        order: 3,
+        selectedKey: 'A',
+        category: 'Worship',
+        duration: 7,
+        transitionNote: 'Transition directly to prayer'
+      }
+    ],
+    items: [
+      { id: 'item-1', order: 1, type: 'Custom', title: 'Welcome & Opening Prayer', duration: 3, assignedPerson: 'Pastor John' },
+      { id: 'item-2', order: 2, type: 'Custom', title: 'Call to Worship', duration: 2, assignedPerson: 'David Chen' },
+      { id: 'item-3', order: 3, type: 'Song', title: 'Holy Forever', duration: 6, songId: '1' },
+      { id: 'item-4', order: 4, type: 'Song', title: 'King of Kings', duration: 5, songId: '2' },
+      { id: 'item-5', order: 5, type: 'Custom', title: 'Scripture Reading', duration: 3, notes: 'Isaiah 6:1-8' },
+      { id: 'item-6', order: 6, type: 'Song', title: 'Great Are You Lord', duration: 7, songId: '3' },
+      { id: 'item-7', order: 7, type: 'Custom', title: 'Pastoral Prayer', duration: 5 },
+      { id: 'item-8', order: 8, type: 'Custom', title: 'Sermon', duration: 30, assignedPerson: 'Pastor John' },
+      { id: 'item-9', order: 9, type: 'Custom', title: 'Benediction', duration: 2 }
+    ],
+    assignments: [
+      { id: 'as-1', serviceId: '1', memberId: '1', role: 'Worship Leader', status: 'Confirmed', callTime: '07:15 AM' },
+      { id: 'as-2', serviceId: '1', memberId: '2', role: 'Keyboard', status: 'Confirmed', callTime: '07:30 AM' },
+      { id: 'as-3', serviceId: '1', memberId: '3', role: 'Electric Guitar', status: 'Confirmed', callTime: '07:30 AM' },
+      { id: 'as-4', serviceId: '1', memberId: '4', role: 'Vocalist', status: 'Pending', callTime: '07:45 AM' },
+      { id: 'as-5', serviceId: '1', memberId: '6', role: 'Sound Engineer', status: 'Confirmed', callTime: '07:00 AM' }
+    ],
+    rehearsalDate: '2026-08-27',
+    rehearsalTime: '07:00 PM',
+    rehearsalLocation: 'Main Sanctuary',
+    callTimes: {
+      'Worship Leader': '07:15 AM',
+      'Musicians': '07:30 AM',
+      'Vocals': '07:45 AM',
+      'Technical Team': '07:00 AM'
+    },
+    estimatedDuration: 63,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: '2',
+    title: 'Midweek Prayer & Praise',
+    serviceDate: '2026-09-02',
+    serviceTime: '07:00 PM',
+    serviceType: 'Midweek Service',
+    worshipLeader: '1',
+    theme: 'Faithfulness',
+    status: 'Draft',
+    songs: [
+      {
+        id: 'sl-4',
+        songId: '4',
+        order: 1,
+        selectedKey: 'C',
+        category: 'Opening Praise',
+        duration: 5
+      }
+    ],
+    items: [
+      { id: 'item-10', order: 1, type: 'Custom', title: 'Opening Song', duration: 5, songId: '4' },
+      { id: 'item-11', order: 2, type: 'Custom', title: 'Prayer Sharing', duration: 15 }
+    ],
+    assignments: [],
+    estimatedDuration: 20,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  }
+];
+
+export const SETLIST_TEMPLATES = [
+  {
+    title: 'Sunday Worship',
+    items: [
+      { title: 'Welcome', duration: 3 },
+      { title: 'Call to Worship', duration: 2 },
+      { title: 'Song 1', duration: 5, type: 'Song' },
+      { title: 'Song 2', duration: 5, type: 'Song' },
+      { title: 'Scripture Reading', duration: 3 },
+      { title: 'Song 3', duration: 7, type: 'Song' },
+      { title: 'Pastoral Prayer', duration: 5 },
+      { title: 'Sermon', duration: 30 },
+      { title: 'Closing Song', duration: 5, type: 'Song' },
+      { title: 'Benediction', duration: 2 }
+    ]
+  },
+  {
+    title: 'Communion Sunday',
+    items: [
+      { title: 'Welcome', duration: 3 },
+      { title: 'Worship Set', duration: 15, type: 'Song' },
+      { title: 'Sermon', duration: 25 },
+      { title: 'Communion', duration: 15 },
+      { title: 'Closing Hymn', duration: 5, type: 'Song' }
+    ]
+  }
+];import { TeamMember } from '../types/team';
+
+export const MOCK_TEAM: TeamMember[] = [
+  {
+    id: "1",
+    fullName: "Sarah Jenkins",
+    photoUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=800&auto=format&fit=crop",
+    primaryRole: "Worship Leader",
+    secondaryRoles: ["Vocalist"],
+    vocalRange: "Soprano",
+    status: "Active",
+    bio: "Sarah has been leading worship for over 10 years and has a passion for building teams that serve with excellence and humility.",
+    email: "sarah.j@radiantworship.org",
+    phone: "555-0101",
+    dateJoined: "2018-03-15",
+    skills: ["Lead Vocal", "Backing Vocal", "Soprano"],
+    groups: ["Worship Leaders", "Vocals"],
+    availability: [
+      { id: 'av-1', memberId: '1', date: '2026-08-30', status: 'Available' },
+      { id: 'av-2', memberId: '1', date: '2026-09-06', status: 'Unavailable', notes: 'Out of town' }
+    ],
+    createdAt: "2018-03-15T10:00:00Z",
+    updatedAt: "2024-01-20T14:30:00Z"
+  },
+  {
+    id: "2",
+    fullName: "David Chen",
+    photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=800&auto=format&fit=crop",
+    primaryRole: "Keyboard",
+    secondaryRoles: ["Technical Team"],
+    instrument: "Piano / Keyboard",
+    status: "Active",
+    bio: "David is a classically trained pianist who loves using modern synthesis to create atmospheric worship environments.",
+    email: "david.c@radiantworship.org",
+    phone: "555-0102",
+    dateJoined: "2020-06-22",
+    skills: ["Keyboard", "Sound"],
+    groups: ["Band"],
+    availability: [
+      { id: 'av-3', memberId: '2', date: '2026-08-30', status: 'Available' }
+    ],
+    createdAt: "2020-06-22T09:00:00Z",
+    updatedAt: "2024-02-15T11:20:00Z"
+  },
+  {
+    id: "3",
+    fullName: "Marcus Thorne",
+    photoUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=800&auto=format&fit=crop",
+    primaryRole: "Electric Guitar",
+    secondaryRoles: ["Acoustic Guitar"],
+    instrument: "Guitar",
+    status: "Active",
+    bio: "Marcus brings energy and precision to the band, always seeking to serve the song and the congregation.",
+    email: "marcus.t@radiantworship.org",
+    phone: "555-0103",
+    dateJoined: "2019-11-10",
+    skills: ["Electric Guitar", "Acoustic Guitar"],
+    groups: ["Band"],
+    createdAt: "2019-11-10T08:45:00Z",
+    updatedAt: "2023-12-05T16:15:00Z"
+  },
+  {
+    id: "4",
+    fullName: "Elena Rodriguez",
+    photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=800&auto=format&fit=crop",
+    primaryRole: "Vocalist",
+    secondaryRoles: [],
+    vocalRange: "Alto",
+    status: "Available",
+    bio: "Elena is passionate about the power of lyrics and harmony to convey biblical truth.",
+    email: "elena.r@radiantworship.org",
+    phone: "555-0104",
+    dateJoined: "2021-02-01",
+    skills: ["Backing Vocal", "Alto"],
+    groups: ["Vocals"],
+    createdAt: "2021-02-01T12:00:00Z",
+    updatedAt: "2024-03-01T10:00:00Z"
+  },
+  {
+    id: "5",
+    fullName: "Jonathan Miller",
+    photoUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=800&auto=format&fit=crop",
+    primaryRole: "Drums",
+    secondaryRoles: ["Percussion"],
+    instrument: "Drums",
+    status: "Limited Availability",
+    bio: "A heartbeat for the ministry, Jonathan ensures the foundation is solid and steady.",
+    email: "jonathan.m@radiantworship.org",
+    phone: "555-0105",
+    dateJoined: "2022-09-15",
+    skills: ["Drums"],
+    groups: ["Band"],
+    createdAt: "2022-09-15T14:00:00Z",
+    updatedAt: "2024-01-10T09:30:00Z"
+  },
+  {
+    id: "6",
+    fullName: "Grace Park",
+    photoUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=800&auto=format&fit=crop",
+    primaryRole: "Sound Engineer",
+    secondaryRoles: ["Technical Team"],
+    status: "Active",
+    bio: "Grace ensures that every word and note is heard clearly, serving the congregation from the back of the room.",
+    email: "grace.p@radiantworship.org",
+    phone: "555-0106",
+    dateJoined: "2023-01-20",
+    skills: ["Sound"],
+    groups: ["Technical Team"],
+    createdAt: "2023-01-20T11:00:00Z",
+    updatedAt: "2024-04-05T15:45:00Z"
+  }
+];

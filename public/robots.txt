@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /dashboard/
+Disallow: /login/
+Disallow: /auth/
+Disallow: /api/
+
+Sitemap: https://praise-hub-site.lovable.app/sitemap.xml
