@@ -45,34 +45,41 @@ function SongDetailPage() {
   const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   
   const [currentKey, setCurrentKey] = useState(searchParams.get('key') || song?.defaultKey || 'C');
+  // Device-wide reader defaults: RED chords + 75% text size (12px of 16px base),
+  // chords and lyrics visible. A saved device preference always wins.
+  const readPref = (key: string) => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem(`song-pref-${key}`) ?? localStorage.getItem(`song-pref-${key}-${id}`);
+  };
+
   const [showChords, setShowChords] = useState(() => {
     const fromUrl = searchParams.get('chords');
     if (fromUrl !== null) return fromUrl === 'true';
-    const saved = localStorage.getItem(`song-pref-showChords-${id}`);
+    const saved = readPref('showChords');
     return saved !== null ? JSON.parse(saved) : true;
   });
   const [showLyrics, setShowLyrics] = useState(() => {
     const fromUrl = searchParams.get('lyrics');
     if (fromUrl !== null) return fromUrl === 'true';
-    const saved = localStorage.getItem(`song-pref-showLyrics-${id}`);
+    const saved = readPref('showLyrics');
     return saved !== null ? JSON.parse(saved) : true;
   });
   const [numberNotation, setNumberNotation] = useState(false);
   const [isSplit, setIsSplit] = useState(() => {
     const fromUrl = searchParams.get('split');
     if (fromUrl !== null) return fromUrl === 'true';
-    const saved = localStorage.getItem(`song-pref-isSplit-${id}`);
+    const saved = readPref('isSplit');
     return saved !== null ? JSON.parse(saved) : false;
   });
   const [fontSize, setFontSize] = useState(() => {
-    const saved = localStorage.getItem(`song-pref-fontSize-${id}`);
-    const parsed = saved ? Number(saved) : 16;
-    return Number.isFinite(parsed) ? Math.min(22, Math.max(12, parsed)) : 16;
+    const saved = readPref('fontSize');
+    const parsed = saved ? Number(saved) : 12;
+    return Number.isFinite(parsed) ? Math.min(22, Math.max(12, parsed)) : 12;
   });
   const [chordColor, setChordColor] = useState(() => {
     const fromUrl = searchParams.get('color');
     if (fromUrl !== null) return `text-${fromUrl}`;
-    return localStorage.getItem(`song-pref-chordColor-${id}`) || 'text-accent';
+    return readPref('chordColor') || 'text-red-600';
   });
   
   // Metronome state
