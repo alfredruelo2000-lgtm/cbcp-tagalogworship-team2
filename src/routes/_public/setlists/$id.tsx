@@ -17,6 +17,8 @@ import {
 import { SETLIST_KEYS, useSetlistAbilities } from '@/components/setlists/setlist-hooks';
 import { SetlistFormDialog } from '@/components/setlists/SetlistFormDialog';
 import { KEYS } from '@/utils/transposition';
+import { resolveSetlistKey, setLocalSetlistKey } from '@/lib/setlist-key-prefs';
+
 import { markSetlistSavedOffline, cacheSongsOffline, useOnlineStatus, useSyncStatus } from '@/lib/offline';
 import { WifiOff, CloudOff, Download, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
