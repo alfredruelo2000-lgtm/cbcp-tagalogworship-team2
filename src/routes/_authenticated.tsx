@@ -33,11 +33,11 @@ function AuthenticatedLayout() {
   useEffect(() => {
     if (loading) return;
     if (isPending && location.pathname !== '/awaiting-approval' && location.pathname !== '/dashboard/profile') {
-      navigate({ to: '/awaiting-approval' });
+      navigate({ to: '/awaiting-approval', replace: true });
       return;
     }
     if (!isPending && !isMinistryAdmin && location.pathname !== '/dashboard/profile') {
-      navigate({ to: '/dashboard/profile' });
+      navigate({ to: '/dashboard/profile', replace: true });
     }
   }, [loading, isPending, isMinistryAdmin, location.pathname, navigate]);
 
