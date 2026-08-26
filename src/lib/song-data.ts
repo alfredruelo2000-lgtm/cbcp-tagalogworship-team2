@@ -8,17 +8,18 @@ export const songKeys = {
   publicDetail: (id: string) => ['song-public', id] as const,
 };
 
-// Keep bulk song reads small. Existing embedded base64 cover images can be
-// multiple megabytes each, so artwork is loaded only when it is a normal URL.
+// Keep bulk song reads small. Cover art is stored in storage and referenced by
+// a short proxy URL, so it is safe to include in list queries.
 export const SONG_LIST_SELECT = [
   'id', 'title', 'artist', 'songwriter', 'default_key', 'bpm', 'time_signature',
   'language', 'themes', 'scripture_references', 'song_type', 'status', 'sections',
   'flow', 'worship_leader_notes', 'copyright_owner', 'copyright_year', 'ccli_number',
   'public_domain', 'created_at', 'updated_at', 'is_public', 'featured', 'audio_url',
-  'sheet_music_url', 'external_resources', 'lyrics', 'chords',
+  'sheet_music_url', 'external_resources', 'lyrics', 'chords', 'artwork_url',
 ].join(',');
 
 export const SONG_DETAIL_SELECT = '*';
+
 
 export function mapSongRow(row: Record<string, any>): WorshipSong {
   return {
