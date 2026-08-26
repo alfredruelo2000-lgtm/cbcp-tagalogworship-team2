@@ -144,9 +144,10 @@ function TeamManagementPage() {
 
   const updateMemberField = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Record<string, any> }) => {
-      const { error } = await supabase.from('profiles').update(updates).eq('id', id);
+      const { error } = await supabase.from('profiles').update(updates as never).eq('id', id);
       if (error) throw error;
     },
+
     onSuccess: () => {
       invalidateTeam();
       toast.success('Profile updated');
