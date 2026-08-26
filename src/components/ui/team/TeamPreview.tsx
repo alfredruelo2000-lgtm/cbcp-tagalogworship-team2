@@ -1,6 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { getTeamPublic } from "@/lib/db-public.functions";
+import { normalizeRole } from "@/lib/team-roles";
+
 
 export function TeamPreview() {
   const { data: team = [] } = useQuery({
