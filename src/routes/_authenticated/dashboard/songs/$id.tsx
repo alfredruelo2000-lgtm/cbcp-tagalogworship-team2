@@ -8,9 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Save, Music, Type, Languages, Tags, Star, Info, Loader2, Upload, FileText, Trash2, Eye, History, Wand2, RotateCcw } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import { updateSong, getSongs, getSongVersions, restoreSongVersion, enhanceChordParsing, SongVersion } from '@/lib/db-songs.functions';
+import { updateSong, saveResolvedSong, getSongs, getSongVersions, restoreSongVersion, enhanceChordParsing, SongVersion } from '@/lib/db-songs.functions';
+import { isSongConflictError, type SongFieldConflict } from '@/lib/song-conflicts';
+import { SongConflictDialog } from '@/components/songs/SongConflictDialog';
 import { toast } from 'sonner';
 import { WorshipSong, SongLanguage, SongType, SongStatus, SongVisibility } from '@/types/songs';
 import { useAuth } from '@/hooks/use-auth';
