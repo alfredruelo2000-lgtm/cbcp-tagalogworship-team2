@@ -81,7 +81,7 @@ export async function createSong(input: { data: Partial<WorshipSong> } | Partial
     .from('songs')
     .insert([insertData])
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -121,9 +121,10 @@ export async function updateSong(input: { data: { id: string, song: Partial<Wors
     .update(updateData)
     .eq('id', id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
+  if (!data) throw new Error('Song could not be updated. Please refresh and try again.');
   return data;
 }
 
