@@ -4,6 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, ListMusic } from 'lucide-react';
 import { getSetlist, type SetlistItem } from '@/lib/db-setlists.functions';
 import { cacheSongsOffline } from '@/lib/offline';
+import { getLocalSetlistKey } from '@/lib/setlist-key-prefs';
+
 
 /**
  * Reads the `?setlist=` context of a song chart and exposes the ordered
