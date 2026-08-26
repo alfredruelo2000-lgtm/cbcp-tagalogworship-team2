@@ -70,25 +70,90 @@ function EditSongPage() {
   });
 
   const [formData, setFormData] = useState<Partial<WorshipSong>>({});
+  // Snapshot of the version this edit session started from — used for conflict detection.
+  const baselineRef = useRef<Partial<WorshipSong> | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+  const [remoteChanged, setRemoteChanged] = useState(false);
+  const [conflicts, setConflicts] = useState<SongFieldConflict[]>([]);
+  const [conflictRemote, setConflictRemote] = useState<Record<string, any> | null>(null);
+  const [conflictMine, setConflictMine] = useState<Record<string, any> | null>(null);
 
   useEffect(() => {
-    if (song) {
+    if (!song) return;
+    const stamp = (song as any).updatedAt;
+    const baseStamp = (baselineRef.current as any)?.updatedAt;
+    if (!baselineRef.current) {
+      baselineRef.current = song;
       setFormData(song);
+      return;
     }
-  }, [song]);
+    if (stamp === baseStamp) return;
+    if (isDirty) {
+      // Someone else saved while we have unsaved edits: keep the edits, warn, resolve on save.
+      setRemoteChanged(true);
+      return;
+    }
+    baselineRef.current = song;
+    setFormData(song);
+    setRemoteChanged(false);
+  }, [song, isDirty]);
+
+  const applySaved = (saved: any) => {
+    queryClient.invalidateQueries({ queryKey: ['songs'] });
+    queryClient.invalidateQueries({ queryKey: ['song', id] });
+    queryClient.invalidateQueries({ queryKey: ['song-versions', id] });
+    if (saved?.updated_at) {
+      baselineRef.current = { ...(baselineRef.current || {}), updatedAt: saved.updated_at } as any;
+    }
+    setIsDirty(false);
+    setRemoteChanged(false);
+  };
 
   const mutation = useMutation({
-    mutationFn: (data: Partial<WorshipSong>) => updateSong({ id, song: data }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['songs'] });
-      queryClient.invalidateQueries({ queryKey: ['song', id] });
+    mutationFn: (data: Partial<WorshipSong>) =>
+      updateSong({ id, song: data, baseline: baselineRef.current }),
+    onSuccess: (saved: any) => {
+      applySaved(saved);
       toast.success('Song updated successfully');
       navigate({ to: '/dashboard/songs' });
     },
     onError: (error: any) => {
-      toast.error('Failed to update song: ' + error.message);
       setIsSaving(false);
+      if (isSongConflictError(error)) {
+        setConflicts(error.conflicts);
+        setConflictRemote(error.remote);
+        setConflictMine(error.mine);
+        toast.warning('This song was edited elsewhere — review the conflicting fields.');
+        return;
+      }
+      toast.error('Failed to update song: ' + error.message);
     }
+  });
+
+  const resolveMutation = useMutation({
+    mutationFn: async (resolved: Record<string, unknown>) => {
+      const remote = conflictRemote || {};
+      const mine = conflictMine || {};
+      // Start from their latest row, layer our edits, then the per-field decisions.
+      const columns: Record<string, any> = {};
+      Object.keys(mine).forEach((key) => { columns[key] = mine[key]; });
+      Object.entries(resolved).forEach(([key, value]) => { columns[key] = value; });
+      delete columns.updated_at;
+      return saveResolvedSong({ id, columns, expectedUpdatedAt: remote.updated_at ?? null });
+    },
+    onSuccess: (saved: any) => {
+      applySaved(saved);
+      setConflicts([]);
+      setConflictRemote(null);
+      setConflictMine(null);
+      toast.success('Merged version saved');
+      navigate({ to: '/dashboard/songs' });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Could not save the merged version');
+      queryClient.invalidateQueries({ queryKey: ['song', id] });
+      setConflicts([]);
+    },
   });
 
   const handleSave = () => {
@@ -99,6 +164,7 @@ function EditSongPage() {
     setIsSaving(true);
     mutation.mutate(formData);
   };
+
 
   const updateField = (field: keyof WorshipSong, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
