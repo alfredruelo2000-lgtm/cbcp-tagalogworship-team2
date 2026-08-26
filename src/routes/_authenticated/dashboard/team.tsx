@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import {
@@ -17,6 +17,7 @@ import {
   EyeOff,
   AlertTriangle,
   Loader2,
+  Check,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,6 +43,7 @@ export const Route = createFileRoute('/_authenticated/dashboard/team')({
 });
 
 function TeamManagementPage() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -109,6 +111,14 @@ function TeamManagementPage() {
     queryClient.invalidateQueries({ queryKey: ['team-public'] });
   };
 
+  const navigateToMember = (id: string) => {
+    navigate({ to: '/dashboard/team/$id', params: { id } });
+  };
+
+  const navigateToMemberEdit = (id: string) => {
+    navigate({ to: '/dashboard/team/edit/$id', params: { id } });
+  };
+
   const reorderMutation = useMutation({
     mutationFn: async (rows: Array<{ id: string; display_order: number }>) => {
       await Promise.all(
@@ -147,12 +157,25 @@ function TeamManagementPage() {
       const { error } = await supabase.from('profiles').update(updates as never).eq('id', id);
       if (error) throw error;
     },
-
+    onMutate: async ({ id, updates }) => {
+      await queryClient.cancelQueries({ queryKey: ['team'] });
+      await queryClient.cancelQueries({ queryKey: ['team-full'] });
+      const previousTeam = queryClient.getQueryData<any[]>(['team']);
+      const previousTeamFull = queryClient.getQueryData<any[]>(['team-full']);
+      const applyPatch = (rows?: any[]) => rows?.map((row) => (row.id === id ? { ...row, ...updates } : row));
+      if (previousTeam) queryClient.setQueryData(['team'], applyPatch(previousTeam));
+      if (previousTeamFull) queryClient.setQueryData(['team-full'], applyPatch(previousTeamFull));
+      return { previousTeam, previousTeamFull };
+    },
     onSuccess: () => {
       invalidateTeam();
       toast.success('Profile updated');
     },
-    onError: (error: any) => toast.error('Update failed: ' + error.message),
+    onError: (error: any, _variables, context) => {
+      if (context?.previousTeam) queryClient.setQueryData(['team'], context.previousTeam);
+      if (context?.previousTeamFull) queryClient.setQueryData(['team-full'], context.previousTeamFull);
+      toast.error('Update failed: ' + error.message);
+    },
   });
 
   const deleteMemberMutation = useMutation({
@@ -280,6 +303,9 @@ function TeamManagementPage() {
                   </div>
                   <RowMenu
                     member={member}
+                    busy={updateMemberField.isPending || deleteMemberMutation.isPending}
+                    onView={navigateToMember}
+                    onEdit={navigateToMemberEdit}
                     onArchive={handleArchive}
                     onDelete={handleDelete}
                     onToggleVisibility={() =>
@@ -433,11 +459,18 @@ function TeamManagementPage() {
                       </button>
                     </TableCell>
                     <TableCell className="px-6 py-4">
-                      <StatusBadge status={member.status} />
+                      <StatusSelect
+                        status={member.status}
+                        disabled={updateMemberField.isPending}
+                        onChange={(status) => updateMemberField.mutate({ id: member.id, updates: { status } })}
+                      />
                     </TableCell>
                     <TableCell className="px-6 py-4 text-right">
                       <RowMenu
                         member={member}
+                        busy={updateMemberField.isPending || deleteMemberMutation.isPending}
+                        onView={navigateToMember}
+                        onEdit={navigateToMemberEdit}
                         onArchive={handleArchive}
                         onDelete={handleDelete}
                         onToggleVisibility={() =>
@@ -505,37 +538,74 @@ function VisibilityBadge({ isPublic }: { isPublic?: boolean | null }) {
   );
 }
 
+function StatusSelect({
+  status,
+  disabled,
+  onChange,
+}: {
+  status?: string | null;
+  disabled?: boolean;
+  onChange: (status: string) => void;
+}) {
+  const value = status && (MEMBER_STATUSES as readonly string[]).includes(status) ? status : 'Active';
+
+  return (
+    <Select value={value} onValueChange={onChange} disabled={disabled}>
+      <SelectTrigger className="h-8 w-[150px] rounded-none border-accent/10 bg-background px-2 text-[9px] font-bold uppercase tracking-widest shadow-none focus:ring-accent">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent className="rounded-none">
+        {MEMBER_STATUSES.map((nextStatus) => (
+          <SelectItem key={nextStatus} value={nextStatus} className="text-[11px]">
+            {nextStatus}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 function RowMenu({
   member,
+  busy,
+  onView,
+  onEdit,
   onArchive,
   onDelete,
   onToggleVisibility,
   onSetStatus,
 }: {
   member: any;
+  busy?: boolean;
+  onView: (id: string) => void;
+  onEdit: (id: string) => void;
   onArchive: (id: string) => void;
   onDelete: (id: string) => void;
   onToggleVisibility: () => void;
   onSetStatus: (status: string) => void;
 }) {
+  const currentStatus = member.status || 'Active';
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-none text-accent/50 hover:text-accent">
+        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-none text-accent/50 hover:text-accent" disabled={busy}>
           <MoreVertical className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56 rounded-none border-accent/10 bg-primary text-primary-foreground">
         <DropdownMenuLabel className="text-[9px] font-bold uppercase tracking-widest text-accent/50">Options</DropdownMenuLabel>
-        <DropdownMenuItem asChild className="cursor-pointer text-[10px] font-bold uppercase tracking-widest focus:bg-accent focus:text-primary">
-          <Link to="/dashboard/team/$id" params={{ id: member.id }}>
-            <ArrowRight className="mr-2 h-3 w-3" /> View profile
-          </Link>
+        <DropdownMenuItem
+          onSelect={() => onView(member.id)}
+          className="cursor-pointer text-[10px] font-bold uppercase tracking-widest focus:bg-accent focus:text-primary"
+        >
+          <ArrowRight className="mr-2 h-3 w-3" /> View profile
         </DropdownMenuItem>
-        <DropdownMenuItem asChild className="cursor-pointer text-[10px] font-bold uppercase tracking-widest focus:bg-accent focus:text-primary">
-          <Link to="/dashboard/team/edit/$id" params={{ id: member.id }}>
-            <Edit className="mr-2 h-3 w-3" /> Edit profile
-          </Link>
+        <DropdownMenuItem
+          onSelect={() => onEdit(member.id)}
+          className="cursor-pointer text-[10px] font-bold uppercase tracking-widest focus:bg-accent focus:text-primary"
+        >
+          <Edit className="mr-2 h-3 w-3" /> Edit profile
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={onToggleVisibility}
@@ -545,12 +615,17 @@ function RowMenu({
           {member.is_public ? 'Hide from public' : 'Show on public page'}
         </DropdownMenuItem>
         <DropdownMenuSeparator className="bg-accent/10" />
-        <DropdownMenuItem
-          onClick={() => onSetStatus(member.status === 'On Break' ? 'Active' : 'On Break')}
-          className="cursor-pointer text-[10px] font-bold uppercase tracking-widest focus:bg-accent focus:text-primary"
-        >
-          <UserX className="mr-2 h-3 w-3" /> {member.status === 'On Break' ? 'Set active' : 'Set on break'}
-        </DropdownMenuItem>
+        <DropdownMenuLabel className="text-[9px] font-bold uppercase tracking-widest text-accent/50">Set status</DropdownMenuLabel>
+        {MEMBER_STATUSES.map((status) => (
+          <DropdownMenuItem
+            key={status}
+            onSelect={() => onSetStatus(status)}
+            className="cursor-pointer text-[10px] font-bold uppercase tracking-widest focus:bg-accent focus:text-primary"
+          >
+            {currentStatus === status ? <Check className="mr-2 h-3 w-3" /> : <UserX className="mr-2 h-3 w-3" />}
+            {status}
+          </DropdownMenuItem>
+        ))}
         <DropdownMenuItem
           onClick={() => onArchive(member.id)}
           className="cursor-pointer text-[10px] font-bold uppercase tracking-widest text-red-400 focus:bg-red-400/10 focus:text-red-400"
