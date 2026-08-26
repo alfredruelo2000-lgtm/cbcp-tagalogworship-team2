@@ -11,14 +11,14 @@ export const Route = createFileRoute('/_authenticated/awaiting-approval')({
 });
 
 function AwaitingApprovalPage() {
-  const { status, isRejected, signOut, refreshAccess } = useAuth();
+  const { status, isRejected, isMinistryAdmin, signOut, refreshAccess } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (status && status !== 'Pending' && !isRejected) {
-      navigate({ to: '/dashboard', replace: true });
+      navigate({ to: isMinistryAdmin ? '/dashboard' : '/dashboard/profile', replace: true });
     }
-  }, [status, isRejected, navigate]);
+  }, [status, isRejected, isMinistryAdmin, navigate]);
 
   return (
     <div className="container mx-auto flex min-h-[75vh] items-center justify-center px-5 py-12 sm:px-6 sm:py-20 animate-in fade-in duration-500">
