@@ -16,7 +16,7 @@ const TABLE_KEYS: Record<string, string[]> = {
   ministry_settings: ["homepage-sections-public", "ministry-settings", "settings"],
 };
 
-const TABLES = Object.keys(TABLE_KEYS);
+const TABLES = Object.keys(TABLE_KEYS).filter((table) => table !== 'songs');
 
 function invalidate(queryClient: QueryClient, table: string) {
   const prefixes = TABLE_KEYS[table] ?? [];
@@ -46,6 +46,11 @@ export function usePublicRealtime() {
 
     function subscribe() {
       const ch = supabase.channel(`content-sync-${Math.random().toString(36).slice(2)}`);
+      // Public-safe change events contain no song content. Anonymous tabs can
+      // therefore detect edits, unpublishes and deletes that songs RLS hides.
+      ch.on("postgres_changes", { event: "INSERT", schema: "public", table: "song_change_events" }, () => {
+        invalidate(clientRef.current, "songs");
+      });
       for (const table of TABLES) {
         ch.on("postgres_changes", { event: "*", schema: "public", table }, (payload) => {
           invalidate(clientRef.current, payload.table);

@@ -10,7 +10,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Save, Music, Type, Languages, Tags, Star, Info, Loader2, Upload, FileText, Trash2, Eye, History, Wand2, RotateCcw } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import { updateSong, getSongs, getSongVersions, restoreSongVersion, enhanceChordParsing, SongVersion } from '@/lib/db-songs.functions';
+import { updateSong, getSongById, getSongVersions, restoreSongVersion, enhanceChordParsing, SongVersion } from '@/lib/db-songs.functions';
+import { cacheSongChart } from '@/lib/offline';
+import { isPublicSong, songKeys, syncSongCaches } from '@/lib/song-data';
 import { toast } from 'sonner';
 import { WorshipSong, SongLanguage, SongType, SongStatus, SongVisibility } from '@/types/songs';
 import { useAuth } from '@/hooks/use-auth';
@@ -28,7 +30,6 @@ function EditSongPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { loading, isPending: authPending } = useAuth();
-  const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState<string | null>(null);
   const [aiOpen, setAiOpen] = useState(false);
   const [aiMood, setAiMood] = useState('Reverent');
@@ -39,27 +40,8 @@ function EditSongPage() {
   const [aiError, setAiError] = useState<string | null>(null);
   
   const { data: song, isLoading: songLoading } = useQuery({
-    queryKey: ['song', id],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('songs').select('*').eq('id', id).single();
-      if (error) throw error;
-      return {
-        ...data,
-        defaultKey: (data as any).default_key,
-        songType: (data as any).song_type,
-        ccliNumber: (data as any).ccli_number,
-        visibility: (data as any).is_public ? 'Public' : 'Team Only',
-        audioUrl: (data as any).audio_url,
-        sheetMusicUrl: (data as any).sheet_music_url,
-        externalResources: (data as any).external_resources,
-        scriptureReferences: (data as any).scripture_references || [],
-        lyrics: (data as any).lyrics,
-        chords: (data as any).chords,
-        isPublic: (data as any).is_public,
-        createdAt: (data as any).created_at,
-        updatedAt: (data as any).updated_at
-      } as unknown as WorshipSong;
-    },
+    queryKey: songKeys.detail(id),
+    queryFn: () => getSongById(id),
   });
 
   const { data: versions, isLoading: versionsLoading } = useQuery({
@@ -77,16 +59,35 @@ function EditSongPage() {
 
   const mutation = useMutation({
     mutationFn: (data: Partial<WorshipSong>) => updateSong({ id, song: data }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['songs'] });
-      queryClient.invalidateQueries({ queryKey: ['song', id] });
+    onMutate: async (patch) => {
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: songKeys.adminList }),
+        queryClient.cancelQueries({ queryKey: songKeys.publicList }),
+        queryClient.cancelQueries({ queryKey: songKeys.detail(id) }),
+      ]);
+      const previousAdmin = queryClient.getQueryData(songKeys.adminList);
+      const previousPublic = queryClient.getQueryData(songKeys.publicList);
+      const previousDetail = queryClient.getQueryData(songKeys.detail(id));
+      if (song) syncSongCaches(queryClient, { ...song, ...patch, id } as WorshipSong);
+      return { previousAdmin, previousPublic, previousDetail };
+    },
+    onSuccess: async (savedSong) => {
+      syncSongCaches(queryClient, savedSong);
+      if (isPublicSong(savedSong)) await cacheSongChart(savedSong);
       toast.success('Song updated successfully');
       navigate({ to: '/dashboard/songs' });
     },
-    onError: (error: any) => {
+    onError: (error: any, _patch, context) => {
+      queryClient.setQueryData(songKeys.adminList, context?.previousAdmin);
+      queryClient.setQueryData(songKeys.publicList, context?.previousPublic);
+      queryClient.setQueryData(songKeys.detail(id), context?.previousDetail);
       toast.error('Failed to update song: ' + error.message);
-      setIsSaving(false);
-    }
+    },
+    onSettled: () => void Promise.all([
+      queryClient.invalidateQueries({ queryKey: songKeys.adminList }),
+      queryClient.invalidateQueries({ queryKey: songKeys.publicList }),
+      queryClient.invalidateQueries({ queryKey: songKeys.detail(id) }),
+    ]),
   });
 
   const handleSave = () => {
@@ -94,7 +95,7 @@ function EditSongPage() {
       toast.error('Song title is required');
       return;
     }
-    setIsSaving(true);
+    if (mutation.isPending) return;
     mutation.mutate(formData);
   };
 
@@ -172,11 +173,11 @@ function EditSongPage() {
           </div>
         </div>
         <Button 
-          disabled={isSaving}
+          disabled={mutation.isPending}
           onClick={handleSave}
           className="rounded-none bg-accent text-primary hover:bg-accent/90 px-8 py-6 font-bold text-[10px] uppercase tracking-widest shadow-xl"
         >
-          <Save className="w-4 h-4 mr-2" /> {isSaving ? 'Updating...' : 'Save Changes'}
+          {mutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />} {mutation.isPending ? 'Saving...' : 'Save Changes'}
         </Button>
       </header>
 

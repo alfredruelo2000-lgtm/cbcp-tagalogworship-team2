@@ -47,6 +47,8 @@ import { toast } from 'sonner';
 import { cn } from "@/lib/utils";
 import { useState, useMemo } from 'react';
 import { WorshipSong } from '@/types/songs';
+import { removeSongFromCaches, songKeys, syncSongCaches } from '@/lib/song-data';
+import { removeCachedSongChart } from '@/lib/offline';
 
 export const Route = createFileRoute('/_authenticated/dashboard/songs/')({
   component: SongManagementPage,
@@ -93,44 +95,46 @@ function SongManagementPage() {
     mutationFn: archiveSong,
     onMutate: async (id: string | { data: string }) => {
       const songId = typeof id === 'string' ? id : id.data;
-      await queryClient.cancelQueries({ queryKey: ['songs'] });
-      const previousSongs = queryClient.getQueryData(['songs']);
-      queryClient.setQueryData(['songs'], (old: WorshipSong[]) => 
-        old?.map(s => s.id === songId ? { ...s, status: 'Archived' } : s)
-      );
-      return { previousSongs };
+      await Promise.all([queryClient.cancelQueries({ queryKey: songKeys.adminList }), queryClient.cancelQueries({ queryKey: songKeys.publicList })]);
+      const previousSongs = queryClient.getQueryData(songKeys.adminList);
+      const previousPublicSongs = queryClient.getQueryData(songKeys.publicList);
+      const current = (previousSongs as WorshipSong[] | undefined)?.find((song) => song.id === songId);
+      if (current) syncSongCaches(queryClient, { ...current, status: 'Archived' });
+      return { previousSongs, previousPublicSongs };
     },
     onSuccess: () => {
       toast.success('Song archived');
     },
     onError: (err, id, context: any) => {
-      queryClient.setQueryData(['songs'], context.previousSongs);
+      queryClient.setQueryData(songKeys.adminList, context.previousSongs);
+      queryClient.setQueryData(songKeys.publicList, context.previousPublicSongs);
       toast.error('Failed to archive song');
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['songs'] });
+      void Promise.all([queryClient.invalidateQueries({ queryKey: songKeys.adminList }), queryClient.invalidateQueries({ queryKey: songKeys.publicList })]);
     }
   });
 
   const deleteMutation = useMutation({
     mutationFn: deleteSong,
     onMutate: async (id: string) => {
-      await queryClient.cancelQueries({ queryKey: ['songs'] });
-      const previousSongs = queryClient.getQueryData(['songs']);
-      queryClient.setQueryData(['songs'], (old: WorshipSong[]) => 
-        old?.filter(s => s.id !== id)
-      );
-      return { previousSongs };
+      await Promise.all([queryClient.cancelQueries({ queryKey: songKeys.adminList }), queryClient.cancelQueries({ queryKey: songKeys.publicList })]);
+      const previousSongs = queryClient.getQueryData(songKeys.adminList);
+      const previousPublicSongs = queryClient.getQueryData(songKeys.publicList);
+      removeSongFromCaches(queryClient, id);
+      return { previousSongs, previousPublicSongs };
     },
-    onSuccess: () => {
+    onSuccess: async (_data, id) => {
+      await removeCachedSongChart(id);
       toast.success('Song deleted successfully');
     },
     onError: (err, id, context: any) => {
-      queryClient.setQueryData(['songs'], context.previousSongs);
+      queryClient.setQueryData(songKeys.adminList, context.previousSongs);
+      queryClient.setQueryData(songKeys.publicList, context.previousPublicSongs);
       toast.error('Failed to delete song');
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['songs'] });
+      void Promise.all([queryClient.invalidateQueries({ queryKey: songKeys.adminList }), queryClient.invalidateQueries({ queryKey: songKeys.publicList })]);
     }
   });
 

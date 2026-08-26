@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getSongsPublic } from '@/lib/db-public.functions';
+import { getSongPublicById, getSongsPublic } from '@/lib/db-public.functions';
+import { songKeys } from '@/lib/song-data';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { 
@@ -40,13 +41,18 @@ export const Route = createFileRoute('/_public/songs/$id')({
 });
 
 function SongDetailPage() {
+  const online = useOnlineStatus();
   const { data: songs = [] } = useQuery({
-    queryKey: ['songs-public'],
+    queryKey: songKeys.publicList,
     queryFn: getSongsPublic,
   });
 
   const { id } = Route.useParams();
-  const rawSong = (songs || []).find((s: any) => s.id === (id as string));
+  const { data: rawSong } = useQuery({
+    queryKey: songKeys.publicDetail(id as string),
+    queryFn: () => getSongPublicById(id as string),
+    retry: 1,
+  });
 
   // Offline fallback: the full chart body kept in IndexedDB by prefetch / "Save offline".
   const [cachedChart, setCachedChart] = useState<CachedChart | null>(null);
@@ -58,7 +64,10 @@ function SongDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, rawSong]);
 
-  const song = useMemo(() => (rawSong ?? cachedChart) as unknown as WorshipSong, [rawSong, cachedChart]);
+  const song = useMemo(
+    () => (rawSong ?? (!online ? cachedChart : null)) as unknown as WorshipSong,
+    [rawSong, cachedChart, online],
+  );
   
   const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   
@@ -67,7 +76,6 @@ function SongDetailPage() {
   // ----- Setlist context: sequence navigation + per-setlist key persistence -----
   const sequence = useSetlistSequence(id as string);
   const { canEdit } = useSetlistAbilities();
-  const online = useOnlineStatus();
   const setlistId = sequence.setlist?.id ?? null;
   const canSaveSetlistKey = Boolean(sequence.current) && canEdit(sequence.setlist ?? null);
   const setlistItemKey = sequence.current?.selected_key ?? null;
