@@ -167,6 +167,7 @@ function EditSongPage() {
 
 
   const updateField = (field: keyof WorshipSong, value: any) => {
+    setIsDirty(true);
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
