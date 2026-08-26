@@ -12,21 +12,9 @@ export async function getSongsPublic() {
   if (error) throw error;
 
   const rows = (data ?? []) as unknown as Record<string, any>[];
-  const ids = rows.map((song) => song['id']).filter(Boolean);
-  let artworkById = new Map<string, string>();
-
-  if (ids.length > 0) {
-    const { data: artworkRows } = await supabase
-      .from("songs")
-      .select("id, artwork_url")
-      .in("id", ids)
-      .not("artwork_url", "is", null)
-      .not("artwork_url", "like", "data:%");
-    artworkById = new Map((artworkRows ?? []).map((row: any) => [row.id, row.artwork_url]));
-  }
-
-  return rows.map((row) => mapSongRow({ ...row, artwork_url: artworkById.get(row['id']) }));
+  return rows.map((row) => mapSongRow(row));
 }
+
 
 export async function getSongPublicById(id: string) {
   const { data, error } = await supabase

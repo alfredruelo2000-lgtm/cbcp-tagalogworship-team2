@@ -54,6 +54,7 @@ import { Route as AuthenticatedDashboardSongsIdRouteImport } from './routes/_aut
 import { Route as AuthenticatedDashboardSongsNewRouteImport } from './routes/_authenticated/dashboard/songs/new'
 import { Route as AuthenticatedDashboardTeamIdRouteImport } from './routes/_authenticated/dashboard/team/$id'
 import { Route as AuthenticatedDashboardUsersNewRouteImport } from './routes/_authenticated/dashboard/users/new'
+import { Route as ApiPublicMediaSplatRouteImport } from './routes/api/public/media/$'
 import { Route as AuthenticatedDashboardTeamEditIdRouteImport } from './routes/_authenticated/dashboard/team/edit/$id'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
@@ -306,6 +307,11 @@ const AuthenticatedDashboardUsersNewRoute =
     path: '/new',
     getParentRoute: () => AuthenticatedDashboardUsersRoute,
   } as any)
+const ApiPublicMediaSplatRoute = ApiPublicMediaSplatRouteImport.update({
+  id: '/api/public/media/$',
+  path: '/api/public/media/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedDashboardTeamEditIdRoute =
   AuthenticatedDashboardTeamEditIdRouteImport.update({
     id: '/edit/$id',
@@ -355,6 +361,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/songs/new': typeof AuthenticatedDashboardSongsNewRoute
   '/dashboard/team/$id': typeof AuthenticatedDashboardTeamIdRoute
   '/dashboard/users/new': typeof AuthenticatedDashboardUsersNewRoute
+  '/api/public/media/$': typeof ApiPublicMediaSplatRoute
   '/dashboard/setlists/': typeof AuthenticatedDashboardSetlistsIndexRoute
   '/dashboard/songs/': typeof AuthenticatedDashboardSongsIndexRoute
   '/dashboard/team/edit/$id': typeof AuthenticatedDashboardTeamEditIdRoute
@@ -398,6 +405,7 @@ export interface FileRoutesByTo {
   '/dashboard/songs/new': typeof AuthenticatedDashboardSongsNewRoute
   '/dashboard/team/$id': typeof AuthenticatedDashboardTeamIdRoute
   '/dashboard/users/new': typeof AuthenticatedDashboardUsersNewRoute
+  '/api/public/media/$': typeof ApiPublicMediaSplatRoute
   '/dashboard/setlists': typeof AuthenticatedDashboardSetlistsIndexRoute
   '/dashboard/songs': typeof AuthenticatedDashboardSongsIndexRoute
   '/dashboard/team/edit/$id': typeof AuthenticatedDashboardTeamEditIdRoute
@@ -447,6 +455,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/songs/new': typeof AuthenticatedDashboardSongsNewRoute
   '/_authenticated/dashboard/team/$id': typeof AuthenticatedDashboardTeamIdRoute
   '/_authenticated/dashboard/users/new': typeof AuthenticatedDashboardUsersNewRoute
+  '/api/public/media/$': typeof ApiPublicMediaSplatRoute
   '/_authenticated/dashboard/setlists/': typeof AuthenticatedDashboardSetlistsIndexRoute
   '/_authenticated/dashboard/songs/': typeof AuthenticatedDashboardSongsIndexRoute
   '/_authenticated/dashboard/team/edit/$id': typeof AuthenticatedDashboardTeamEditIdRoute
@@ -495,6 +504,7 @@ export interface FileRouteTypes {
     | '/dashboard/songs/new'
     | '/dashboard/team/$id'
     | '/dashboard/users/new'
+    | '/api/public/media/$'
     | '/dashboard/setlists/'
     | '/dashboard/songs/'
     | '/dashboard/team/edit/$id'
@@ -538,6 +548,7 @@ export interface FileRouteTypes {
     | '/dashboard/songs/new'
     | '/dashboard/team/$id'
     | '/dashboard/users/new'
+    | '/api/public/media/$'
     | '/dashboard/setlists'
     | '/dashboard/songs'
     | '/dashboard/team/edit/$id'
@@ -586,6 +597,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/songs/new'
     | '/_authenticated/dashboard/team/$id'
     | '/_authenticated/dashboard/users/new'
+    | '/api/public/media/$'
     | '/_authenticated/dashboard/setlists/'
     | '/_authenticated/dashboard/songs/'
     | '/_authenticated/dashboard/team/edit/$id'
@@ -594,6 +606,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   PublicRoute: typeof PublicRouteWithChildren
+  ApiPublicMediaSplatRoute: typeof ApiPublicMediaSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -913,6 +926,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardUsersNewRouteImport
       parentRoute: typeof AuthenticatedDashboardUsersRoute
     }
+    '/api/public/media/$': {
+      id: '/api/public/media/$'
+      path: '/api/public/media/$'
+      fullPath: '/api/public/media/$'
+      preLoaderRoute: typeof ApiPublicMediaSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/dashboard/team/edit/$id': {
       id: '/_authenticated/dashboard/team/edit/$id'
       path: '/edit/$id'
@@ -1176,6 +1196,7 @@ const PublicRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   PublicRoute: PublicRouteWithChildren,
+  ApiPublicMediaSplatRoute: ApiPublicMediaSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
