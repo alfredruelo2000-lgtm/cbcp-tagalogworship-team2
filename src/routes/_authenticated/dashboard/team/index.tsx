@@ -200,7 +200,7 @@ function TeamManagementPage() {
   };
 
   return (
-    <div className="container mx-auto space-y-8 px-4 py-8 sm:px-6 sm:py-12">
+    <div className="mx-auto w-full max-w-full min-w-0 space-y-8 overflow-x-hidden px-4 py-8 sm:px-6 sm:py-12">
       <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 sm:flex sm:items-end sm:justify-between">
         <div className="min-w-0 space-y-2">
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent">Worship Personnel Profiles</p>
@@ -352,20 +352,20 @@ function TeamManagementPage() {
       </div>
 
       {/* Desktop table */}
-      <div className="hidden overflow-x-auto border border-accent/5 bg-background lg:block">
-        <Table>
+      <div className="hidden w-full min-w-0 max-w-full overflow-x-auto border border-accent/5 bg-background lg:block">
+        <Table className="w-full table-fixed">
           <TableHeader>
             <TableRow className="border-accent/5 hover:bg-transparent">
-              <TableHead className="w-[60px] px-6 py-5 text-[10px] font-bold uppercase tracking-widest text-accent/50">
+              <TableHead className="w-[52px] px-3 py-4 text-[10px] font-bold uppercase tracking-widest text-accent/50">
                 Order
               </TableHead>
-              <TableHead className="px-6 py-5 text-[10px] font-bold uppercase tracking-widest text-accent/50">Member</TableHead>
-              <TableHead className="px-6 py-5 text-[10px] font-bold uppercase tracking-widest text-accent/50">Primary Role</TableHead>
-              <TableHead className="px-6 py-5 text-[10px] font-bold uppercase tracking-widest text-accent/50">Skills</TableHead>
-              <TableHead className="px-6 py-5 text-[10px] font-bold uppercase tracking-widest text-accent/50">Assignments</TableHead>
-              <TableHead className="px-6 py-5 text-[10px] font-bold uppercase tracking-widest text-accent/50">Public</TableHead>
-              <TableHead className="px-6 py-5 text-[10px] font-bold uppercase tracking-widest text-accent/50">Status</TableHead>
-              <TableHead className="px-6 py-5 text-right text-[10px] font-bold uppercase tracking-widest text-accent/50">Actions</TableHead>
+              <TableHead className="px-3 py-4 text-[10px] font-bold uppercase tracking-widest text-accent/50">Member</TableHead>
+              <TableHead className="w-[150px] px-3 py-4 text-[10px] font-bold uppercase tracking-widest text-accent/50">Primary Role</TableHead>
+              <TableHead className="hidden px-3 py-4 text-[10px] font-bold uppercase tracking-widest text-accent/50 2xl:table-cell">Skills</TableHead>
+              <TableHead className="hidden w-[110px] px-3 py-4 text-[10px] font-bold uppercase tracking-widest text-accent/50 xl:table-cell">Assign.</TableHead>
+              <TableHead className="w-[92px] px-3 py-4 text-[10px] font-bold uppercase tracking-widest text-accent/50">Public</TableHead>
+              <TableHead className="w-[128px] px-3 py-4 text-[10px] font-bold uppercase tracking-widest text-accent/50">Status</TableHead>
+              <TableHead className="w-[64px] px-3 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-accent/50">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -386,7 +386,7 @@ function TeamManagementPage() {
                 const index = ordered.findIndex((m: any) => m.id === member.id);
                 return (
                   <TableRow key={member.id} className="group border-accent/5 transition-colors hover:bg-muted/10">
-                    <TableCell className="px-6 py-4">
+                    <TableCell className="px-3 py-4">
                       <div className="flex flex-col gap-1">
                         <Button
                           variant="ghost"
@@ -410,26 +410,26 @@ function TeamManagementPage() {
                         </Button>
                       </div>
                     </TableCell>
-                    <TableCell className="px-6 py-4">
-                      <div className="flex min-w-0 items-center gap-4">
-                        <MemberAvatar member={member} className="h-10 w-10" />
+                    <TableCell className="px-3 py-4">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <MemberAvatar member={member} className="h-9 w-9" />
                         <div className="min-w-0">
-                          <h3 className="truncate font-serif text-lg leading-tight">{memberDisplayName(member)}</h3>
+                          <h3 className="truncate font-serif text-base leading-tight">{memberDisplayName(member)}</h3>
                           <p className="truncate text-[9px] uppercase tracking-widest text-muted-foreground">
                             {member.email || 'No email linked'}
                           </p>
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <Shield className="h-3 w-3 text-accent/40" />
-                        <span className="text-[11px] font-bold uppercase tracking-widest">
+                    <TableCell className="px-3 py-4">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <Shield className="h-3 w-3 shrink-0 text-accent/40" />
+                        <span className="truncate text-[10px] font-bold uppercase tracking-widest">
                           {normalizeRole(member.primary_role)}
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell className="max-w-[200px] px-6 py-4">
+                    <TableCell className="hidden max-w-[180px] px-3 py-4 2xl:table-cell">
                       <div className="flex flex-wrap gap-1">
                         {(member.skills ?? []).slice(0, 2).map((skill: string) => (
                           <Badge
@@ -445,12 +445,12 @@ function TeamManagementPage() {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="px-6 py-4">
+                    <TableCell className="hidden px-3 py-4 xl:table-cell">
                       <p className="text-[10px] font-bold uppercase tracking-widest">
                         {assignmentCounts.get(member.id) ?? 0} total
                       </p>
                     </TableCell>
-                    <TableCell className="px-6 py-4">
+                    <TableCell className="px-3 py-4">
                       <button
                         type="button"
                         onClick={() => updateMemberField.mutate({ id: member.id, updates: { is_public: !member.is_public } })}
@@ -458,14 +458,14 @@ function TeamManagementPage() {
                         <VisibilityBadge isPublic={member.is_public} />
                       </button>
                     </TableCell>
-                    <TableCell className="px-6 py-4">
+                    <TableCell className="px-3 py-4">
                       <StatusSelect
                         status={member.status}
                         disabled={updateMemberField.isPending}
                         onChange={(status) => updateMemberField.mutate({ id: member.id, updates: { status } })}
                       />
                     </TableCell>
-                    <TableCell className="px-6 py-4 text-right">
+                    <TableCell className="px-3 py-4 text-right">
                       <RowMenu
                         member={member}
                         busy={updateMemberField.isPending || deleteMemberMutation.isPending}
@@ -551,7 +551,7 @@ function StatusSelect({
 
   return (
     <Select value={value} onValueChange={onChange} disabled={disabled ?? false}>
-      <SelectTrigger className="h-8 w-[150px] rounded-none border-accent/10 bg-background px-2 text-[9px] font-bold uppercase tracking-widest shadow-none focus:ring-accent">
+      <SelectTrigger className="h-8 w-full max-w-[120px] rounded-none border-accent/10 bg-background px-2 text-[9px] font-bold uppercase tracking-widest shadow-none focus:ring-accent">
         <SelectValue />
       </SelectTrigger>
       <SelectContent className="rounded-none">
