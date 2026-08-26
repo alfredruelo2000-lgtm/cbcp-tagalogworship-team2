@@ -8,9 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Save, Music, Type, Languages, Tags, Star, Info, Loader2, Upload, FileText, Trash2, Eye, History, Wand2, RotateCcw } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import { updateSong, getSongs, getSongVersions, restoreSongVersion, enhanceChordParsing, SongVersion } from '@/lib/db-songs.functions';
+import { updateSong, saveResolvedSong, getSongs, getSongVersions, restoreSongVersion, enhanceChordParsing, SongVersion } from '@/lib/db-songs.functions';
+import { isSongConflictError, type SongFieldConflict } from '@/lib/song-conflicts';
+import { SongConflictDialog } from '@/components/songs/SongConflictDialog';
 import { toast } from 'sonner';
 import { WorshipSong, SongLanguage, SongType, SongStatus, SongVisibility } from '@/types/songs';
 import { useAuth } from '@/hooks/use-auth';
@@ -68,25 +70,90 @@ function EditSongPage() {
   });
 
   const [formData, setFormData] = useState<Partial<WorshipSong>>({});
+  // Snapshot of the version this edit session started from — used for conflict detection.
+  const baselineRef = useRef<Partial<WorshipSong> | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+  const [remoteChanged, setRemoteChanged] = useState(false);
+  const [conflicts, setConflicts] = useState<SongFieldConflict[]>([]);
+  const [conflictRemote, setConflictRemote] = useState<Record<string, any> | null>(null);
+  const [conflictMine, setConflictMine] = useState<Record<string, any> | null>(null);
 
   useEffect(() => {
-    if (song) {
+    if (!song) return;
+    const stamp = (song as any).updatedAt;
+    const baseStamp = (baselineRef.current as any)?.updatedAt;
+    if (!baselineRef.current) {
+      baselineRef.current = song;
       setFormData(song);
+      return;
     }
-  }, [song]);
+    if (stamp === baseStamp) return;
+    if (isDirty) {
+      // Someone else saved while we have unsaved edits: keep the edits, warn, resolve on save.
+      setRemoteChanged(true);
+      return;
+    }
+    baselineRef.current = song;
+    setFormData(song);
+    setRemoteChanged(false);
+  }, [song, isDirty]);
+
+  const applySaved = (saved: any) => {
+    queryClient.invalidateQueries({ queryKey: ['songs'] });
+    queryClient.invalidateQueries({ queryKey: ['song', id] });
+    queryClient.invalidateQueries({ queryKey: ['song-versions', id] });
+    if (saved?.updated_at) {
+      baselineRef.current = { ...(baselineRef.current || {}), updatedAt: saved.updated_at } as any;
+    }
+    setIsDirty(false);
+    setRemoteChanged(false);
+  };
 
   const mutation = useMutation({
-    mutationFn: (data: Partial<WorshipSong>) => updateSong({ id, song: data }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['songs'] });
-      queryClient.invalidateQueries({ queryKey: ['song', id] });
+    mutationFn: (data: Partial<WorshipSong>) =>
+      updateSong({ id, song: data, baseline: baselineRef.current }),
+    onSuccess: (saved: any) => {
+      applySaved(saved);
       toast.success('Song updated successfully');
       navigate({ to: '/dashboard/songs' });
     },
     onError: (error: any) => {
-      toast.error('Failed to update song: ' + error.message);
       setIsSaving(false);
+      if (isSongConflictError(error)) {
+        setConflicts(error.conflicts);
+        setConflictRemote(error.remote);
+        setConflictMine(error.mine);
+        toast.warning('This song was edited elsewhere — review the conflicting fields.');
+        return;
+      }
+      toast.error('Failed to update song: ' + error.message);
     }
+  });
+
+  const resolveMutation = useMutation({
+    mutationFn: async (resolved: Record<string, unknown>) => {
+      const remote = conflictRemote || {};
+      const mine = conflictMine || {};
+      // Start from their latest row, layer our edits, then the per-field decisions.
+      const columns: Record<string, any> = {};
+      Object.keys(mine).forEach((key) => { columns[key] = mine[key]; });
+      Object.entries(resolved).forEach(([key, value]) => { columns[key] = value; });
+      delete columns['updated_at'];
+      return saveResolvedSong({ id, columns, expectedUpdatedAt: remote['updated_at'] ?? null });
+    },
+    onSuccess: (saved: any) => {
+      applySaved(saved);
+      setConflicts([]);
+      setConflictRemote(null);
+      setConflictMine(null);
+      toast.success('Merged version saved');
+      navigate({ to: '/dashboard/songs' });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Could not save the merged version');
+      queryClient.invalidateQueries({ queryKey: ['song', id] });
+      setConflicts([]);
+    },
   });
 
   const handleSave = () => {
@@ -98,7 +165,9 @@ function EditSongPage() {
     mutation.mutate(formData);
   };
 
+
   const updateField = (field: keyof WorshipSong, value: any) => {
+    setIsDirty(true);
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -179,6 +248,46 @@ function EditSongPage() {
           <Save className="w-4 h-4 mr-2" /> {isSaving ? 'Updating...' : 'Save Changes'}
         </Button>
       </header>
+
+      <SongConflictDialog
+        open={conflicts.length > 0}
+        conflicts={conflicts}
+        saving={resolveMutation.isPending}
+        onCancel={() => setConflicts([])}
+        onDiscard={() => {
+          setConflicts([]);
+          setConflictRemote(null);
+          setConflictMine(null);
+          setIsDirty(false);
+          baselineRef.current = null;
+          queryClient.invalidateQueries({ queryKey: ['song', id] });
+          toast.info('Reloaded the latest saved version');
+        }}
+        onResolve={(resolved) => resolveMutation.mutate(resolved)}
+      />
+
+      {remoteChanged && conflicts.length === 0 && (
+        <div className="border border-amber-500/40 bg-amber-500/10 px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
+          <p className="text-xs text-foreground flex-1">
+            Someone else saved this song while you were editing. Your unsaved changes are intact — saving will merge them
+            and ask you about any field you both changed.
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-none text-[10px] uppercase tracking-widest"
+            onClick={() => {
+              setIsDirty(false);
+              baselineRef.current = null;
+              setRemoteChanged(false);
+              queryClient.invalidateQueries({ queryKey: ['song', id] });
+            }}
+          >
+            Discard mine &amp; reload
+          </Button>
+        </div>
+      )}
+
 
       <div className="max-w-5xl grid grid-cols-1 md:grid-cols-3 gap-12 ml-14">
         <div className="md:col-span-2 space-y-12">
