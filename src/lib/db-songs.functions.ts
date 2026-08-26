@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { WorshipSong, SongLanguage, SongType, SongStatus } from "@/types/songs";
+import { mapSongRow, SONG_DETAIL_SELECT, SONG_LIST_SELECT } from '@/lib/song-data';
 
 export interface SongVersion {
   id: string;
@@ -16,27 +17,30 @@ export interface SongVersion {
 export async function getSongs(): Promise<WorshipSong[]> {
   const { data, error } = await supabase
     .from('songs')
-    .select('*')
+    .select(SONG_LIST_SELECT)
     .order('title');
 
   if (error) throw error;
 
-  return (data || []).map((song: any) => ({
-    ...song,
-    language: song.language as SongLanguage,
-    songType: song.song_type as SongType,
-    status: song.status as SongStatus,
-    visibility: song.is_public ? 'Public' : 'Team Only',
-    scriptureReferences: song.scripture_references as any,
-    defaultKey: song.default_key,
-    lyrics: song.lyrics,
-    chords: song.chords,
-    isPublic: song.is_public,
-     featured: song.featured,
-     artworkUrl: song.artwork_url,
-    createdAt: song.created_at,
-    updatedAt: song.updated_at,
-  })) as WorshipSong[];
+  const rows = (data ?? []) as unknown as Record<string, any>[];
+  const ids = rows.map((song) => song.id).filter(Boolean);
+  let artworkById = new Map<string, string>();
+  if (ids.length > 0) {
+    const { data: artworkRows } = await supabase
+      .from('songs')
+      .select('id, artwork_url')
+      .in('id', ids)
+      .not('artwork_url', 'is', null)
+      .not('artwork_url', 'like', 'data:%');
+    artworkById = new Map((artworkRows ?? []).map((row: any) => [row.id, row.artwork_url]));
+  }
+  return rows.map((row) => mapSongRow({ ...row, artwork_url: artworkById.get(row.id) }));
+}
+
+export async function getSongById(id: string): Promise<WorshipSong | null> {
+  const { data, error } = await supabase.from('songs').select(SONG_DETAIL_SELECT).eq('id', id).maybeSingle();
+  if (error) throw error;
+  return data ? mapSongRow(data as Record<string, any>) : null;
 }
 
 export async function archiveSong(input: { data: string } | string) {
@@ -84,7 +88,8 @@ export async function createSong(input: { data: Partial<WorshipSong> } | Partial
     .maybeSingle();
 
   if (error) throw error;
-  return data;
+  if (!data) throw new Error('Song could not be created. Please try again.');
+  return mapSongRow(data as Record<string, any>);
 }
 
 export async function updateSong(input: { data: { id: string, song: Partial<WorshipSong> } } | { id: string, song: Partial<WorshipSong> }) {
@@ -125,7 +130,7 @@ export async function updateSong(input: { data: { id: string, song: Partial<Wors
 
   if (error) throw error;
   if (!data) throw new Error('Song could not be updated. Please refresh and try again.');
-  return data;
+  return mapSongRow(data as Record<string, any>);
 }
 
 export async function deleteSong(input: { data: string } | string) {

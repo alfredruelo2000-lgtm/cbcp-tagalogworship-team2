@@ -1,26 +1,44 @@
 import { supabase } from "@/integrations/supabase/client";
+import { mapSongRow, SONG_DETAIL_SELECT, SONG_LIST_SELECT } from "@/lib/song-data";
 
 export async function getSongsPublic() {
   const { data, error } = await supabase
     .from("songs")
-    .select("*")
+    .select(SONG_LIST_SELECT)
     .eq("status", "Active")
     .eq("is_public", true)
     .order("title");
 
   if (error) throw error;
-  
-  return (data || []).map((song: any) => ({
-    ...song,
-    defaultKey: song.default_key,
-    timeSignature: song.time_signature,
-    createdAt: song.created_at,
-    updatedAt: song.updated_at,
-    scriptureReferences: song.scripture_references || [],
-    songType: song.song_type,
-     externalResources: song.external_resources,
-     artworkUrl: song.artwork_url,
-  }));
+
+  const rows = (data ?? []) as unknown as Record<string, any>[];
+  const ids = rows.map((song) => song.id).filter(Boolean);
+  let artworkById = new Map<string, string>();
+
+  if (ids.length > 0) {
+    const { data: artworkRows } = await supabase
+      .from("songs")
+      .select("id, artwork_url")
+      .in("id", ids)
+      .not("artwork_url", "is", null)
+      .not("artwork_url", "like", "data:%");
+    artworkById = new Map((artworkRows ?? []).map((row: any) => [row.id, row.artwork_url]));
+  }
+
+  return rows.map((row) => mapSongRow({ ...row, artwork_url: artworkById.get(row.id) }));
+}
+
+export async function getSongPublicById(id: string) {
+  const { data, error } = await supabase
+    .from("songs")
+    .select(SONG_DETAIL_SELECT)
+    .eq("id", id)
+    .eq("status", "Active")
+    .eq("is_public", true)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data ? mapSongRow(data as Record<string, any>) : null;
 }
 
 export async function getResourcesPublic() {
