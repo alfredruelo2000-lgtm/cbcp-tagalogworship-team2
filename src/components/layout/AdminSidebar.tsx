@@ -29,12 +29,14 @@ interface SidebarItemProps {
   label: string;
   collapsed: boolean;
   active?: boolean;
+  onNavigate: () => void;
 }
 
-function SidebarItem({ to, icon, label, collapsed, active }: SidebarItemProps) {
+function SidebarItem({ to, icon, label, collapsed, active, onNavigate }: SidebarItemProps) {
   return (
     <Link 
       to={to}
+      onClick={onNavigate}
       className={cn(
         "flex items-center gap-4 px-4 py-3 group transition-all duration-300",
         "border-l-2 border-transparent hover:bg-accent/5",
@@ -63,7 +65,7 @@ export function AdminSidebar() {
   const toggleMobile = () => setMobileOpen(!mobileOpen);
 
   const isActive = (path: string) => {
-    if (path === '/dashboard') {
+    if (path === '/' || path === '/dashboard') {
       return location.pathname === path;
     }
     return location.pathname.startsWith(path);
@@ -72,29 +74,27 @@ export function AdminSidebar() {
 
   const navigation = [
     { section: "Main", items: [
-      { to: "/dashboard", icon: <LayoutDashboard size={18} />, label: "Overview" },
+      ...(isMinistryAdmin ? [{ to: "/dashboard", icon: <LayoutDashboard size={18} />, label: "Overview" }] : []),
       { to: "/", icon: <Home size={18} />, label: "Home" },
     ]},
-    { section: "Planning", items: [
+    ...(isMinistryAdmin ? [{ section: "Planning", items: [
       { to: "/dashboard/services", icon: <Calendar size={18} />, label: "Services" },
       { to: "/dashboard/setlists", icon: <ListMusic size={18} />, label: "Setlists" },
       { to: "/dashboard/songs", icon: <Music size={18} />, label: "Song Library" },
-    ]},
-    { section: "Team", items: [
+    ]}] : []),
+    ...(isMinistryAdmin ? [{ section: "Team", items: [
       { to: "/dashboard/team", icon: <Users size={18} />, label: "Personnel Profiles" },
       { to: "/dashboard/schedule", icon: <Clock size={18} />, label: "Schedule" },
-    ]},
-    { section: "Content", items: [
+    ]}] : []),
+    ...(isMinistryAdmin ? [{ section: "Content", items: [
       { to: "/dashboard/resources", icon: <BookOpen size={18} />, label: "Resources" },
       { to: "/dashboard/media", icon: <FileVideo size={18} />, label: "Media" },
-    ]},
-    { section: "Administration", items: [
-      ...(isMinistryAdmin ? [
+    ]}] : []),
+    ...(isMinistryAdmin ? [{ section: "Administration", items: [
         { to: "/dashboard/users", icon: <Users size={18} />, label: "User Accounts" },
         { to: "/dashboard/activity", icon: <Activity size={18} />, label: "Activity Log" },
         { to: "/dashboard/settings", icon: <Settings size={18} />, label: "Settings" }
-      ] : []),
-    ]},
+    ]}] : []),
     { section: "Account", items: [
       { to: "/dashboard/profile", icon: <User size={18} />, label: "My Profile" },
     ]},
@@ -128,12 +128,16 @@ export function AdminSidebar() {
                 <span className="block text-[8px] font-bold text-muted-foreground uppercase tracking-[0.3em]">Management</span>
               </div>
             )}
-            <button 
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
               onClick={toggleSidebar}
-              className="hidden lg:flex text-accent/40 hover:text-accent transition-colors"
+              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              className="hidden rounded-none text-accent/40 transition-colors hover:bg-accent/5 hover:text-accent lg:flex"
             >
               {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
-            </button>
+            </Button>
           </div>
 
           <nav className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-none space-y-8">
@@ -150,6 +154,7 @@ export function AdminSidebar() {
                     {...item} 
                     collapsed={collapsed}
                     active={isActive(item.to)}
+                     onNavigate={() => setMobileOpen(false)}
                   />
                 ))}
               </div>
@@ -157,10 +162,15 @@ export function AdminSidebar() {
           </nav>
 
           <div className="mt-auto px-2 space-y-2">
-            <button 
-              onClick={signOut}
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                setMobileOpen(false);
+                void signOut();
+              }}
               className={cn(
-                "w-full flex items-center gap-4 px-4 py-4 text-red-400/60 hover:text-red-400 hover:bg-red-400/5 transition-all duration-300",
+                "h-auto w-full rounded-none px-4 py-4 text-destructive/60 transition-all duration-300 hover:bg-destructive/5 hover:text-destructive",
                 collapsed ? "justify-center" : "justify-start"
               )}
             >
@@ -168,7 +178,7 @@ export function AdminSidebar() {
               {!collapsed && (
                 <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Sign Out</span>
               )}
-            </button>
+            </Button>
           </div>
         </div>
       </aside>
