@@ -57,18 +57,34 @@ export async function getMediaPublic() {
   return data || [];
 }
 
+const TEAM_PUBLIC_SELECT =
+  'id, full_name, public_name, avatar_url, primary_role, bio, instrument, skills, vocal_range, email, show_public_contact, featured, is_public, display_order, status, date_joined, created_at';
+
 export async function getTeamPublic() {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, full_name, avatar_url, primary_role, bio, featured, is_public, display_order")
+    .select(TEAM_PUBLIC_SELECT)
     .eq("is_public", true)
-    .eq("status", "Active")
+    .in("status", [...PUBLIC_VISIBLE_STATUSES])
     .order("display_order", { ascending: true })
     .order("full_name", { ascending: true });
 
   if (error) throw error;
   return data || [];
 }
+
+export async function getTeamMemberPublic(id: string) {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select(TEAM_PUBLIC_SELECT)
+    .eq("id", id)
+    .eq("is_public", true)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
+}
+
 
 export async function getUpcomingServicePublic() {
   const { data, error } = await supabase
