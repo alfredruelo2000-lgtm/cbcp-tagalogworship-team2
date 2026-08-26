@@ -37,7 +37,8 @@ export function useSetlistSequence(songId: string) {
       navigate({
         to: '/songs/$id',
         params: { id: item.song_id },
-        search: { key: item.selected_key || undefined, setlist: setlistId } as never,
+        search: { key: getLocalSetlistKey(setlistId, item.id) || item.selected_key || undefined, setlist: setlistId } as never,
+
       });
     },
     [navigate, setlistId],
