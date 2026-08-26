@@ -25,6 +25,36 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: window.location.origin,
+          data: { full_name: fullName },
+        },
+      });
+      if (error) throw error;
+
+      if (data.session) {
+        toast.success('Account created — awaiting administrator approval');
+        navigate({ to: '/awaiting-approval' });
+      } else {
+        toast.success('Check your email to confirm your account');
+        setMode('signin');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to create account');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,7 +140,7 @@ function LoginPage() {
           <Badge variant="outline" className="rounded-none uppercase text-[10px] tracking-widest border-accent/20 text-accent">
             Secure Access
           </Badge>
-          <h1 className="font-serif text-5xl text-foreground">Worship Team Access</h1>
+          <h1 className="font-serif text-foreground text-[clamp(1.9rem,8vw,3rem)]">Worship Team Access</h1>
           <p className="text-muted-foreground text-sm uppercase tracking-widest font-bold">
             Sign in to access worship planning, schedules, songs, resources, and ministry tools.
           </p>
@@ -142,8 +172,38 @@ function LoginPage() {
             </div>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-6">
+          <div className="grid grid-cols-2 border border-accent/10">
+            {(['signin', 'signup'] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setMode(m)}
+                className={
+                  'min-h-[44px] text-[10px] font-bold uppercase tracking-widest transition-colors ' +
+                  (mode === m ? 'bg-accent/10 text-accent' : 'text-muted-foreground hover:text-foreground')
+                }
+              >
+                {m === 'signin' ? 'Sign In' : 'Create Account'}
+              </button>
+            ))}
+          </div>
+
+          <form onSubmit={mode === 'signup' ? handleSignUp : handleLogin} className="space-y-6">
           <div className="space-y-4">
+            {mode === 'signup' && (
+              <div className="space-y-2">
+                <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-accent">Full Name</label>
+                <Input
+                  type="text"
+                  placeholder="Your full name"
+                  className="h-14 rounded-none border-accent/10 bg-muted/20 focus-visible:ring-accent"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                  disabled={loading}
+                />
+              </div>
+            )}
             <div className="space-y-2">
               <label className="text-[9px] font-bold tracking-[0.2em] text-accent uppercase block">Email Address</label>
               <Input 
@@ -159,14 +219,14 @@ function LoginPage() {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <label className="text-[9px] font-bold tracking-[0.2em] text-accent uppercase block">Password</label>
-                <button 
+                {mode === 'signin' && <button 
                   type="button" 
                   onClick={handleForgotPassword}
                   className="text-[9px] font-bold text-accent uppercase tracking-widest hover:underline disabled:opacity-50"
                   disabled={loading}
                 >
                   Forgot?
-                </button>
+                </button>}
               </div>
               <Input 
                 type="password" 
@@ -187,7 +247,7 @@ function LoginPage() {
             {loading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              'Sign In'
+              mode === 'signup' ? 'Create Account' : 'Sign In'
             )}
           </Button>
         </form>
@@ -195,7 +255,7 @@ function LoginPage() {
 
         <div className="text-center border-t border-accent/10 pt-8">
           <p className="text-[10px] text-muted-foreground uppercase tracking-widest">
-            Trouble accessing? <a href="#" className="text-accent hover:underline">Contact System Admin</a>
+            New accounts require administrator approval before team features unlock.
           </p>
         </div>
       </div>
