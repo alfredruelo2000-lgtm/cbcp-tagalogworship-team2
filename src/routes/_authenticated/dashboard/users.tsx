@@ -324,7 +324,7 @@ function UserManagementPage() {
               </div>
 
               <div className="flex shrink-0 items-center gap-2">
-                <Select value={user.role} onValueChange={(role) => void updateRole(user.id, role)} disabled={busyId === user.id}>
+                <Select value={user.role ?? "viewer"} onValueChange={(role) => void updateRole(user.id, role)} disabled={busyId === user.id}>
                   <SelectTrigger className="hidden h-11 w-[150px] rounded-none border-accent/10 text-[10px] font-bold uppercase tracking-widest sm:flex">
                     <SelectValue placeholder="Role" />
                   </SelectTrigger>
