@@ -250,6 +250,8 @@ export type Database = {
           is_public: boolean | null
           phone: string | null
           primary_role: string | null
+          public_name: string | null
+          show_public_contact: boolean
           skills: string[] | null
           status: Database["public"]["Enums"]["member_status"] | null
           team_member_id: string | null
@@ -274,6 +276,8 @@ export type Database = {
           is_public?: boolean | null
           phone?: string | null
           primary_role?: string | null
+          public_name?: string | null
+          show_public_contact?: boolean
           skills?: string[] | null
           status?: Database["public"]["Enums"]["member_status"] | null
           team_member_id?: string | null
@@ -298,6 +302,8 @@ export type Database = {
           is_public?: boolean | null
           phone?: string | null
           primary_role?: string | null
+          public_name?: string | null
+          show_public_contact?: boolean
           skills?: string[] | null
           status?: Database["public"]["Enums"]["member_status"] | null
           team_member_id?: string | null

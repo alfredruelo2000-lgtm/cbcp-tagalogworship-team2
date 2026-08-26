@@ -40,9 +40,10 @@ function PublicLayout() {
         ) : <Outlet />}
       </main>
       {(() => {
-        const isPracticeSurface = ['/songs', '/setlists'].some(
+        const isPracticeSurface = ['/songs', '/setlists', '/team'].some(
           (prefix) => location.pathname === prefix || location.pathname.startsWith(`${prefix}/`),
         );
+
         return isPracticeSurface ? <MiniFooter /> : <Footer />;
       })()}
     </div>

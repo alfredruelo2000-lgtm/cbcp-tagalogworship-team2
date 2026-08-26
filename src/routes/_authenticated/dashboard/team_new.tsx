@@ -10,6 +10,8 @@ import { ImageUpload } from '@/components/ui/ImageUpload';
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createMember } from '@/lib/db-team.functions';
+import { TEAM_ROLES } from '@/lib/team-roles';
+
 import { toast } from 'sonner';
 
 export const Route = createFileRoute('/_authenticated/dashboard/team_new')({
@@ -168,11 +170,10 @@ function AddTeamMemberPage() {
                     <SelectValue placeholder="Select Role" />
                   </SelectTrigger>
                   <SelectContent className="rounded-none">
-                    <SelectItem value="vocalist" className="text-[11px] uppercase tracking-wider">Vocalist</SelectItem>
-                    <SelectItem value="musician" className="text-[11px] uppercase tracking-wider">Musician (Instrumentalist)</SelectItem>
-                    <SelectItem value="production" className="text-[11px] uppercase tracking-wider">Production / Technical Team</SelectItem>
-                    <SelectItem value="leader" className="text-[11px] uppercase tracking-wider">Worship Leader</SelectItem>
-                    <SelectItem value="multimedia" className="text-[11px] uppercase tracking-wider">Multimedia / Livestream</SelectItem>
+                    {TEAM_ROLES.map((role) => (
+                      <SelectItem key={role} value={role} className="text-[11px] uppercase tracking-wider">{role}</SelectItem>
+                    ))}
+
                   </SelectContent>
                 </Select>
               </div>

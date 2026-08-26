@@ -1,271 +1,179 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { supabase } from '@/integrations/supabase/client';
-import { getServices } from '@/lib/db-services.functions';
-import { Badge } from '@/components/ui/badge';
 import { useQuery } from '@tanstack/react-query';
+import { getTeamMemberPublic } from '@/lib/db-public.functions';
+import { initials, memberDisplayName, normalizeRole } from '@/lib/team-roles';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  Calendar, 
-  Music, 
-  Mic2, 
-  Mail, 
-  ArrowLeft,
-  Clock,
-  Shield,
-  Star,
-  CheckCircle2,
-  Clock3,
-  XCircle,
-  AlertCircle,
-  ChevronRight
-} from 'lucide-react';
-import { TeamMemberStatus } from '@/types/team';
-import { cn } from '@/lib/utils';
-import { useMemo } from 'react';
-import { AssignmentStatus } from '@/types/setlists';
+import { ArrowLeft, Mail, Music, Mic2, Calendar } from 'lucide-react';
 
 export const Route = createFileRoute('/_public/team/$id')({
   component: MemberProfilePage,
+  head: () => ({
+    meta: [
+      { title: 'Team Member — Worship Ministry Profile' },
+      { name: 'description', content: 'Profile of a member serving in our worship ministry.' },
+      { property: 'og:title', content: 'Team Member — Worship Ministry Profile' },
+      { property: 'og:description', content: 'Profile of a member serving in our worship ministry.' },
+      { property: 'og:type', content: 'profile' },
+      { name: 'twitter:card', content: 'summary' },
+    ],
+  }),
 });
 
 function MemberProfilePage() {
   const { id } = Route.useParams();
 
-  const { data: team = [] } = useQuery({
-    queryKey: ['team'],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('profiles').select('*');
-      if (error) throw error;
-      return data;
-    }
+  const { data: member, isPending } = useQuery({
+    queryKey: ['team-public', 'member', id],
+    queryFn: () => getTeamMemberPublic(id),
   });
 
-  const member = useMemo(() => (team || []).find((m: any) => m.id === id), [team, id]);
-
-  const { data: services = [] } = useQuery({
-    queryKey: ['services'],
-    queryFn: () => getServices(),
-  });
-
-  const servingHistory = useMemo(() => {
-    if (!member) return [];
-    const history: any[] = [];
-    (services || []).forEach((service: any) => {
-      const assignment = (service.assignments || []).find((a: any) => (a.memberId || a.member_id) === (member as any).id);
-      if (assignment) {
-        history.push({
-          ...assignment,
-          serviceTitle: service.title,
-          serviceDate: service.serviceDate
-        });
-      }
-    });
-    return history.sort((a: any, b: any) => new Date(b.serviceDate).getTime() - new Date(a.serviceDate).getTime()).slice(0, 5);
-  }, [services, member]);
-
-  const getStatusColor = (status: TeamMemberStatus | string | null) => {
-    switch (status) {
-      case 'Active': return 'bg-green-500/10 text-green-600 border-green-200';
-      case 'Available': return 'bg-blue-500/10 text-blue-600 border-blue-200';
-      case 'Limited Availability': return 'bg-yellow-500/10 text-yellow-600 border-yellow-200';
-      case 'On Break': return 'bg-orange-500/10 text-orange-600 border-orange-200';
-      default: return 'bg-slate-500/10 text-slate-600 border-slate-200';
-    }
-  };
-
-  if (!member) {
+  if (isPending) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <h2 className="font-serif text-3xl">Member Not Found</h2>
-          <Button asChild variant="outline" className="rounded-none tracking-widest uppercase">
-            <Link to="/team">Back to Directory</Link>
-          </Button>
+      <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
+        <div className="h-3 w-24 animate-pulse bg-muted" />
+        <div className="mt-6 flex gap-4">
+          <div className="h-24 w-24 animate-pulse bg-muted sm:h-32 sm:w-32" />
+          <div className="flex-1 space-y-3 pt-2">
+            <div className="h-5 w-2/3 animate-pulse bg-muted" />
+            <div className="h-3 w-1/3 animate-pulse bg-muted" />
+          </div>
         </div>
       </div>
     );
   }
 
+  if (!member) {
+    return (
+      <div className="mx-auto max-w-md px-6 py-24 text-center">
+        <h1 className="font-serif text-2xl text-foreground">Profile not available</h1>
+        <p className="mt-2 text-sm text-muted-foreground">This member is not part of the public directory.</p>
+        <Button asChild variant="outline" className="mt-6 rounded-none text-[10px] font-bold uppercase tracking-widest">
+          <Link to="/team">Back to directory</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  const name = memberDisplayName(member as any);
+  const role = normalizeRole((member as any).primary_role);
+  const skills: string[] = (member as any).skills ?? [];
+
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-background/95 backdrop-blur-sm pt-32 pb-24 px-6">
-      <div className="mx-auto max-w-7xl">
-        <Link 
-          to="/team" 
-          className="inline-flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] text-accent uppercase hover:gap-3 transition-all mb-12"
-        >
-          <ArrowLeft className="h-3 w-3" />
-          Back to Team Directory
-        </Link>
+    <div className="mx-auto w-full max-w-3xl px-4 pb-16 pt-6 sm:px-6 sm:pt-10">
+      <Link
+        to="/team"
+        className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-accent"
+      >
+        <ArrowLeft className="h-3 w-3" /> Back to team
+      </Link>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
-          {/* Sidebar / Photo */}
-          <div className="lg:col-span-4 space-y-8">
-            <div className="aspect-[3/4] overflow-hidden bg-muted rounded-sm">
-              <img 
-                src={member.avatar_url || (member as any).photoUrl || 'https://via.placeholder.com/300x400?text=No+Photo'} 
-                alt={member.full_name || (member as any).fullName} 
-                className="w-full h-full object-cover grayscale"
-              />
+      <header className="mt-5 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-4 border-b border-accent/10 pb-6">
+        <div className="h-24 w-24 shrink-0 overflow-hidden bg-accent/10 sm:h-32 sm:w-32">
+          {(member as any).avatar_url ? (
+            <img
+              src={(member as any).avatar_url}
+              alt={name}
+              className="h-full w-full object-cover"
+              loading="eager"
+              decoding="async"
+            />
+          ) : (
+            <div className="grid h-full w-full place-items-center font-serif text-3xl text-accent">
+              {initials(name)}
             </div>
-
-            <div className="p-6 bg-muted/20 border border-muted/20 rounded-sm space-y-6">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold tracking-[0.2em] text-primary uppercase">Current Status</span>
-                <Badge className={getStatusColor(member.status)}>
-                  {member.status || 'Active'}
-                </Badge>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                  <Calendar className="h-4 w-4 text-accent" />
-                  <span>Joined {member.created_at ? new Date(member.created_at).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : 'Unknown'}</span>
-                </div>
-                {(member.instrument || (member as any).primary_instrument) && (
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                    <Music className="h-4 w-4 text-accent" />
-                    <span>Primary: {member.instrument || (member as any).primary_instrument}</span>
-                  </div>
-                )}
-                {member.vocal_range && (
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                    <Mic2 className="h-4 w-4 text-accent" />
-                    <span>Range: {member.vocal_range}</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="pt-6 border-t border-muted/20 space-y-4">
-                <h4 className="text-[10px] font-bold tracking-[0.2em] text-primary uppercase">Ministry Groups</h4>
-                <div className="flex flex-wrap gap-2">
-                  {(member.groups || []).map((group: string) => (
-                    <Badge key={group} variant="outline" className="text-[10px] tracking-wide border-muted">
-                      {group}
-                    </Badge>
-                  ))}
-                  {(member.groups || []).length === 0 && (
-                    <span className="text-[10px] text-muted-foreground italic uppercase tracking-tighter">No groups set</span>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Main Content */}
-          <div className="lg:col-span-8 space-y-12">
-            <div className="space-y-4">
-              <span className="text-[10px] font-bold tracking-[0.3em] text-accent uppercase">{member.primary_role || (member as any).primaryRole || 'Team Member'}</span>
-              <h1 className="text-5xl md:text-7xl font-serif text-primary leading-tight">{member.full_name || (member as any).fullName}</h1>
-              {((member as any).secondary_roles || (member as any).secondaryRoles || []).length > 0 && (
-                <div className="flex flex-wrap gap-2 text-sm text-muted-foreground italic">
-                  Also serving as: {((member as any).secondary_roles || (member as any).secondaryRoles || []).join(', ')}
-                </div>
-              )}
-            </div>
-
-            <div className="prose prose-slate max-w-none">
-              <h3 className="text-[10px] font-bold tracking-[0.2em] text-primary uppercase mb-4">About {(member.full_name || (member as any).fullName || '').split(' ')[0]}</h3>
-              <p className="text-lg text-muted-foreground leading-relaxed font-serif">
-                {member.bio || "No biography provided."}
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-12 border-t border-muted/20">
-              <div className="space-y-6">
-                <h3 className="text-[10px] font-bold tracking-[0.2em] text-primary uppercase">Skills & Capabilities</h3>
-                <div className="flex flex-wrap gap-3">
-                  {(member.skills || []).map((skill: string) => (
-                    <div key={skill} className="flex items-center gap-2 bg-muted/30 px-4 py-2 rounded-full border border-muted/20">
-                      <Star className="h-3 w-3 text-accent fill-accent" />
-                      <span className="text-sm font-medium">{skill}</span>
-                    </div>
-                  ))}
-                  {(member.skills || []).length === 0 && (
-                    <p className="text-sm text-muted-foreground italic">No skills listed yet.</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-[10px] font-bold tracking-[0.2em] text-primary uppercase">Internal Information</h3>
-                  <Shield className="h-4 w-4 text-accent/50" />
-                </div>
-                <div className="bg-muted/10 p-6 rounded-sm space-y-4 border border-accent/10">
-                  <div className="flex items-center gap-3 text-sm">
-                    <Mail className="h-4 w-4 text-accent/60" />
-                    <span className="text-muted-foreground">Contact details are visible to team leaders only.</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm">
-                    <Clock className="h-4 w-4 text-accent/60" />
-                    <span className="text-muted-foreground italic">Preferred Service: Sunday Morning</span>
-                  </div>
-                  {(member as any).internal_notes && (
-                    <div className="pt-4 mt-4 border-t border-accent/10">
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        <span className="font-bold text-primary mr-2 uppercase tracking-tighter">Leader Notes:</span>
-                        {(member as any).internal_notes}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-12 border-t border-muted/20">
-              <div className="space-y-8">
-                <h3 className="text-[10px] font-bold tracking-[0.2em] text-primary uppercase">Serving History</h3>
-                <div className="space-y-4">
-                  {servingHistory.length > 0 ? (
-                    servingHistory.map((assignment: any) => (
-                      <div key={assignment.id} className="flex items-center justify-between p-4 bg-muted/20 border border-accent/5">
-                        <div>
-                          <p className="text-[10px] font-bold text-accent uppercase">{new Date(assignment.serviceDate).toLocaleDateString()}</p>
-                          <p className="text-sm font-serif">{assignment.serviceTitle}</p>
-                        </div>
-                        <Badge variant="outline" className="rounded-none text-[8px] uppercase tracking-widest text-muted-foreground border-muted">
-                          {assignment.role}
-                        </Badge>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-muted-foreground italic">No recent serving history.</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-8">
-                <h3 className="text-[10px] font-bold tracking-[0.2em] text-primary uppercase">Availability</h3>
-                <div className="space-y-4">
-                  {((member as any).availability || []).map((av: any) => (
-                    <div key={av.id} className="flex items-center justify-between p-4 bg-muted/20 border border-accent/5">
-                      <div>
-                        <p className="text-[10px] font-bold text-accent uppercase">{new Date(av.date).toLocaleDateString()}</p>
-                        <p className="text-xs text-muted-foreground">{av.notes || 'No specific notes'}</p>
-                      </div>
-                      <Badge variant="outline" className={cn(
-                        "rounded-none text-[8px] uppercase tracking-widest",
-                        av.status === 'Available' ? "text-green-600 border-green-500/20" : "text-red-600 border-red-500/20"
-                      )}>
-                        {av.status}
-                      </Badge>
-                    </div>
-                  ))}
-                  {(!(member as any).availability || (member as any).availability.length === 0) && (
-                    <p className="text-sm text-muted-foreground italic">No availability data set.</p>
-                  )}
-                </div>
-              </div>
-            </div>
-            
-            <div className="pt-12">
-              <Button variant="outline" className="h-12 px-8 text-[10px] font-bold tracking-[0.2em] uppercase rounded-none border-accent/20 text-accent hover:bg-accent hover:text-primary">
-                Schedule for Service
-              </Button>
-            </div>
-          </div>
+          )}
         </div>
+        <div className="min-w-0 space-y-1.5">
+          <h1 className="truncate font-serif text-2xl leading-tight text-foreground sm:text-4xl">{name}</h1>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent">{role}</p>
+          {(member as any).instrument && (
+            <p className="truncate text-xs text-muted-foreground">{(member as any).instrument}</p>
+          )}
+        </div>
+      </header>
+
+      <div className="mt-6 space-y-8">
+        {(member as any).bio && (
+          <section className="space-y-2">
+            <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent">About</h2>
+            <p className="text-sm leading-relaxed text-muted-foreground">{(member as any).bio}</p>
+          </section>
+        )}
+
+        <section className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {(member as any).instrument && (
+            <InfoRow icon={<Music className="h-3.5 w-3.5 text-accent" />} label="Instrument" value={(member as any).instrument} />
+          )}
+          {(member as any).vocal_range && (
+            <InfoRow icon={<Mic2 className="h-3.5 w-3.5 text-accent" />} label="Vocal range" value={(member as any).vocal_range} />
+          )}
+          {((member as any).date_joined || (member as any).created_at) && (
+            <InfoRow
+              icon={<Calendar className="h-3.5 w-3.5 text-accent" />}
+              label="Serving since"
+              value={new Date((member as any).date_joined || (member as any).created_at).toLocaleDateString(undefined, {
+                month: 'long',
+                year: 'numeric',
+              })}
+            />
+          )}
+          {(member as any).show_public_contact && (member as any).email && (
+            <InfoRow
+              icon={<Mail className="h-3.5 w-3.5 text-accent" />}
+              label="Contact"
+              value={(member as any).email}
+              href={`mailto:${(member as any).email}`}
+            />
+          )}
+        </section>
+
+        {skills.length > 0 && (
+          <section className="space-y-3">
+            <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent">Skills</h2>
+            <div className="flex flex-wrap gap-2">
+              {skills.map((skill) => (
+                <Badge
+                  key={skill}
+                  variant="outline"
+                  className="rounded-none border-accent/15 text-[9px] uppercase tracking-widest text-muted-foreground"
+                >
+                  {skill}
+                </Badge>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </div>
+  );
+}
+
+function InfoRow({
+  icon,
+  label,
+  value,
+  href,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  href?: string;
+}) {
+  const content = (
+    <div className="flex min-w-0 items-center gap-3 border border-accent/5 bg-muted/10 px-4 py-3">
+      <span className="shrink-0">{icon}</span>
+      <div className="min-w-0">
+        <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
+        <p className="truncate text-sm text-foreground">{value}</p>
+      </div>
+    </div>
+  );
+  return href ? (
+    <a href={href} className="block transition-colors hover:border-accent/20">
+      {content}
+    </a>
+  ) : (
+    content
   );
 }
