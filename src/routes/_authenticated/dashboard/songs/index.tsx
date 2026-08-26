@@ -48,6 +48,7 @@ import { cn } from "@/lib/utils";
 import { useState, useMemo } from 'react';
 import { WorshipSong } from '@/types/songs';
 import { removeSongFromCaches, songKeys, syncSongCaches } from '@/lib/song-data';
+import { removeCachedSongChart } from '@/lib/offline';
 
 export const Route = createFileRoute('/_authenticated/dashboard/songs/')({
   component: SongManagementPage,
@@ -123,7 +124,8 @@ function SongManagementPage() {
       removeSongFromCaches(queryClient, id);
       return { previousSongs, previousPublicSongs };
     },
-    onSuccess: () => {
+    onSuccess: async (_data, id) => {
+      await removeCachedSongChart(id);
       toast.success('Song deleted successfully');
     },
     onError: (err, id, context: any) => {

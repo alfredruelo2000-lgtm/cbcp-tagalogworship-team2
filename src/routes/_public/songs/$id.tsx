@@ -41,6 +41,7 @@ export const Route = createFileRoute('/_public/songs/$id')({
 });
 
 function SongDetailPage() {
+  const online = useOnlineStatus();
   const { data: songs = [] } = useQuery({
     queryKey: songKeys.publicList,
     queryFn: getSongsPublic,
@@ -63,7 +64,10 @@ function SongDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, rawSong]);
 
-  const song = useMemo(() => (rawSong ?? cachedChart) as unknown as WorshipSong, [rawSong, cachedChart]);
+  const song = useMemo(
+    () => (rawSong ?? (!online ? cachedChart : null)) as unknown as WorshipSong,
+    [rawSong, cachedChart, online],
+  );
   
   const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   
@@ -72,7 +76,6 @@ function SongDetailPage() {
   // ----- Setlist context: sequence navigation + per-setlist key persistence -----
   const sequence = useSetlistSequence(id as string);
   const { canEdit } = useSetlistAbilities();
-  const online = useOnlineStatus();
   const setlistId = sequence.setlist?.id ?? null;
   const canSaveSetlistKey = Boolean(sequence.current) && canEdit(sequence.setlist ?? null);
   const setlistItemKey = sequence.current?.selected_key ?? null;

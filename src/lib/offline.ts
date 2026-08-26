@@ -202,6 +202,12 @@ export async function getCachedSongChart(songId: string): Promise<CachedChart | 
   return await get<CachedChart>(chartKey(songId), store);
 }
 
+/** Removes a normal cached chart after deletion. Intentionally saved setlist
+ * charts remain available through their persisted setlist/query snapshot. */
+export async function removeCachedSongChart(songId: string): Promise<void> {
+  await del(chartKey(songId), store);
+}
+
 /** Warms the service-worker asset cache for a song's artwork/audio (best effort). */
 async function warmSongAssets(song: any) {
   if (typeof caches === "undefined") return;
