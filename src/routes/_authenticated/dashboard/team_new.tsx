@@ -10,6 +10,8 @@ import { ImageUpload } from '@/components/ui/ImageUpload';
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createMember } from '@/lib/db-team.functions';
+import { TEAM_ROLES } from '@/lib/team-roles';
+
 import { toast } from 'sonner';
 
 export const Route = createFileRoute('/_authenticated/dashboard/team_new')({
