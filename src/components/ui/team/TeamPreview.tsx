@@ -33,11 +33,18 @@ export function TeamPreview() {
             {displayMembers.map((member: any) => (
               <div key={member.id} className="group">
                 <div className="aspect-[3/4] overflow-hidden bg-muted mb-4">
-                  <img src={member.avatar_url} alt={member.full_name} className="w-full h-full object-cover grayscale transition-all duration-700 group-hover:grayscale-0" loading="lazy" decoding="async" />
+                  {member.avatar_url ? (
+                    <img src={member.avatar_url} alt={member.public_name || member.full_name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" decoding="async" />
+                  ) : (
+                    <div className="grid h-full w-full place-items-center font-serif text-2xl text-accent">
+                      {(member.public_name || member.full_name || '?').charAt(0)}
+                    </div>
+                  )}
                 </div>
-                <h4 className="font-serif text-lg">{member.full_name}</h4>
-                <p className="text-[10px] tracking-[0.2em] text-accent uppercase">{member.primary_role}</p>
+                <h4 className="font-serif text-lg">{member.public_name || member.full_name}</h4>
+                <p className="text-[10px] tracking-[0.2em] text-accent uppercase">{normalizeRole(member.primary_role)}</p>
               </div>
+
             ))}
           </div>
         </div>
