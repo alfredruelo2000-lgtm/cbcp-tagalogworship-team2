@@ -140,7 +140,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isMinistryAdmin = isAdmin || roles.includes('ministry_admin');
   const isWorshipLeader = isMinistryAdmin || roles.includes('worship_director') || roles.includes('worship_pastor') || roles.includes('worship_leader');
   const isTeamMember = isWorshipLeader || roles.includes('team_member');
-  const isPending = status === 'Pending';
+  const isRejected = status === 'Suspended' || status === 'Inactive' || status === 'Archived';
+  const isPending = status === 'Pending' || isRejected;
 
   return (
     <AuthContext.Provider value={{ 
@@ -148,12 +149,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user, 
       loading, 
       signOut, 
+      refreshAccess,
       isAdmin, 
       isMinistryAdmin, 
       isWorshipLeader,
       isTeamMember,
       status,
-      isPending
+      isPending,
+      isRejected
     }}>
       {children}
     </AuthContext.Provider>
