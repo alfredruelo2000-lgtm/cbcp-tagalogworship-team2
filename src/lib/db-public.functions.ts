@@ -1,5 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
+import { PUBLIC_VISIBLE_STATUSES } from "@/lib/team-roles";
 import { mapSongRow, SONG_DETAIL_SELECT, SONG_LIST_SELECT } from "@/lib/song-data";
+
 
 export async function getSongsPublic() {
   const { data, error } = await supabase
