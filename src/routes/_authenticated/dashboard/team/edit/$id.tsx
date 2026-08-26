@@ -9,7 +9,10 @@ import { ImageUpload } from '@/components/ui/ImageUpload';
 import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { updateMember, getTeamMembers, deleteMember } from '@/lib/db-team.functions';
+import { TEAM_ROLES, MEMBER_STATUSES } from '@/lib/team-roles';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+
 
 export const Route = createFileRoute('/_authenticated/dashboard/team/edit/$id')({
   component: EditTeamMemberPage,
