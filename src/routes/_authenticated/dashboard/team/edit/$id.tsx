@@ -271,9 +271,6 @@ function EditTeamMemberPage() {
             </div>
           </section>
         </div>
-
-          </section>
-        </div>
       </div>
     </div>
   );
