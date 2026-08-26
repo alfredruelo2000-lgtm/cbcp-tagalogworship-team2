@@ -20,6 +20,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { ImageUpload } from '@/components/ui/ImageUpload';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { generateSongCover } from '@/lib/ai-cover-art.functions';
+import { storeSongCover } from '@/lib/song-cover.functions';
+
 
 export const Route = createFileRoute('/_authenticated/dashboard/songs/$id')({
   component: EditSongPage,
