@@ -517,6 +517,33 @@ export type Database = {
           },
         ]
       }
+      song_change_events: {
+        Row: {
+          changed_at: string
+          id: number
+          is_public: boolean
+          operation: string
+          song_id: string
+          status: Database["public"]["Enums"]["song_status"] | null
+        }
+        Insert: {
+          changed_at?: string
+          id?: never
+          is_public?: boolean
+          operation: string
+          song_id: string
+          status?: Database["public"]["Enums"]["song_status"] | null
+        }
+        Update: {
+          changed_at?: string
+          id?: never
+          is_public?: boolean
+          operation?: string
+          song_id?: string
+          status?: Database["public"]["Enums"]["song_status"] | null
+        }
+        Relationships: []
+      }
       song_versions: {
         Row: {
           chords: string | null
