@@ -197,6 +197,26 @@ export async function updateSong(
   throw new SongConflictError(conflicts, remote as any, columns);
 }
 
+/** Write raw database columns after a manual conflict resolution. */
+export async function saveResolvedSong(input: {
+  id: string;
+  columns: Record<string, any>;
+  expectedUpdatedAt?: string | null;
+}) {
+  const { id, columns, expectedUpdatedAt } = input;
+  let query = supabase
+    .from('songs')
+    .update({ ...columns, updated_at: new Date().toISOString() })
+    .eq('id', id);
+  if (expectedUpdatedAt) query = query.eq('updated_at', expectedUpdatedAt);
+  const { data, error } = await query.select().maybeSingle();
+  if (error) throw error;
+  if (!data) throw new Error('The song changed again while you were resolving. Please review the latest version.');
+  return data;
+}
+
+
+
 
 export async function deleteSong(input: { data: string } | string) {
   const id = typeof input === 'string' ? input : input.data;
