@@ -48,11 +48,12 @@ function SongDetailPage() {
   });
 
   const { id } = Route.useParams();
-  const { data: rawSong } = useQuery({
+  const { data: rawSong, isPending: isSongPending, isFetching: isSongFetching } = useQuery({
     queryKey: songKeys.publicDetail(id as string),
     queryFn: () => getSongPublicById(id as string),
     retry: 1,
   });
+
 
   // Offline fallback: the full chart body kept in IndexedDB by prefetch / "Save offline".
   const [cachedChart, setCachedChart] = useState<CachedChart | null>(null);
