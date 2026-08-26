@@ -81,7 +81,10 @@ function AddSongPage() {
       toast.error('Failed to save song: ' + error.message);
     },
     onSettled: () => {
-      void queryClient.invalidateQueries({ predicate: (query) => [songKeys.adminList[0], songKeys.publicList[0]].includes(String(query.queryKey[0])) });
+      void queryClient.invalidateQueries({ predicate: (query) => {
+        const root = String(query.queryKey[0]);
+        return root === songKeys.adminList[0] || root === songKeys.publicList[0];
+      } });
     }
   });
 
@@ -173,11 +176,11 @@ function AddSongPage() {
           </p>
         </div>
         <Button 
-          disabled={isSaving}
+          disabled={mutation.isPending}
           onClick={handleSave}
           className="rounded-none bg-accent text-primary hover:bg-accent/90 px-8 py-6 font-bold text-[10px] uppercase tracking-widest shadow-xl"
         >
-          <Save className="w-4 h-4 mr-2" /> {isSaving ? 'Saving...' : 'Save to Library'}
+          {mutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />} {mutation.isPending ? 'Saving...' : 'Save to Library'}
         </Button>
       </header>
 

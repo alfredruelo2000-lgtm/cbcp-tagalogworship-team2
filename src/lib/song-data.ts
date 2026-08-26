@@ -46,7 +46,9 @@ export function isPublicSong(song: Partial<WorshipSong>) {
 }
 
 function withoutEmbeddedArtwork(song: WorshipSong): WorshipSong {
-  return song.artworkUrl?.startsWith('data:') ? { ...song, artworkUrl: undefined } : song;
+  if (!song.artworkUrl?.startsWith('data:')) return song;
+  const { artworkUrl: _artworkUrl, ...rest } = song;
+  return rest as WorshipSong;
 }
 
 function upsertSorted(list: WorshipSong[] | undefined, song: WorshipSong) {
