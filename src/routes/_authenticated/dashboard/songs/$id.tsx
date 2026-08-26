@@ -249,6 +249,46 @@ function EditSongPage() {
         </Button>
       </header>
 
+      <SongConflictDialog
+        open={conflicts.length > 0}
+        conflicts={conflicts}
+        saving={resolveMutation.isPending}
+        onCancel={() => setConflicts([])}
+        onDiscard={() => {
+          setConflicts([]);
+          setConflictRemote(null);
+          setConflictMine(null);
+          setIsDirty(false);
+          baselineRef.current = null;
+          queryClient.invalidateQueries({ queryKey: ['song', id] });
+          toast.info('Reloaded the latest saved version');
+        }}
+        onResolve={(resolved) => resolveMutation.mutate(resolved)}
+      />
+
+      {remoteChanged && conflicts.length === 0 && (
+        <div className="border border-amber-500/40 bg-amber-500/10 px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
+          <p className="text-xs text-foreground flex-1">
+            Someone else saved this song while you were editing. Your unsaved changes are intact — saving will merge them
+            and ask you about any field you both changed.
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-none text-[10px] uppercase tracking-widest"
+            onClick={() => {
+              setIsDirty(false);
+              baselineRef.current = null;
+              setRemoteChanged(false);
+              queryClient.invalidateQueries({ queryKey: ['song', id] });
+            }}
+          >
+            Discard mine &amp; reload
+          </Button>
+        </div>
+      )}
+
+
       <div className="max-w-5xl grid grid-cols-1 md:grid-cols-3 gap-12 ml-14">
         <div className="md:col-span-2 space-y-12">
           {/* Metadata Section */}
