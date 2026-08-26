@@ -1,286 +1,272 @@
 import { useState, useMemo } from 'react';
-import { createFileRoute, Link, Outlet } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { getServices } from '@/lib/db-services.functions';
 import { getTeamPublic } from '@/lib/db-public.functions';
-import { TeamRole, TeamMemberStatus } from '@/types/team';
-import { 
-  LayoutGrid, 
-  List, 
-  Search, 
-  Filter, 
-  ChevronRight, 
-  Mic2, 
-  Music, 
-  Headphones, 
-  Plus,
-  Calendar
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { ROLE_SORT_WEIGHT, initials, memberDisplayName, normalizeRole } from '@/lib/team-roles';
+import { Search, X, ChevronRight, Star } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from '@/lib/utils';
 
-export const Route = createFileRoute('/_public/team')({
-  component: TeamDirectoryLayout,
+export const Route = createFileRoute('/_public/team/')({
+  component: TeamDirectoryPage,
+  head: () => ({
+    meta: [
+      { title: 'Worship Team — Ministry Personnel Directory' },
+      {
+        name: 'description',
+        content:
+          'Meet the worship leaders, vocalists, musicians and multimedia volunteers serving in our worship ministry.',
+      },
+      { property: 'og:title', content: 'Worship Team — Ministry Personnel Directory' },
+      {
+        property: 'og:description',
+        content: 'Meet the leaders, vocalists, musicians and multimedia volunteers of our worship ministry.',
+      },
+      { property: 'og:type', content: 'website' },
+      { name: 'twitter:card', content: 'summary_large_image' },
+    ],
+  }),
 });
 
-function TeamDirectoryLayout() {
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+function TeamDirectoryPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [visibilityFilter, setVisibilityFilter] = useState<string>('all');
 
-  const { data: team = [] } = useQuery({
+  const { data: team = [], isPending } = useQuery({
     queryKey: ['team-public'],
-    queryFn: () => getTeamPublic()
+    queryFn: () => getTeamPublic(),
   });
 
-  const { data: services = [] } = useQuery({
-    queryKey: ['services'],
-    queryFn: () => getServices(),
-  });
+  const members = useMemo(
+    () =>
+      (team as any[])
+        .map((m) => ({ ...m, role: normalizeRole(m.primary_role), name: memberDisplayName(m) }))
+        .sort((a, b) => {
+          const orderA = a.display_order ?? 999;
+          const orderB = b.display_order ?? 999;
+          if (orderA !== orderB) return orderA - orderB;
+          const weight = (ROLE_SORT_WEIGHT[a.role] ?? 9) - (ROLE_SORT_WEIGHT[b.role] ?? 9);
+          return weight !== 0 ? weight : a.name.localeCompare(b.name);
+        }),
+    [team],
+  );
 
-  const filteredMembers = useMemo(() => {
-    return team.filter((member: any) => {
-      const fullName = member.full_name || member.fullName || '';
-      const primaryRole = member.primary_role || member.primaryRole || '';
-      
-      const matchesSearch = fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          primaryRole.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesRole = roleFilter === 'all' || primaryRole.toLowerCase() === roleFilter.toLowerCase();
-      const matchesStatus = statusFilter === 'all' || member.status === statusFilter;
-      const matchesVisibility = visibilityFilter === 'all' || 
-                               (visibilityFilter === 'featured' && member.featured) ||
-                               (visibilityFilter === 'standard' && !member.featured);
-      
-      return matchesSearch && matchesRole && matchesStatus && matchesVisibility;
+  const roleCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const m of members) counts.set(m.role, (counts.get(m.role) ?? 0) + 1);
+    return Array.from(counts.entries()).sort(
+      (a, b) => (ROLE_SORT_WEIGHT[a[0]] ?? 9) - (ROLE_SORT_WEIGHT[b[0]] ?? 9),
+    );
+  }, [members]);
+
+  const filtered = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return members.filter((m) => {
+      const matchesRole = roleFilter === 'all' || m.role === roleFilter;
+      if (!matchesRole) return false;
+      if (!q) return true;
+      const haystack = [m.name, m.role, m.instrument, ...(m.skills ?? [])]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(q);
     });
-  }, [team, searchQuery, roleFilter, statusFilter, visibilityFilter]);
-
-  const roles = Array.from(new Set(team.map((m: any) => m.primary_role || m.primaryRole))).filter(Boolean).sort();
-  const statuses = ['Active', 'Available', 'Limited Availability', 'On Break', 'Inactive'];
-
-  const getStatusColor = (status: TeamMemberStatus) => {
-    switch (status) {
-      case 'Active': return 'bg-green-500/10 text-green-600 border-green-200';
-      case 'Available': return 'bg-blue-500/10 text-blue-600 border-blue-200';
-      case 'Limited Availability': return 'bg-yellow-500/10 text-yellow-600 border-yellow-200';
-      case 'On Break': return 'bg-orange-500/10 text-orange-600 border-orange-200';
-      default: return 'bg-slate-500/10 text-slate-600 border-slate-200';
-    }
-  };
-
-  const getUpcomingAssignmentsCount = (memberId: string) => {
-    return services.reduce((count: number, service: any) => {
-      const isAssigned = service.assignments?.some((a: any) => (a.memberId || a.member_id) === memberId);
-      return isAssigned ? count + 1 : count;
-    }, 0);
-  };
+  }, [members, searchQuery, roleFilter]);
 
   return (
-    <div className="container mx-auto px-6 py-20 animate-in fade-in duration-700">
-      <div className="max-w-7xl mx-auto space-y-16">
-        <header className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-          <div className="space-y-4">
-            <Badge variant="outline" className="rounded-none uppercase text-[10px] tracking-widest border-accent/20 text-accent">
-              Ministry Personnel
-            </Badge>
-            <h1 className="font-serif text-5xl lg:text-7xl text-foreground">Worship Team</h1>
-            <p className="text-muted-foreground uppercase tracking-widest text-[10px] font-bold">
-              Directory of those serving in the house of the Lord
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <Button asChild variant="outline" className="rounded-none h-12 px-8 text-[10px] font-bold tracking-[0.2em] uppercase border-accent/20 hover:bg-accent hover:text-primary transition-all">
-              <Link to="/team">
-                <Plus className="w-3 h-3 mr-2" /> Application / Info
-              </Link>
-            </Button>
-          </div>
-        </header>
+    <div className="mx-auto w-full max-w-6xl px-4 pb-16 pt-8 sm:px-6 sm:pt-12">
+      {/* Header */}
+      <header className="space-y-2">
+        <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent">Ministry Personnel</p>
+        <h1 className="font-serif text-3xl leading-tight text-foreground sm:text-5xl">Worship Team</h1>
+        <p className="max-w-xl text-xs text-muted-foreground sm:text-sm">
+          Those who serve with their gifts in the house of the Lord.
+        </p>
+      </header>
 
-        {/* Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 pb-12 border-b border-accent/10">
-          <div className="md:col-span-5 relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search by name or role..." 
-              className="pl-12 h-14 bg-muted/20 border-accent/10 rounded-none focus-visible:ring-accent"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          
-          <div className="md:col-span-3">
-            <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger className="h-14 bg-muted/20 border-accent/10 rounded-none focus:ring-accent uppercase text-[10px] tracking-widest font-bold">
-                <SelectValue placeholder="All Roles" />
-              </SelectTrigger>
-              <SelectContent className="rounded-none border-accent/10">
-                <SelectItem value="all" className="uppercase text-[10px] tracking-widest">All Roles</SelectItem>
-                {roles.map(role => (
-                  <SelectItem key={role as string} value={role as string} className="uppercase text-[10px] tracking-widest">{role as string}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="md:col-span-2">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="h-14 bg-muted/20 border-accent/10 rounded-none focus:ring-accent uppercase text-[10px] tracking-widest font-bold">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent className="rounded-none border-accent/10">
-                <SelectItem value="all" className="uppercase text-[10px] tracking-widest">All Status</SelectItem>
-                {statuses.map(status => (
-                  <SelectItem key={status} value={status} className="uppercase text-[10px] tracking-widest">{status}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="md:col-span-2">
-            <Select value={visibilityFilter} onValueChange={setVisibilityFilter}>
-              <SelectTrigger className="h-14 bg-muted/20 border-accent/10 rounded-none focus:ring-accent uppercase text-[10px] tracking-widest font-bold">
-                <SelectValue placeholder="Visibility" />
-              </SelectTrigger>
-              <SelectContent className="rounded-none border-accent/10">
-                <SelectItem value="all" className="uppercase text-[10px] tracking-widest">All Members</SelectItem>
-                <SelectItem value="featured" className="uppercase text-[10px] tracking-widest">Featured Only</SelectItem>
-                <SelectItem value="standard" className="uppercase text-[10px] tracking-widest">Standard Only</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="md:col-span-2 flex justify-end gap-2">
-            <Button 
-              variant="outline" 
-              size="icon" 
-              className={cn("h-14 w-14 rounded-none border-accent/10 transition-all", viewMode === 'grid' ? "bg-accent text-primary" : "text-accent")}
-              onClick={() => setViewMode('grid')}
+      {/* Sticky toolbar */}
+      <div className="sticky top-[52px] z-20 -mx-4 mt-6 border-b border-accent/10 bg-background/95 px-4 py-3 backdrop-blur sm:top-[60px] sm:-mx-6 sm:px-6">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search name, role or instrument"
+            className="h-10 rounded-none border-accent/10 bg-muted/20 pl-9 pr-9 text-sm focus-visible:ring-accent"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              aria-label="Clear search"
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-accent"
             >
-              <LayoutGrid className="w-4 h-4" />
-            </Button>
-            <Button 
-              variant="outline" 
-              size="icon" 
-              className={cn("h-14 w-14 rounded-none border-accent/10 transition-all", viewMode === 'list' ? "bg-accent text-primary" : "text-accent")}
-              onClick={() => setViewMode('list')}
-            >
-              <List className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Results */}
-        <div>
-          {filteredMembers.length === 0 ? (
-            <div className="text-center py-20 bg-muted/10 border border-dashed border-accent/10">
-              <p className="font-serif italic text-muted-foreground text-xl">No team members match your filters.</p>
-              <Button 
-                variant="link" 
-                className="mt-4 text-accent uppercase tracking-widest text-[10px] font-bold"
-                onClick={() => {
-                  setSearchQuery('');
-                  setRoleFilter('all');
-                  setStatusFilter('all');
-                  setVisibilityFilter('all');
-                }}
-              >
-                Clear all filters
-              </Button>
-            </div>
-          ) : viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-              {filteredMembers.map((member: any) => (
-                <Link 
-                  key={member.id} 
-                  to="/team/$id" 
-                  params={{ id: member.id }}
-                  className="group block"
-                >
-                  <div className="relative aspect-[4/5] overflow-hidden bg-muted mb-4">
-                    <img loading="lazy" decoding="async" 
-                      src={member.avatar_url || member.photoUrl} 
-                      alt={member.full_name || member.fullName} 
-
-                      className="w-full h-full object-cover grayscale transition-all duration-700 group-hover:grayscale-0 group-hover:scale-105"
-                    />
-                    <div className="absolute top-4 right-4">
-                      <Badge className={cn(getStatusColor(member.status), "border backdrop-blur-sm shadow-sm rounded-none text-[8px] uppercase tracking-widest")}>
-                        {member.status}
-                      </Badge>
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <div>
-                      <h3 className="font-serif text-2xl text-foreground group-hover:text-accent transition-colors">{member.full_name || member.fullName}</h3>
-                      <p className="text-[10px] font-bold tracking-[0.2em] text-accent uppercase">{member.primary_role || member.primaryRole}</p>
-
-                    </div>
-                    <div className="flex items-center justify-between text-[9px] uppercase tracking-widest text-muted-foreground border-t border-accent/5 pt-4">
-                      <div className="flex items-center gap-1.5">
-                        <Calendar className="w-3 h-3 text-accent/40" />
-                        <span>{getUpcomingAssignmentsCount(member.id)} Upcoming</span>
-                      </div>
-                      <span className="text-accent/60 group-hover:text-accent transition-colors flex items-center gap-1 font-bold">
-                        View Profile <ChevronRight className="w-3 h-3" />
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {filteredMembers.map((member: any) => (
-                <Link 
-                  key={member.id} 
-                  to="/team/$id" 
-                  params={{ id: member.id }}
-                  className="group flex flex-col sm:flex-row sm:items-center gap-6 p-6 bg-muted/20 border border-accent/5 hover:border-accent/10 transition-all"
-                >
-                  <div className="h-16 w-16 overflow-hidden bg-muted flex-shrink-0">
-                    <img loading="lazy" decoding="async" src={member.avatar_url || member.photoUrl} alt={member.full_name || member.fullName} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-serif text-2xl text-foreground group-hover:text-accent transition-colors truncate">{member.full_name || member.fullName}</h3>
-                    <div className="flex flex-wrap gap-x-6 gap-y-2 mt-1">
-                      <span className="text-[10px] font-bold tracking-widest text-accent uppercase">{member.primary_role || member.primaryRole}</span>
-
-                      <span className="text-[10px] text-muted-foreground uppercase tracking-widest">{member.email}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-8">
-                    <div className="text-right hidden md:block">
-                      <p className="text-[9px] font-bold text-accent uppercase tracking-widest">{getUpcomingAssignmentsCount(member.id)} Upcoming</p>
-                      <p className="text-[9px] text-muted-foreground uppercase tracking-widest">Services Scheduled</p>
-                    </div>
-                    <Badge className={cn(getStatusColor(member.status), "rounded-none text-[8px] uppercase tracking-widest")}>
-                      {member.status}
-                    </Badge>
-                    <ChevronRight className="w-5 h-5 text-accent/20 group-hover:text-accent transition-colors" />
-                  </div>
-                </Link>
-              ))}
-            </div>
+              <X className="h-3.5 w-3.5" />
+            </button>
           )}
         </div>
+
+        {/* Role pills — horizontally scrollable on mobile */}
+        <div className="-mx-4 mt-3 flex snap-x gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden">
+          <RolePill active={roleFilter === 'all'} onClick={() => setRoleFilter('all')} label="All" count={members.length} />
+          {roleCounts.map(([role, count]) => (
+            <RolePill
+              key={role}
+              active={roleFilter === role}
+              onClick={() => setRoleFilter(role)}
+              label={role}
+              count={count}
+            />
+          ))}
+        </div>
       </div>
-      
-      <div className="mt-20 print:hidden">
-        <Outlet />
-      </div>
+
+      {/* Results */}
+      {isPending ? (
+        <ul className="mt-4 divide-y divide-accent/5">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <li key={i} className="flex items-center gap-3 py-3">
+              <div className="h-14 w-14 shrink-0 animate-pulse bg-muted" />
+              <div className="min-w-0 flex-1 space-y-2">
+                <div className="h-3 w-2/5 animate-pulse bg-muted" />
+                <div className="h-2 w-1/4 animate-pulse bg-muted" />
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : filtered.length === 0 ? (
+        <div className="mt-8 border border-dashed border-accent/10 bg-muted/10 py-16 text-center">
+          <p className="font-serif text-lg italic text-muted-foreground">No team members match your search.</p>
+          <button
+            type="button"
+            className="mt-3 text-[10px] font-bold uppercase tracking-widest text-accent"
+            onClick={() => {
+              setSearchQuery('');
+              setRoleFilter('all');
+            }}
+          >
+            Clear filters
+          </button>
+        </div>
+      ) : (
+        <>
+          {/* Compact list (mobile) */}
+          <ul className="mt-2 divide-y divide-accent/5 sm:hidden">
+            {filtered.map((member) => (
+              <li key={member.id}>
+                <Link
+                  to="/team/$id"
+                  params={{ id: member.id }}
+                  className="flex items-center gap-3 py-3 active:bg-muted/30"
+                >
+                  <Avatar member={member} className="h-14 w-14" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-serif text-base leading-tight text-foreground">{member.name}</p>
+                    <p className="truncate text-[10px] font-bold uppercase tracking-widest text-accent">
+                      {member.role}
+                    </p>
+                    {member.instrument && (
+                      <p className="truncate text-[10px] text-muted-foreground">{member.instrument}</p>
+                    )}
+                  </div>
+                  {member.featured && <Star className="h-3 w-3 shrink-0 fill-accent text-accent" />}
+                  <ChevronRight className="h-4 w-4 shrink-0 text-accent/30" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+
+          {/* Card grid (tablet / desktop) */}
+          <div className="mt-6 hidden gap-5 sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {filtered.map((member) => (
+              <Link
+                key={member.id}
+                to="/team/$id"
+                params={{ id: member.id }}
+                className="group block border border-accent/5 bg-muted/10 transition-all hover:border-accent/20 hover:shadow-lg"
+              >
+                <div className="relative aspect-[4/5] overflow-hidden bg-muted">
+                  <Avatar member={member} className="h-full w-full" rounded={false} />
+                  {member.featured && (
+                    <span className="absolute right-2 top-2 bg-background/80 p-1 backdrop-blur">
+                      <Star className="h-3 w-3 fill-accent text-accent" />
+                    </span>
+                  )}
+                </div>
+                <div className="space-y-1 p-4">
+                  <h3 className="truncate font-serif text-lg text-foreground transition-colors group-hover:text-accent">
+                    {member.name}
+                  </h3>
+                  <p className="truncate text-[10px] font-bold uppercase tracking-[0.2em] text-accent">{member.role}</p>
+                  {member.instrument && (
+                    <p className="truncate text-[11px] text-muted-foreground">{member.instrument}</p>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </>
+      )}
     </div>
+  );
+}
+
+function RolePill({
+  label,
+  count,
+  active,
+  onClick,
+}: {
+  label: string;
+  count: number;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'shrink-0 snap-start whitespace-nowrap border px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest transition-colors',
+        active
+          ? 'border-accent bg-accent text-primary'
+          : 'border-accent/15 bg-muted/20 text-muted-foreground hover:text-accent',
+      )}
+    >
+      {label} <span className="opacity-60">{count}</span>
+    </button>
+  );
+}
+
+function Avatar({
+  member,
+  className,
+  rounded = true,
+}: {
+  member: { avatar_url?: string | null; name: string };
+  className?: string;
+  rounded?: boolean;
+}) {
+  if (!member.avatar_url) {
+    return (
+      <div
+        className={cn(
+          'grid shrink-0 place-items-center bg-accent/10 font-serif text-accent',
+          rounded ? 'rounded-sm' : '',
+          className,
+        )}
+      >
+        {initials(member.name)}
+      </div>
+    );
+  }
+  return (
+    <img
+      src={member.avatar_url}
+      alt={member.name}
+      loading="lazy"
+      decoding="async"
+      className={cn('shrink-0 object-cover transition-transform duration-500 group-hover:scale-105', className)}
+    />
   );
 }
