@@ -63,7 +63,7 @@ function SongManagementPage() {
    const [coverFilter, setCoverFilter] = useState<'All' | 'Has Cover' | 'Missing Cover'>('All');
 
   const { data: songs = [], isLoading } = useQuery({
-    queryKey: ['songs'],
+    queryKey: songKeys.adminList,
     queryFn: () => getSongs(),
   });
 
