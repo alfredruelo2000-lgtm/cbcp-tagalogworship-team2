@@ -14,6 +14,7 @@ import NotFound from "@/components/layout/NotFound";
 import { PostLoginRedirect } from "@/components/auth/PostLoginRedirect";
 import { BrandEntrance } from "@/components/layout/BrandEntrance";
 import { setupPwa } from "@/lib/pwa";
+import { usePublicRealtime } from "@/lib/use-public-realtime";
 
 
 import appCss from "../styles.css?url";
@@ -121,6 +122,11 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+function RealtimeSync() {
+  usePublicRealtime();
+  return null;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
@@ -131,6 +137,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <RealtimeSync />
         <PostLoginRedirect />
         <BrandEntrance />
         <Outlet />

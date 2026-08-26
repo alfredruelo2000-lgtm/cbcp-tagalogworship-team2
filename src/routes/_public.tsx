@@ -1,7 +1,6 @@
 import { createFileRoute, Outlet, useLocation, useNavigate } from '@tanstack/react-router';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer, MiniFooter } from '@/components/layout/Footer';
-import { usePublicRealtime } from '@/lib/use-public-realtime';
 import { usePublicSectionVisibility, type PublicSectionKey } from '@/lib/public-section-visibility';
 
 
@@ -21,7 +20,6 @@ const routeSections: Array<[string, PublicSectionKey]> = [
 ];
 
 function PublicLayout() {
-  usePublicRealtime();
   const location = useLocation();
   const navigate = useNavigate();
   const { isVisible, isFetched } = usePublicSectionVisibility();

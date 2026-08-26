@@ -245,7 +245,7 @@ function EditSongPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="rounded-none">
-                      {['Opening', 'Praise', 'Worship', 'Response', 'Communion', 'Offering', 'Closing', 'Special Number'].map(t => (
+                      {['Opening', 'Praise', 'Worship', 'Response', 'Communion', 'Offering', 'Closing'].map(t => (
                         <SelectItem key={t} value={t}>{t}</SelectItem>
                       ))}
                     </SelectContent>
@@ -392,7 +392,6 @@ function EditSongPage() {
                   <SelectContent className="rounded-none">
                     <SelectItem value="Active">Active</SelectItem>
                     <SelectItem value="Learning">Learning</SelectItem>
-                    <SelectItem value="Inactive">Inactive</SelectItem>
                     <SelectItem value="Archived">Archived</SelectItem>
                   </SelectContent>
                 </Select>

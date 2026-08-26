@@ -1,5 +1,5 @@
-export type SongStatus = 'Active' | 'Learning' | 'Inactive' | 'Archived';
-export type SongType = 'Opening' | 'Praise' | 'Worship' | 'Response' | 'Communion' | 'Offering' | 'Closing' | 'Special Number';
+export type SongStatus = 'Active' | 'Learning' | 'Archived';
+export type SongType = 'Opening' | 'Praise' | 'Worship' | 'Response' | 'Communion' | 'Offering' | 'Closing';
 export type SongLanguage = 'English' | 'Filipino/Tagalog' | 'Cebuano/Bisaya' | 'Other';
 export type SongVisibility = 'Public' | 'Team Only' | 'Private';
 
