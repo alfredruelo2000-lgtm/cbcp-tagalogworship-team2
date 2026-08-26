@@ -838,6 +838,41 @@ export type Database = {
       }
     }
     Functions: {
+      ensure_my_profile: {
+        Args: never
+        Returns: {
+          auth_provider: string | null
+          avatar_url: string | null
+          bio: string | null
+          created_at: string | null
+          date_joined: string | null
+          display_order: number | null
+          email: string
+          emergency_contact: string | null
+          featured: boolean | null
+          full_name: string
+          groups: string[] | null
+          id: string
+          instrument: string | null
+          internal_notes: string | null
+          is_public: boolean | null
+          phone: string | null
+          primary_role: string | null
+          public_name: string | null
+          show_public_contact: boolean
+          skills: string[] | null
+          status: Database["public"]["Enums"]["member_status"] | null
+          team_member_id: string | null
+          updated_at: string | null
+          vocal_range: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "profiles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

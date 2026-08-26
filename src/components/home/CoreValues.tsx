@@ -19,22 +19,22 @@ export function CoreValues() {
   ];
 
   return (
-    <section className="py-24 px-6 bg-muted/20">
+    <section className="bg-muted/20 px-5 py-12 sm:px-6 sm:py-20 lg:py-24">
       <div className="mx-auto max-w-7xl">
-        <div className="text-center mb-16 space-y-4">
+        <div className="mb-8 space-y-3 text-center sm:mb-14">
           <span className="text-[10px] font-bold tracking-[0.3em] text-accent uppercase">Our Foundation</span>
-          <h2 className="text-4xl font-serif text-foreground">What Shapes Our Worship</h2>
+          <h2 className="font-serif text-foreground text-[clamp(1.75rem,7vw,2.25rem)]">What Shapes Our Worship</h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
+        <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 sm:gap-10 lg:grid-cols-4 lg:gap-12">
           {values.map((value, index) => (
             <div 
               key={value.title} 
               className="group animate-in fade-in slide-in-from-bottom-4 duration-700"
               style={{ animationDelay: `${index * 150}ms` }}
             >
-              <div className="mb-6 h-px w-12 bg-accent/30 group-hover:w-full transition-all duration-500" />
-              <h3 className="text-xl font-serif mb-3 text-foreground">{value.title}</h3>
+              <div className="mb-4 h-px w-12 bg-accent/30 transition-all duration-500 group-hover:w-full sm:mb-6" />
+              <h3 className="mb-2 font-serif text-lg text-foreground sm:mb-3 sm:text-xl">{value.title}</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 {value.description}
               </p>

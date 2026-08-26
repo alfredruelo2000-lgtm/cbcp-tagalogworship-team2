@@ -8,7 +8,8 @@ import logoAsset from "@/assets/cbcp-logo.png.asset.json";
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const { isMinistryAdmin } = useAuth();
+  const { session, isMinistryAdmin } = useAuth();
+  const showDashboard = Boolean(session);
   const { navItems } = usePublicSectionVisibility();
 
   return (
@@ -40,7 +41,7 @@ export function Navbar() {
           </div>
           <div className="h-4 w-px bg-border" />
           <Button variant="outline" size="sm" className="rounded-none border-foreground font-bold tracking-widest uppercase text-[10px]" asChild>
-            <Link to={isMinistryAdmin ? "/dashboard" : "/login"}>{isMinistryAdmin ? "DASHBOARD" : "TEAM LOGIN"}</Link>
+            <Link to={showDashboard ? "/dashboard" : "/login"}>{showDashboard ? "DASHBOARD" : "TEAM LOGIN"}</Link>
           </Button>
         </div>
 
@@ -59,8 +60,8 @@ export function Navbar() {
 
       {/* Mobile Navigation */}
       {isOpen && (
-        <div className="fixed inset-0 top-16 z-40 flex flex-col overflow-y-auto bg-background lg:hidden animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="flex flex-col px-5 pb-8 pt-2">
+        <div className="fixed inset-0 top-16 z-40 flex flex-col overflow-y-auto overscroll-contain bg-background pb-[env(safe-area-inset-bottom)] lg:hidden animate-in fade-in slide-in-from-top-2 duration-150">
+          <div className="flex flex-col px-5 pb-8 pt-1">
             {navItems.map((link) => (
               <Link
                 key={link.key}
@@ -68,7 +69,7 @@ export function Navbar() {
                 onClick={() => setIsOpen(false)}
                 activeProps={{ className: "text-accent" }}
                 activeOptions={{ exact: link.to === "/" }}
-                className="flex min-h-[52px] items-center justify-between border-b border-border/60 text-[13px] font-bold tracking-[0.15em] text-foreground transition-colors active:bg-muted/40"
+                className="flex min-h-[48px] items-center justify-between border-b border-border/60 text-[12px] font-bold tracking-[0.14em] text-foreground transition-colors active:bg-muted/40"
               >
                 <span className="flex items-center gap-3">
                   <span className="h-4 w-px bg-transparent [.text-accent_&]:bg-accent" />
@@ -77,9 +78,9 @@ export function Navbar() {
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </Link>
             ))}
-            <Button className="mt-6 h-12 w-full rounded-none font-bold uppercase tracking-widest" asChild>
-              <Link to={isMinistryAdmin ? "/dashboard" : "/login"} onClick={() => setIsOpen(false)}>
-                {isMinistryAdmin ? "DASHBOARD" : "TEAM LOGIN"}
+            <Button className="mt-5 h-12 w-full rounded-none font-bold uppercase tracking-widest" asChild>
+              <Link to={showDashboard ? "/dashboard" : "/login"} onClick={() => setIsOpen(false)}>
+                {showDashboard ? "DASHBOARD" : "TEAM LOGIN"}
               </Link>
             </Button>
           </div>

@@ -23,12 +23,13 @@ export function HeroSection({
 }) {
   if (variant === "full") {
     return (
-      <section className="relative h-[90vh] min-h-[600px] w-full overflow-hidden flex items-center">
+      <section className="relative flex min-h-[62vh] w-full items-center overflow-hidden py-16 sm:min-h-[70vh] lg:h-[86vh] lg:min-h-[600px] lg:py-0">
         {imageSrc && (
           <div className="absolute inset-0 z-0">
             <img
               src={imageSrc}
-              alt="Worship Hero"
+              alt=""
+              fetchPriority="high"
               className="h-full w-full object-cover"
             />
             <div className="absolute inset-0 bg-primary/60 mix-blend-multiply" />
@@ -36,25 +37,25 @@ export function HeroSection({
           </div>
         )}
         
-        <div className="relative z-10 mx-auto max-w-7xl px-6 text-center text-primary-foreground">
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-5 text-center text-primary-foreground sm:px-6">
           {tagline && (
-            <span className="mb-6 inline-block text-[10px] font-bold tracking-[0.4em] text-accent uppercase animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <span className="mb-4 inline-block text-[9px] font-bold tracking-[0.35em] text-accent uppercase animate-in fade-in slide-in-from-bottom-4 duration-700 sm:mb-6 sm:text-[10px] sm:tracking-[0.4em]">
               {tagline}
             </span>
           )}
-          <h1 className="font-serif text-5xl font-normal leading-[1.1] tracking-tight md:text-7xl lg:text-8xl animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-200">
+          <h1 className="font-serif font-normal leading-[1.08] tracking-tight text-[clamp(2.1rem,9vw,4rem)] md:text-7xl lg:text-8xl animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-200">
             {title}
           </h1>
           {subtitle && (
-            <p className="mt-8 mx-auto max-w-2xl text-lg md:text-xl leading-relaxed opacity-90 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
+            <p className="mx-auto mt-4 max-w-2xl text-[0.95rem] leading-relaxed opacity-90 sm:mt-8 sm:text-lg md:text-xl animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
               {subtitle}
             </p>
           )}
-          <div className="mt-12 flex flex-wrap justify-center gap-6 animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-400">
+          <div className="mt-7 flex flex-col gap-3 sm:mt-12 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-6 animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-400">
             {primaryCtaText && (
               <Link
                 to={primaryCtaTo as any}
-                className="inline-flex h-14 items-center justify-center bg-accent px-10 text-[10px] font-bold tracking-[0.2em] text-accent-foreground uppercase transition-all hover:bg-accent/90 hover:scale-105 active:scale-95 shadow-lg"
+                className="inline-flex h-12 w-full items-center justify-center bg-accent px-8 text-[10px] font-bold tracking-[0.2em] text-accent-foreground uppercase shadow-lg transition-all hover:bg-accent/90 active:scale-95 sm:h-14 sm:w-auto sm:px-10 sm:hover:scale-105"
               >
                 {primaryCtaText}
               </Link>
@@ -62,7 +63,7 @@ export function HeroSection({
             {secondaryCtaText && (
               <Link
                 to={secondaryCtaTo as any}
-                className="inline-flex h-14 items-center justify-center border border-primary-foreground/30 bg-white/10 backdrop-blur-sm px-10 text-[10px] font-bold tracking-[0.2em] text-primary-foreground uppercase transition-all hover:bg-white/20 hover:scale-105 active:scale-95"
+                className="inline-flex h-12 w-full items-center justify-center border border-primary-foreground/30 bg-white/10 px-8 text-[10px] font-bold tracking-[0.2em] text-primary-foreground uppercase backdrop-blur-sm transition-all hover:bg-white/20 active:scale-95 sm:h-14 sm:w-auto sm:px-10 sm:hover:scale-105"
               >
                 {secondaryCtaText}
               </Link>
