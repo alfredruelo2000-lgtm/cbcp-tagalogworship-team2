@@ -32,11 +32,14 @@ function EditTeamMemberPage() {
 
   const [formData, setFormData] = useState({
     full_name: '',
+    public_name: '',
     email: '',
     primary_role: '',
     instruments: '',
+    bio: '',
     status: 'Active',
     is_public: true,
+    show_public_contact: false,
     avatar_url: ''
   });
 
@@ -44,15 +47,19 @@ function EditTeamMemberPage() {
     if (member) {
       setFormData({
         full_name: member.full_name || '',
+        public_name: (member as any).public_name || '',
         email: member.email || '',
         primary_role: member.primary_role || '',
         instruments: Array.isArray(member.instrument) ? member.instrument.join(', ') : (member.instrument || ''),
+        bio: member.bio || '',
         status: member.status || 'Active',
         is_public: member.is_public ?? true,
+        show_public_contact: (member as any).show_public_contact ?? false,
         avatar_url: member.avatar_url || ''
       });
     }
   }, [member]);
+
 
   const mutation = useMutation({
     mutationFn: (updates: any) => updateMember({ data: { id: id as string, updates } }),
