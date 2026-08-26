@@ -57,18 +57,26 @@ function SongDetailPage() {
 
   // Offline fallback: the full chart body kept in IndexedDB by prefetch / "Save offline".
   const [cachedChart, setCachedChart] = useState<CachedChart | null>(null);
+  const [cacheChecked, setCacheChecked] = useState(false);
   useEffect(() => {
     if (rawSong) { void cacheSongsOffline([rawSong]); return; }
     let active = true;
-    void getCachedSongChart(id as string).then((chart) => { if (active && chart) setCachedChart(chart); });
+    setCacheChecked(false);
+    void getCachedSongChart(id as string)
+      .then((chart) => { if (active && chart) setCachedChart(chart); })
+      .finally(() => { if (active) setCacheChecked(true); });
     return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, rawSong]);
 
   const song = useMemo(
-    () => (rawSong ?? (!online ? cachedChart : null)) as unknown as WorshipSong,
-    [rawSong, cachedChart, online],
+    () => (rawSong ?? cachedChart) as unknown as WorshipSong,
+    [rawSong, cachedChart],
   );
+
+  // Never flash "Song not found" while the chart is still resolving (network or IndexedDB).
+  const isResolving = isSongPending || isSongFetching || !cacheChecked;
+
   
   const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   
