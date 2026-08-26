@@ -550,7 +550,7 @@ function StatusSelect({
   const value = status && (MEMBER_STATUSES as readonly string[]).includes(status) ? status : 'Active';
 
   return (
-    <Select value={value} onValueChange={onChange} disabled={disabled}>
+    <Select value={value} onValueChange={onChange} disabled={disabled ?? false}>
       <SelectTrigger className="h-8 w-[150px] rounded-none border-accent/10 bg-background px-2 text-[9px] font-bold uppercase tracking-widest shadow-none focus:ring-accent">
         <SelectValue />
       </SelectTrigger>
