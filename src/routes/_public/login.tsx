@@ -70,11 +70,10 @@ function LoginPage() {
 
       toast.success('Welcome back');
       
-      if (search.redirect) {
-        window.location.href = search.redirect;
-      } else {
-        navigate({ to: '/dashboard' });
-      }
+      const target = search.redirect?.startsWith('/') && !search.redirect.startsWith('//')
+        ? search.redirect
+        : '/dashboard';
+      navigate({ to: target, replace: true });
     } catch (error: any) {
       toast.error(error.message || 'Failed to sign in');
     } finally {
