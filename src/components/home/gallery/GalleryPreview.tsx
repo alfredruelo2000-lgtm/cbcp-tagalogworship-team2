@@ -16,18 +16,20 @@ export function GalleryPreview() {
     return base.slice(0, 4);
   }, [media]);
 
+  if (displayMedia.length === 0) return null;
+
   return (
-    <section className="py-24 px-6 bg-muted/20">
+    <section className="bg-muted/20 px-5 py-12 sm:px-6 sm:py-20 lg:py-24">
       <div className="mx-auto max-w-7xl">
-        <div className="flex justify-between items-end mb-12">
-            <div className="space-y-4">
+        <div className="mb-6 flex items-end justify-between gap-4 sm:mb-12">
+            <div className="min-w-0 space-y-2 sm:space-y-4">
               <span className="text-[10px] font-bold tracking-[0.3em] text-accent uppercase">Ministry Highlights</span>
-              <h2 className="text-4xl font-serif text-foreground">Worship Moments</h2>
+              <h2 className="font-serif text-foreground text-[clamp(1.6rem,6.5vw,2.25rem)]">Worship Moments</h2>
             </div>
             <Link to="/media" className="text-[10px] font-bold tracking-[0.2em] text-accent uppercase border-b border-accent/30 pb-1">View Media</Link>
         </div>
         
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-4 md:grid-cols-4">
            {displayMedia.map((item: any, i) => (
              <Link 
                key={item.id} 

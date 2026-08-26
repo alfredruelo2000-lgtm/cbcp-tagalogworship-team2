@@ -23,19 +23,19 @@ export function WorshipSetlist() {
   const getSongTitle = (songId: string) => songs.find((s: any) => s.id === songId)?.title || "Unknown Song";
 
   return (
-    <section className="py-24 px-6 bg-background">
+    <section className="bg-background px-5 py-12 sm:px-6 sm:py-20 lg:py-24">
       <div className="mx-auto max-w-4xl">
-        <div className="flex flex-col items-center mb-16">
+        <div className="mb-6 flex flex-col items-center text-center sm:mb-12">
           <span className="text-[10px] font-bold tracking-[0.3em] text-accent uppercase">Current Focus</span>
-          <h2 className="text-4xl font-serif text-foreground mt-4">This Week's Worship Set</h2>
+          <h2 className="mt-3 font-serif text-foreground text-[clamp(1.6rem,6.5vw,2.25rem)]">This Week's Worship Set</h2>
           <p className="text-muted-foreground text-sm mt-2 uppercase tracking-widest">{upcomingService.title}</p>
         </div>
 
         <div className="divide-y divide-accent/10">
           {setlistSongs.map((item: any) => (
-            <div key={item.id} className="flex justify-between items-center py-8">
+            <div key={item.id} className="flex items-center justify-between gap-4 py-4 sm:py-6">
               <div>
-                <h4 className="text-xl font-serif text-foreground">{getSongTitle(item.song_id)}</h4>
+                <h4 className="font-serif text-base text-foreground sm:text-xl">{getSongTitle(item.song_id)}</h4>
                 <p className="text-[10px] font-bold tracking-[0.2em] text-muted-foreground uppercase mt-1">{item.category}</p>
               </div>
               <div className="text-[10px] font-bold tracking-[0.2em] text-accent uppercase">
@@ -45,7 +45,7 @@ export function WorshipSetlist() {
           ))}
         </div>
 
-        <div className="mt-12 text-center">
+        <div className="mt-8 text-center sm:mt-12">
            <Link 
             to="/setlists/$id" 
             params={{ id: upcomingService.id }}
