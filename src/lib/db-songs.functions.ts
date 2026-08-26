@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { WorshipSong, SongLanguage, SongType, SongStatus } from "@/types/songs";
+import { SONG_FIELD_LABELS, SongConflictError, changedFields, sameValue, type SongFieldConflict } from "@/lib/song-conflicts";
 
 export interface SongVersion {
   id: string;
