@@ -13,6 +13,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createSong, enhanceChordParsing } from '@/lib/db-songs.functions';
 import { toast } from 'sonner';
 import { WorshipSong } from '@/types/songs';
+import { cacheSongChart } from '@/lib/offline';
+import { isPublicSong, songKeys, syncSongCaches } from '@/lib/song-data';
 import { useAuth } from '@/hooks/use-auth';
 import { supabase } from '@/integrations/supabase/client';
 import { ImageUpload } from '@/components/ui/ImageUpload';
@@ -25,7 +27,6 @@ function AddSongPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { loading, isPending } = useAuth();
-  const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState<string | null>(null);
   const [tempId] = useState(() => crypto.randomUUID());
   
@@ -50,8 +51,9 @@ function AddSongPage() {
   const mutation = useMutation({
     mutationFn: createSong,
     onMutate: async (newSong: Partial<WorshipSong>) => {
-      await queryClient.cancelQueries({ queryKey: ['songs'] });
-      const previousSongs = queryClient.getQueryData(['songs']);
+      await Promise.all([queryClient.cancelQueries({ queryKey: songKeys.adminList }), queryClient.cancelQueries({ queryKey: songKeys.publicList })]);
+      const previousSongs = queryClient.getQueryData(songKeys.adminList);
+      const previousPublicSongs = queryClient.getQueryData(songKeys.publicList);
       
       const optimisticSong = {
         id: tempId,
@@ -61,21 +63,25 @@ function AddSongPage() {
         updatedAt: new Date().toISOString()
       };
 
-      queryClient.setQueryData(['songs'], (old: WorshipSong[]) => [optimisticSong, ...(old || [])]);
+      syncSongCaches(queryClient, optimisticSong as WorshipSong);
       
-      return { previousSongs };
+      return { previousSongs, previousPublicSongs };
     },
-    onSuccess: () => {
+    onSuccess: async (savedSong) => {
+      queryClient.setQueryData<WorshipSong[]>(songKeys.adminList, (old) => old?.filter((song) => song.id !== tempId));
+      queryClient.setQueryData<WorshipSong[]>(songKeys.publicList, (old) => old?.filter((song) => song.id !== tempId));
+      syncSongCaches(queryClient, savedSong);
+      if (isPublicSong(savedSong)) await cacheSongChart(savedSong);
       toast.success('Song added to library');
       navigate({ to: '/dashboard/songs' });
     },
     onError: (error: any, newSong, context: any) => {
-      queryClient.setQueryData(['songs'], context.previousSongs);
+      queryClient.setQueryData(songKeys.adminList, context.previousSongs);
+      queryClient.setQueryData(songKeys.publicList, context.previousPublicSongs);
       toast.error('Failed to save song: ' + error.message);
-      setIsSaving(false);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['songs'] });
+      void queryClient.invalidateQueries({ predicate: (query) => [songKeys.adminList[0], songKeys.publicList[0]].includes(String(query.queryKey[0])) });
     }
   });
 
@@ -84,7 +90,7 @@ function AddSongPage() {
       toast.error('Song title is required');
       return;
     }
-    setIsSaving(true);
+    if (mutation.isPending) return;
     mutation.mutate(formData);
   };
 

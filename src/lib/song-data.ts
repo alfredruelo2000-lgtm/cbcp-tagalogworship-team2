@@ -1,3 +1,4 @@
+import type { QueryClient } from '@tanstack/react-query';
 import type { WorshipSong, SongLanguage, SongStatus, SongType } from '@/types/songs';
 
 export const songKeys = {
@@ -42,4 +43,33 @@ export function mapSongRow(row: Record<string, any>): WorshipSong {
 
 export function isPublicSong(song: Partial<WorshipSong>) {
   return song.status === 'Active' && (song.isPublic === true || song.visibility === 'Public');
+}
+
+function withoutEmbeddedArtwork(song: WorshipSong): WorshipSong {
+  return song.artworkUrl?.startsWith('data:') ? { ...song, artworkUrl: undefined } : song;
+}
+
+function upsertSorted(list: WorshipSong[] | undefined, song: WorshipSong) {
+  const next = [...(list ?? []).filter((item) => item.id !== song.id), withoutEmbeddedArtwork(song)];
+  return next.sort((a, b) => a.title.localeCompare(b.title));
+}
+
+/** Reconciles every in-memory song surface after a canonical database write. */
+export function syncSongCaches(queryClient: QueryClient, song: WorshipSong) {
+  queryClient.setQueryData<WorshipSong[]>(songKeys.adminList, (old) => upsertSorted(old, song));
+  queryClient.setQueryData(songKeys.detail(song.id), song);
+  if (isPublicSong(song)) {
+    queryClient.setQueryData<WorshipSong[]>(songKeys.publicList, (old) => upsertSorted(old, song));
+    queryClient.setQueryData(songKeys.publicDetail(song.id), song);
+  } else {
+    queryClient.setQueryData<WorshipSong[]>(songKeys.publicList, (old) => old?.filter((item) => item.id !== song.id));
+    queryClient.removeQueries({ queryKey: songKeys.publicDetail(song.id), exact: true });
+  }
+}
+
+export function removeSongFromCaches(queryClient: QueryClient, id: string) {
+  queryClient.setQueryData<WorshipSong[]>(songKeys.adminList, (old) => old?.filter((item) => item.id !== id));
+  queryClient.setQueryData<WorshipSong[]>(songKeys.publicList, (old) => old?.filter((item) => item.id !== id));
+  queryClient.removeQueries({ queryKey: songKeys.detail(id), exact: true });
+  queryClient.removeQueries({ queryKey: songKeys.publicDetail(id), exact: true });
 }
