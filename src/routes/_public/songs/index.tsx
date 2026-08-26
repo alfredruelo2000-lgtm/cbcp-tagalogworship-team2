@@ -7,11 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Search, LayoutGrid, List, Filter, Music } from 'lucide-react';
 import { createFileRoute } from '@tanstack/react-router';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { songKeys } from '@/lib/song-data';
 
 type SortOption = 'title-asc' | 'title-desc' | 'recent' | 'most-used' | 'artist';
 type ViewMode = 'grid' | 'list';
 type GroupMode = 'none' | 'language' | 'alphabetical';
-const languages = ['All', 'Tagalog', 'English', 'Taglish', 'Other'] as const;
+const languages = ['All', 'Tagalog', 'English', 'Other'] as const;
 const displayLanguage = (value?: string) => value === 'Filipino/Tagalog' ? 'Tagalog' : value === 'Cebuano/Bisaya' ? 'Other' : value || 'Unclassified';
 
 export const Route = createFileRoute('/_public/songs/')({
@@ -41,7 +42,7 @@ function SongLibraryPage() {
   useEffect(() => { setMounted(true); }, []);
   useEffect(() => { if (!viewTouched) setViewMode('list'); }, [isMobile, viewTouched]);
   const pickView = (mode: ViewMode) => { setViewTouched(true); setViewMode(mode); };
-  const { data: songs = [], isLoading } = useQuery({ queryKey: ['songs-public'], queryFn: getSongsPublic });
+  const { data: songs = [], isLoading } = useQuery({ queryKey: songKeys.publicList, queryFn: getSongsPublic });
   const allThemes = useMemo(() => ['All', ...Array.from(new Set(songs.flatMap((s: any) => s.themes || []))).sort()], [songs]);
   const allKeys = useMemo(() => ['All', ...Array.from(new Set(songs.map((s: any) => s.defaultKey).filter(Boolean))).sort()], [songs]);
   const counts = useMemo(() => Object.fromEntries(languages.map((lang) => [lang, lang === 'All' ? songs.length : songs.filter((s: any) => displayLanguage(s.language) === lang).length])), [songs]);

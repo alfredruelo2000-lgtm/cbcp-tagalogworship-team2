@@ -74,6 +74,7 @@ export async function createSong(input: { data: Partial<WorshipSong> } | Partial
     sheet_music_url: (song as any).sheetMusicUrl,
      external_resources: (song as any).externalResources,
      artwork_url: song.artworkUrl,
+    ccli_number: song.ccliNumber,
     lyrics: song.lyrics,
     chords: song.chords,
   };
@@ -113,6 +114,7 @@ export async function updateSong(input: { data: { id: string, song: Partial<Wors
     sheet_music_url: (song as any).sheetMusicUrl || song.externalResources?.sheetMusicUrl,
      external_resources: song.externalResources,
      artwork_url: song.artworkUrl,
+    ccli_number: song.ccliNumber,
     lyrics: song.lyrics,
     chords: song.chords,
     updated_at: new Date().toISOString(),
