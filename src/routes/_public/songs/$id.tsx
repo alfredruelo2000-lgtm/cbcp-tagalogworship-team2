@@ -495,6 +495,19 @@ function SongDetailPage() {
 
 
   if (!song) {
+    if (isResolving) {
+      return (
+        <div className="container mx-auto animate-pulse space-y-6 px-6 py-16">
+          <div className="h-4 w-28 bg-muted/40" />
+          <div className="h-10 w-2/3 max-w-md bg-muted/30" />
+          <div className="space-y-3 pt-6">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div key={i} className="h-4 bg-muted/20" style={{ width: `${90 - (i % 4) * 12}%` }} />
+            ))}
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="container mx-auto px-6 py-20 text-center">
         <h2 className="font-serif text-3xl">Song not found</h2>
@@ -503,6 +516,7 @@ function SongDetailPage() {
         </Button>
       </div>
     );
+
   }
 
   const semitones = getSemitoneDifference(song.defaultKey || 'C', currentKey);
