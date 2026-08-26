@@ -23,7 +23,7 @@ export async function getSongs(): Promise<WorshipSong[]> {
   if (error) throw error;
 
   const rows = (data ?? []) as unknown as Record<string, any>[];
-  const ids = rows.map((song) => song.id).filter(Boolean);
+  const ids = rows.map((song) => song['id']).filter(Boolean);
   let artworkById = new Map<string, string>();
   if (ids.length > 0) {
     const { data: artworkRows } = await supabase
@@ -34,7 +34,7 @@ export async function getSongs(): Promise<WorshipSong[]> {
       .not('artwork_url', 'like', 'data:%');
     artworkById = new Map((artworkRows ?? []).map((row: any) => [row.id, row.artwork_url]));
   }
-  return rows.map((row) => mapSongRow({ ...row, artwork_url: artworkById.get(row.id) }));
+  return rows.map((row) => mapSongRow({ ...row, artwork_url: artworkById.get(row['id']) }));
 }
 
 export async function getSongById(id: string): Promise<WorshipSong | null> {
