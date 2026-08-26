@@ -44,19 +44,6 @@ export default defineConfig({
               },
             },
             {
-              // Song / setlist reads: serve the last good copy when the network is gone.
-              urlPattern: ({ url, request }) =>
-                request.method === "GET" &&
-                /\/rest\/v1\/(songs|services|service_items)/.test(url.pathname + url.search),
-              handler: "NetworkFirst",
-              options: {
-                cacheName: "cbcp-chart-data",
-                networkTimeoutSeconds: 4,
-                expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 60 },
-                cacheableResponse: { statuses: [0, 200] },
-              },
-            },
-            {
               // Remote artwork/audio referenced by charts (warmed by Save offline).
               urlPattern: ({ request, sameOrigin }) =>
                 !sameOrigin && ["image", "audio"].includes(request.destination),

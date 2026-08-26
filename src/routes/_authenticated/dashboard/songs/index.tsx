@@ -73,8 +73,8 @@ function SongManagementPage() {
     return ['All', ...Array.from(themes).sort()];
   }, [songs]);
 
-  const languages = ['All', 'Tagalog', 'English', 'Taglish', 'Unclassified'];
-  const displayLanguage = (value?: string) => value === 'Filipino/Tagalog' ? 'Tagalog' : value || 'Unclassified';
+  const languages = ['All', 'Tagalog', 'English', 'Other', 'Unclassified'];
+  const displayLanguage = (value?: string) => value === 'Filipino/Tagalog' ? 'Tagalog' : value === 'Cebuano/Bisaya' ? 'Other' : value || 'Unclassified';
 
   const languageCounts = useMemo(() => Object.fromEntries(languages.map(lang => [lang, lang === 'All' ? songs.length : songs.filter(song => displayLanguage(song.language) === lang).length])), [songs]);
 
@@ -203,10 +203,10 @@ function SongManagementPage() {
             </DropdownMenuContent>
           </DropdownMenu>
           
-          {(search || themeFilter !== 'All' || languageFilter !== 'All') && (
+          {(search || themeFilter !== 'All' || languageFilter !== 'All' || coverFilter !== 'All') && (
             <Button 
               variant="ghost" 
-              onClick={() => { setSearch(''); setThemeFilter('All'); setLanguageFilter('All'); }}
+              onClick={() => { setSearch(''); setThemeFilter('All'); setLanguageFilter('All'); setCoverFilter('All'); }}
               className="rounded-none px-4 font-bold text-[10px] uppercase tracking-widest text-accent"
             >
               <X className="w-3 h-3 mr-2" /> Reset

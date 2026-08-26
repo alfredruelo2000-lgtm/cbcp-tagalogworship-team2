@@ -12,7 +12,7 @@ import { songKeys } from '@/lib/song-data';
 type SortOption = 'title-asc' | 'title-desc' | 'recent' | 'most-used' | 'artist';
 type ViewMode = 'grid' | 'list';
 type GroupMode = 'none' | 'language' | 'alphabetical';
-const languages = ['All', 'Tagalog', 'English', 'Taglish', 'Other'] as const;
+const languages = ['All', 'Tagalog', 'English', 'Other'] as const;
 const displayLanguage = (value?: string) => value === 'Filipino/Tagalog' ? 'Tagalog' : value === 'Cebuano/Bisaya' ? 'Other' : value || 'Unclassified';
 
 export const Route = createFileRoute('/_public/songs/')({
