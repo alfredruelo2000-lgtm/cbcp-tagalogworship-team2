@@ -4,6 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, ListMusic } from 'lucide-react';
 import { getSetlist, type SetlistItem } from '@/lib/db-setlists.functions';
 import { cacheSongsOffline } from '@/lib/offline';
+import { getLocalSetlistKey } from '@/lib/setlist-key-prefs';
+
 
 /**
  * Reads the `?setlist=` context of a song chart and exposes the ordered
@@ -37,7 +39,8 @@ export function useSetlistSequence(songId: string) {
       navigate({
         to: '/songs/$id',
         params: { id: item.song_id },
-        search: { key: item.selected_key || undefined, setlist: setlistId } as never,
+        search: { key: getLocalSetlistKey(setlistId, item.id) || item.selected_key || undefined, setlist: setlistId } as never,
+
       });
     },
     [navigate, setlistId],

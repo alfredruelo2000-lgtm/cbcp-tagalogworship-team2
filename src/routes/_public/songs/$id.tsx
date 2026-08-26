@@ -18,6 +18,8 @@ import { AddToSetlistButton } from '@/components/setlists/AddToSetlistDialog';
 import { SetlistSongNav, useSetlistSequence, useSetlistSwipe, useSetlistNeighborPrefetch } from '@/components/setlists/SetlistNav';
 import { useSetlistAbilities } from '@/components/setlists/setlist-hooks';
 import { updateSetlistItem } from '@/lib/db-setlists.functions';
+import { getLocalSetlistKey, setLocalSetlistKey } from '@/lib/setlist-key-prefs';
+
 import { useOnlineStatus, cacheSongsOffline, getCachedSongChart, type CachedChart } from '@/lib/offline';
 
 export const Route = createFileRoute('/_public/songs/$id')({
@@ -66,25 +68,31 @@ function SongDetailPage() {
   const sequence = useSetlistSequence(id as string);
   const { canEdit } = useSetlistAbilities();
   const online = useOnlineStatus();
+  const setlistId = sequence.setlist?.id ?? null;
   const canSaveSetlistKey = Boolean(sequence.current) && canEdit(sequence.setlist ?? null);
   const setlistItemKey = sequence.current?.selected_key ?? null;
 
-  // Moving to another song in the setlist (or opening one) adopts that song's setlist key.
+  // Opening (or swiping to) a setlist song adopts that song's setlist key — never the library default.
   useEffect(() => {
     const fromUrl = new URLSearchParams(window.location.search).get('key');
-    const nextKey = setlistItemKey || fromUrl || song?.defaultKey;
+    const local = setlistId && sequence.current ? getLocalSetlistKey(setlistId, sequence.current.id) : null;
+    const nextKey = local || setlistItemKey || fromUrl || song?.defaultKey;
     if (nextKey) setCurrentKey(nextKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, setlistItemKey]);
+  }, [id, setlistItemKey, setlistId, sequence.current?.id]);
 
-  // Any later key change is saved straight back to this setlist (queued while offline).
+  // Any later key change sticks to this setlist item (device-local instantly, server when allowed).
   const savedSetlistKey = useRef<string | null>(null);
   useEffect(() => {
-    if (!canSaveSetlistKey || !sequence.current) return;
-    if (!currentKey || currentKey === setlistItemKey) { savedSetlistKey.current = currentKey; return; }
+    const item = sequence.current;
+    if (!item || !setlistId || !currentKey) return;
     if (savedSetlistKey.current === currentKey) return;
+    const local = getLocalSetlistKey(setlistId, item.id);
+    if (currentKey === (local || setlistItemKey)) { savedSetlistKey.current = currentKey; return; }
     savedSetlistKey.current = currentKey;
-    const itemId = sequence.current.id;
+    setLocalSetlistKey(setlistId, item.id, currentKey);
+    if (!canSaveSetlistKey) return;
+    const itemId = item.id;
     const timer = setTimeout(() => {
       void updateSetlistItem(itemId, { selected_key: currentKey })
         .then(() => toast.success(online ? `Key saved to setlist (${currentKey})` : `Key saved on this device (${currentKey})`))
@@ -92,7 +100,8 @@ function SongDetailPage() {
     }, 600);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentKey, canSaveSetlistKey, setlistItemKey]);
+  }, [currentKey, canSaveSetlistKey, setlistItemKey, setlistId, sequence.current?.id]);
+
 
   const goPrevious = useCallback(() => sequence.goTo(sequence.previous), [sequence]);
   const goNext = useCallback(() => sequence.goTo(sequence.next), [sequence]);
