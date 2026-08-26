@@ -37,6 +37,8 @@ function SongLibraryPage() {
   const [themeFilter, setThemeFilter] = useState('All');
   const [keyFilter, setKeyFilter] = useState('All');
   const [showFilters, setShowFilters] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
   useEffect(() => { if (!viewTouched) setViewMode('list'); }, [isMobile, viewTouched]);
   const pickView = (mode: ViewMode) => { setViewTouched(true); setViewMode(mode); };
   const { data: songs = [], isLoading } = useQuery({ queryKey: ['songs-public'], queryFn: getSongsPublic });
@@ -67,7 +69,7 @@ function SongLibraryPage() {
         <Button variant="outline" size="icon" aria-label="Toggle filters" className="h-11 w-11 shrink-0 rounded-none sm:w-auto sm:px-4" onClick={() => setShowFilters(!showFilters)}><Filter className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Filters</span></Button>
         <div className="flex shrink-0 border border-accent/10"><Button variant={viewMode === 'grid' ? 'secondary' : 'ghost'} size="icon" className="h-11 w-11 rounded-none" aria-label="Grid view" onClick={() => pickView('grid')}><LayoutGrid className="h-4 w-4" /></Button><Button variant={viewMode === 'list' ? 'secondary' : 'ghost'} size="icon" className="h-11 w-11 rounded-none" aria-label="List view" onClick={() => pickView('list')}><List className="h-4 w-4" /></Button></div>
       </div>
-      <div className="scrollbar-none -mx-4 mt-2 flex snap-x gap-1.5 overflow-x-auto px-4 pb-0.5 sm:mx-0 sm:px-0" role="tablist" aria-label="Filter by language">{languages.map((lang) => (counts[lang] ?? 0) > 0 && (
+      <div className="scrollbar-none -mx-4 mt-2 flex snap-x gap-1.5 overflow-x-auto px-4 pb-0.5 sm:mx-0 sm:px-0" role="tablist" aria-label="Filter by language">{languages.map((lang) => (!mounted || lang === 'All' || (counts[lang] ?? 0) > 0) && (
         <button
           key={lang}
           role="tab"
@@ -75,7 +77,7 @@ function SongLibraryPage() {
           onClick={() => setLanguageFilter(lang)}
           className={`h-8 shrink-0 snap-start whitespace-nowrap border px-3 text-[11px] font-bold uppercase tracking-[0.12em] transition-colors ${languageFilter === lang ? 'border-accent bg-accent text-accent-foreground' : 'border-accent/15 bg-transparent text-muted-foreground hover:border-accent/40 hover:text-foreground'}`}
         >
-          {lang}<span className={`ml-1.5 font-normal tracking-normal ${languageFilter === lang ? 'opacity-80' : 'text-muted-foreground/70'}`}>{counts[lang] ?? 0}</span>
+          {lang}{mounted && <span className={`ml-1.5 font-normal tracking-normal ${languageFilter === lang ? 'opacity-80' : 'text-muted-foreground/70'}`}>{counts[lang] ?? 0}</span>}
         </button>
       ))}</div>
       {groupBy === 'alphabetical' && <nav className="flex flex-wrap gap-2 border-t border-accent/10 pt-3" aria-label="Alphabetical navigation">{letters.map((letter) => <a key={letter} href={`#song-group-${letter}`} className="text-xs font-bold text-accent hover:underline">{letter}</a>)}</nav>}
