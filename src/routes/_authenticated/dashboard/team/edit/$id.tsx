@@ -99,14 +99,18 @@ function EditTeamMemberPage() {
     const instrumentArr = formData.instruments.split(',').map(s => s.trim()).filter(Boolean);
     const updates = {
       full_name: formData.full_name,
+      public_name: formData.public_name.trim() || null,
       email: formData.email,
       primary_role: formData.primary_role,
+      bio: formData.bio.trim() || null,
       status: formData.status,
       is_public: formData.is_public,
+      show_public_contact: formData.show_public_contact,
       avatar_url: formData.avatar_url,
       instrument: instrumentArr.join(', '), // DB column is text
       skills: instrumentArr // DB column is ARRAY
     };
+
 
     mutation.mutate(updates);
   };
