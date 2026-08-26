@@ -10,6 +10,7 @@ import { WorshipSetlist } from "@/components/ui/setlists/WorshipSetlist";
 import { useQuery } from "@tanstack/react-query";
 import { getSongsPublic, getUpcomingServicePublic } from "@/lib/db-public.functions";
 import { usePublicSectionVisibility, SECTION_META } from "@/lib/public-section-visibility";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 
 import { TeamPreview } from "@/components/ui/team/TeamPreview";
@@ -49,6 +50,7 @@ function Index() {
     queryFn: () => getUpcomingServicePublic()
   });
 
+  const isMobile = useIsMobile();
   const { isVisible, orderedKeys, isFetched } = usePublicSectionVisibility();
   const navigate = useNavigate();
   const homeHidden = isFetched && !isVisible('home');
@@ -109,7 +111,7 @@ function Index() {
 
        {isVisible('worship') && <>
        {/* Primary Scripture Feature */}
-       <section className="bg-primary py-40 px-6 overflow-hidden relative group">
+       <section className="group relative overflow-hidden bg-primary px-5 py-16 sm:px-6 sm:py-28 lg:py-36">
          <div className="absolute inset-0 opacity-10 bg-[url('https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center grayscale scale-110 group-hover:scale-100 transition-transform duration-10000" />
          <div className="mx-auto max-w-7xl relative z-10">
             <ScriptureBlock verse="Let everything that has breath praise the LORD. Praise the LORD!" reference="Psalm 150:6" className="text-primary-foreground" />
@@ -120,18 +122,18 @@ function Index() {
 
        {isVisible('worship') && <>
        {/* Upcoming Worship Gathering */}
-       <section className="py-24 px-6 bg-background">
+       <section className="bg-background px-5 py-12 sm:px-6 sm:py-20 lg:py-24">
          <div className="mx-auto max-w-7xl">
-           <div className="text-center mb-16 space-y-4"><span className="text-[10px] font-bold tracking-[0.3em] text-accent uppercase">Join the Assembly</span><h2 className="text-4xl font-serif text-foreground">Gather With Us</h2></div>
+           <div className="mb-6 space-y-2 text-center sm:mb-12 sm:space-y-4"><span className="text-[10px] font-bold tracking-[0.3em] text-accent uppercase">Join the Assembly</span><h2 className="font-serif text-foreground text-[clamp(1.6rem,6.5vw,2.25rem)]">Gather With Us</h2></div>
            <EventCard event={serviceEvent} />
          </div>
        </section>
        </>}
 
-       {isVisible('songs') && <section className="py-24 px-6 bg-muted/20">
+       {isVisible('songs') && featuredSongs.length > 0 && <section className="bg-muted/20 px-5 py-12 sm:px-6 sm:py-20 lg:py-24">
          <div className="mx-auto max-w-7xl">
-           <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6"><div className="space-y-4"><span className="text-[10px] font-bold tracking-[0.3em] text-accent uppercase">Our Song Library</span><h2 className="text-4xl font-serif text-foreground">Songs We Worship With</h2></div><Link to="/songs" className="text-[10px] font-bold tracking-[0.2em] text-accent hover:text-accent/80 uppercase border-b border-accent/30 pb-1 transition-all">View Song Library</Link></div>
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">{featuredSongs.map((song: any) => <SongCard key={song.id} song={song} />)}</div>
+           <div className="mb-6 flex flex-col justify-between gap-3 sm:mb-12 md:flex-row md:items-end md:gap-6"><div className="space-y-2 sm:space-y-4"><span className="text-[10px] font-bold tracking-[0.3em] text-accent uppercase">Our Song Library</span><h2 className="font-serif text-foreground text-[clamp(1.6rem,6.5vw,2.25rem)]">Songs We Worship With</h2></div><Link to="/songs" className="text-[10px] font-bold tracking-[0.2em] text-accent hover:text-accent/80 uppercase border-b border-accent/30 pb-1 transition-all">View Song Library</Link></div>
+           <div className="flex flex-col md:grid md:grid-cols-3 md:gap-10">{featuredSongs.map((song: any) => <SongCard key={song.id} song={song} viewMode={isMobile ? "list" : "grid"} />)}</div>
          </div>
        </section>}
 
