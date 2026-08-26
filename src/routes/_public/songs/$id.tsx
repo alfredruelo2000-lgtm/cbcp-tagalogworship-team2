@@ -48,26 +48,35 @@ function SongDetailPage() {
   });
 
   const { id } = Route.useParams();
-  const { data: rawSong } = useQuery({
+  const { data: rawSong, isPending: isSongPending, isFetching: isSongFetching } = useQuery({
     queryKey: songKeys.publicDetail(id as string),
     queryFn: () => getSongPublicById(id as string),
     retry: 1,
   });
 
+
   // Offline fallback: the full chart body kept in IndexedDB by prefetch / "Save offline".
   const [cachedChart, setCachedChart] = useState<CachedChart | null>(null);
+  const [cacheChecked, setCacheChecked] = useState(false);
   useEffect(() => {
     if (rawSong) { void cacheSongsOffline([rawSong]); return; }
     let active = true;
-    void getCachedSongChart(id as string).then((chart) => { if (active && chart) setCachedChart(chart); });
+    setCacheChecked(false);
+    void getCachedSongChart(id as string)
+      .then((chart) => { if (active && chart) setCachedChart(chart); })
+      .finally(() => { if (active) setCacheChecked(true); });
     return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, rawSong]);
 
   const song = useMemo(
-    () => (rawSong ?? (!online ? cachedChart : null)) as unknown as WorshipSong,
-    [rawSong, cachedChart, online],
+    () => (rawSong ?? cachedChart) as unknown as WorshipSong,
+    [rawSong, cachedChart],
   );
+
+  // Never flash "Song not found" while the chart is still resolving (network or IndexedDB).
+  const isResolving = isSongPending || isSongFetching || !cacheChecked;
+
   
   const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   
@@ -486,6 +495,19 @@ function SongDetailPage() {
 
 
   if (!song) {
+    if (isResolving) {
+      return (
+        <div className="container mx-auto animate-pulse space-y-6 px-6 py-16">
+          <div className="h-4 w-28 bg-muted/40" />
+          <div className="h-10 w-2/3 max-w-md bg-muted/30" />
+          <div className="space-y-3 pt-6">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div key={i} className="h-4 bg-muted/20" style={{ width: `${90 - (i % 4) * 12}%` }} />
+            ))}
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="container mx-auto px-6 py-20 text-center">
         <h2 className="font-serif text-3xl">Song not found</h2>
@@ -494,6 +516,7 @@ function SongDetailPage() {
         </Button>
       </div>
     );
+
   }
 
   const semitones = getSemitoneDifference(song.defaultKey || 'C', currentKey);
