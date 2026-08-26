@@ -138,8 +138,8 @@ function EditSongPage() {
       const columns: Record<string, any> = {};
       Object.keys(mine).forEach((key) => { columns[key] = mine[key]; });
       Object.entries(resolved).forEach(([key, value]) => { columns[key] = value; });
-      delete columns.updated_at;
-      return saveResolvedSong({ id, columns, expectedUpdatedAt: remote.updated_at ?? null });
+      delete columns['updated_at'];
+      return saveResolvedSong({ id, columns, expectedUpdatedAt: remote['updated_at'] ?? null });
     },
     onSuccess: (saved: any) => {
       applySaved(saved);
