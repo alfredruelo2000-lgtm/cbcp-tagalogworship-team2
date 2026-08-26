@@ -113,10 +113,9 @@ export function ImageUpload({ value, onChange, bucket, className }: ImageUploadP
         throw uploadError;
       }
 
-      logDiagnostic("Storage upload successful. Fetching public URL...");
-      const { data: { publicUrl } } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(filePath);
+      logDiagnostic("Storage upload successful. Building public URL...");
+      // Buckets are private, so images are served through the public media proxy.
+      const publicUrl = `/api/public/media/${bucket}/${filePath}`;
 
       logDiagnostic(`Public URL generated: ${publicUrl.substring(0, 50)}...`);
 
