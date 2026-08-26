@@ -42,7 +42,7 @@ function MemberDetailsPage() {
         <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
           <div className="w-32 h-32 bg-accent/10 border border-accent/20 flex items-center justify-center font-serif text-accent text-5xl shrink-0">
             {member.avatar_url ? (
-              <img src={member.avatar_url} alt={member.full_name} className="w-full h-full object-cover grayscale" />
+              <img src={member.avatar_url} alt={member.full_name} className="w-full h-full object-cover" />
             ) : (
               member.full_name.charAt(0)
             )}
