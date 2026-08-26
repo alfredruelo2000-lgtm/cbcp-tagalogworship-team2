@@ -171,12 +171,33 @@ function EditTeamMemberPage() {
             </div>
 
             <div className="space-y-2">
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Public Display Name</Label>
+              <Input
+                value={formData.public_name}
+                onChange={(e) => setFormData(prev => ({ ...prev, public_name: e.target.value }))}
+                placeholder="Leave blank to use the full name"
+                className="rounded-none border-accent/10 bg-background"
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Email Address</Label>
               <Input 
                 type="email" 
                 value={formData.email}
                 onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                 className="rounded-none border-accent/10 bg-background" 
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Public Bio</Label>
+              <Textarea
+                value={formData.bio}
+                onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
+                rows={5}
+                placeholder="Short testimony or ministry background shown on the public profile."
+                className="rounded-none border-accent/10 bg-background"
               />
             </div>
           </section>
@@ -193,11 +214,9 @@ function EditTeamMemberPage() {
                   <SelectValue placeholder="Select Role" />
                 </SelectTrigger>
                 <SelectContent className="rounded-none">
-                  <SelectItem value="vocalist" className="text-[11px] uppercase tracking-wider">Vocalist</SelectItem>
-                  <SelectItem value="musician" className="text-[11px] uppercase tracking-wider">Musician (Instrumentalist)</SelectItem>
-                  <SelectItem value="production" className="text-[11px] uppercase tracking-wider">Production / Technical Team</SelectItem>
-                  <SelectItem value="leader" className="text-[11px] uppercase tracking-wider">Worship Leader</SelectItem>
-                  <SelectItem value="multimedia" className="text-[11px] uppercase tracking-wider">Multimedia / Livestream</SelectItem>
+                  {TEAM_ROLES.map((role) => (
+                    <SelectItem key={role} value={role} className="text-[11px] uppercase tracking-wider">{role}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -212,6 +231,20 @@ function EditTeamMemberPage() {
               />
             </div>
 
+            <div className="space-y-2">
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Ministry Status</Label>
+              <Select value={formData.status} onValueChange={(v) => setFormData(prev => ({ ...prev, status: v }))}>
+                <SelectTrigger className="rounded-none border-accent/10 bg-background text-[11px] uppercase tracking-wider">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent className="rounded-none">
+                  {MEMBER_STATUSES.map((status) => (
+                    <SelectItem key={status} value={status} className="text-[11px] uppercase tracking-wider">{status}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="space-y-2 pt-4">
               <div className="flex items-center justify-between">
                 <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Public Visibility</Label>
@@ -224,7 +257,21 @@ function EditTeamMemberPage() {
                   {formData.is_public ? 'Public' : 'Hidden'}
                 </Button>
               </div>
+              <div className="flex items-center justify-between">
+                <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Show Email Publicly</Label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setFormData(prev => ({ ...prev, show_public_contact: !prev.show_public_contact }))}
+                  className={`rounded-none text-[8px] uppercase tracking-widest font-bold ${formData.show_public_contact ? 'text-green-500 hover:text-green-600' : 'text-muted-foreground hover:text-accent'}`}
+                >
+                  {formData.show_public_contact ? 'Shown' : 'Private'}
+                </Button>
+              </div>
             </div>
+          </section>
+        </div>
+
           </section>
         </div>
       </div>
