@@ -1,6 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
 import { WorshipSong, SongLanguage, SongType, SongStatus } from "@/types/songs";
-import { SONG_FIELD_LABELS, SongConflictError, changedFields, sameValue, type SongFieldConflict } from "@/lib/song-conflicts";
 
 export interface SongVersion {
   id: string;
@@ -88,9 +87,10 @@ export async function createSong(input: { data: Partial<WorshipSong> } | Partial
   return data;
 }
 
-/** Map an app-shaped song object onto database columns (undefined entries removed). */
-export function toSongColumns(song: Partial<WorshipSong>): Record<string, any> {
-  const data: any = {
+export async function updateSong(input: { data: { id: string, song: Partial<WorshipSong> } } | { id: string, song: Partial<WorshipSong> }) {
+  const { id, song } = ((input as any)?.data ?? input);
+
+  const updateData: any = {
     title: song.title,
     artist: song.artist,
     songwriter: song.songwriter,
@@ -102,121 +102,31 @@ export function toSongColumns(song: Partial<WorshipSong>): Record<string, any> {
     scripture_references: song.scriptureReferences,
     song_type: song.songType,
     status: song.status,
-    is_public: song.visibility ? song.visibility === 'Public' : song.isPublic,
+    is_public: song.visibility === 'Public' || song.isPublic,
     featured: song.featured,
     audio_url: (song as any).audioUrl || song.externalResources?.audioUrl,
     sheet_music_url: (song as any).sheetMusicUrl || song.externalResources?.sheetMusicUrl,
-    external_resources: song.externalResources,
-    artwork_url: song.artworkUrl,
+     external_resources: song.externalResources,
+     artwork_url: song.artworkUrl,
     lyrics: song.lyrics,
     chords: song.chords,
-    ccli_number: (song as any).ccliNumber,
-  };
-  Object.keys(data).forEach((key) => data[key] === undefined && delete data[key]);
-  return data;
-}
-
-export async function updateSong(
-  input:
-    | { data: { id: string; song: Partial<WorshipSong>; baseline?: Partial<WorshipSong> | null; force?: boolean } }
-    | { id: string; song: Partial<WorshipSong>; baseline?: Partial<WorshipSong> | null; force?: boolean }
-) {
-  const { id, song, baseline, force } = ((input as any)?.data ?? input) as {
-    id: string;
-    song: Partial<WorshipSong>;
-    baseline?: Partial<WorshipSong> | null;
-    force?: boolean;
+    updated_at: new Date().toISOString(),
   };
 
-  const columns = toSongColumns(song);
-  const baseColumns = baseline ? toSongColumns(baseline) : undefined;
-  const baseStamp = (baseline as any)?.updatedAt ?? (baseline as any)?.updated_at ?? null;
+  // Remove undefined properties to satisfy exactOptionalPropertyTypes
+  Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
 
-  const write = async (payload: Record<string, any>, expectedStamp: string | null) => {
-    let query = supabase.from('songs').update({ ...payload, updated_at: new Date().toISOString() }).eq('id', id);
-    if (expectedStamp) query = query.eq('updated_at', expectedStamp);
-    const { data, error } = await query.select().maybeSingle();
-    if (error) throw error;
-    return data;
-  };
-
-  // Fast path: no baseline available (or an explicit override) => last write wins.
-  if (!baseStamp || force) {
-    const data = await write(columns, null);
-    if (!data) throw new Error('Song could not be updated. Please refresh and try again.');
-    return data;
-  }
-
-  const guarded = await write(columns, baseStamp);
-  if (guarded) return guarded;
-
-  // Guard failed: someone saved between our load and our save. Compare the three versions.
-  const { data: remote, error: remoteError } = await supabase.from('songs').select('*').eq('id', id).maybeSingle();
-  if (remoteError) throw remoteError;
-  if (!remote) throw new Error('This song no longer exists. It may have been deleted.');
-
-  const mineChanged = changedFields(baseColumns, columns);
-  const theirsChanged = changedFields(baseColumns, toSongColumns({
-    ...(remote as any),
-    defaultKey: (remote as any).default_key,
-    songType: (remote as any).song_type,
-    timeSignature: (remote as any).time_signature,
-    scriptureReferences: (remote as any).scripture_references,
-    externalResources: (remote as any).external_resources,
-    artworkUrl: (remote as any).artwork_url,
-    audioUrl: (remote as any).audio_url,
-    sheetMusicUrl: (remote as any).sheet_music_url,
-    ccliNumber: (remote as any).ccli_number,
-    isPublic: (remote as any).is_public,
-  } as any));
-
-  const conflicts: SongFieldConflict[] = mineChanged
-    .filter((field) => theirsChanged.includes(field) && !sameValue(columns[field], (remote as any)[field]))
-    .map((field) => ({
-      field,
-      label: SONG_FIELD_LABELS[field] ?? field,
-      base: baseColumns ? baseColumns[field] : undefined,
-      mine: columns[field],
-      theirs: (remote as any)[field],
-    }));
-
-  if (conflicts.length === 0) {
-    // Disjoint edits: merge automatically by writing only the fields we actually changed.
-    const merged: Record<string, any> = {};
-    mineChanged.forEach((field) => { merged[field] = columns[field]; });
-    const data = await write(merged, (remote as any).updated_at);
-    if (!data) {
-      // Another write landed again; retry once without the guard on our own fields only.
-      const retry = await write(merged, null);
-      if (!retry) throw new Error('Song could not be updated. Please refresh and try again.');
-      return retry;
-    }
-    return data;
-  }
-
-  throw new SongConflictError(conflicts, remote as any, columns);
-}
-
-/** Write raw database columns after a manual conflict resolution. */
-export async function saveResolvedSong(input: {
-  id: string;
-  columns: Record<string, any>;
-  expectedUpdatedAt?: string | null;
-}) {
-  const { id, columns, expectedUpdatedAt } = input;
-  let query = supabase
+  const { data, error } = await supabase
     .from('songs')
-    .update({ ...columns, updated_at: new Date().toISOString() })
-    .eq('id', id);
-  if (expectedUpdatedAt) query = query.eq('updated_at', expectedUpdatedAt);
-  const { data, error } = await query.select().maybeSingle();
+    .update(updateData)
+    .eq('id', id)
+    .select()
+    .maybeSingle();
+
   if (error) throw error;
-  if (!data) throw new Error('The song changed again while you were resolving. Please review the latest version.');
+  if (!data) throw new Error('Song could not be updated. Please refresh and try again.');
   return data;
 }
-
-
-
 
 export async function deleteSong(input: { data: string } | string) {
   const id = typeof input === 'string' ? input : input.data;
