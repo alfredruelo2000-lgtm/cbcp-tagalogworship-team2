@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { uploadMediaFile } from '@/lib/media-upload';
+import logoAsset from '@/assets/cbcp-logo.png.asset.json';
 
 type Fmt = { id: string; label: string; w: number; h: number };
 type Cell = [number, number, number, number];
@@ -31,6 +32,39 @@ const THEMES = [
   { id: 'sage', label: 'Sage', bg: '#e6ebe4', ink: '#22312a', accent: '#5d7a63', frame: '#ffffff' },
   { id: 'noir', label: 'Noir Gold', bg: '#0d0d0f', ink: '#f6f1e6', accent: '#d4af37', frame: '#17171a' },
 ];
+
+/** Typography presets for headline / subline styling. */
+const FONTS = [
+  { id: 'serif', label: 'Editorial', title: `Georgia, 'Times New Roman', serif`, sub: 'Helvetica, Arial, sans-serif' },
+  { id: 'sans', label: 'Modern', title: `Helvetica, Arial, sans-serif`, sub: 'Helvetica, Arial, sans-serif' },
+  { id: 'mono', label: 'Technical', title: `'Courier New', monospace`, sub: `'Courier New', monospace` },
+  { id: 'mixed', label: 'Contrast', title: `Georgia, serif`, sub: `'Courier New', monospace` },
+] as const;
+type FontId = (typeof FONTS)[number]['id'];
+
+const ALIGNS = [
+  { id: 'left', label: 'Left' },
+  { id: 'center', label: 'Center' },
+  { id: 'right', label: 'Right' },
+] as const;
+type AlignId = (typeof ALIGNS)[number]['id'];
+
+const WATERMARK_MODES = [
+  { id: 'off', label: 'No watermark' },
+  { id: 'logo', label: 'Logo' },
+  { id: 'text', label: 'Text' },
+  { id: 'both', label: 'Logo + Text' },
+] as const;
+type WatermarkMode = (typeof WATERMARK_MODES)[number]['id'];
+
+const WM_POSITIONS = [
+  { id: 'tl', label: 'Top left' },
+  { id: 'tr', label: 'Top right' },
+  { id: 'bl', label: 'Bottom left' },
+  { id: 'br', label: 'Bottom right' },
+  { id: 'center', label: 'Center' },
+] as const;
+type WmPosition = (typeof WM_POSITIONS)[number]['id'];
 
 const TEMPLATES = [
   { id: 'mosaic', label: 'Mosaic' },
@@ -180,6 +214,16 @@ export function CollageStudio({
   const [theme, setTheme] = useState(THEMES[0]!);
   const [template, setTemplate] = useState<TemplateId>('mosaic');
   const [enhance, setEnhance] = useState(true);
+  const [font, setFont] = useState<FontId>('serif');
+  const [align, setAlign] = useState<AlignId>('left');
+  const [titleScale, setTitleScale] = useState(1);
+  const [uppercaseTitle, setUppercaseTitle] = useState(false);
+  const [wmMode, setWmMode] = useState<WatermarkMode>('off');
+  const [wmText, setWmText] = useState('@cbcptagalogworship');
+  const [wmPos, setWmPos] = useState<WmPosition>('br');
+  const [wmOpacity, setWmOpacity] = useState(0.55);
+  const [wmScale, setWmScale] = useState(1);
+  const logoRef = useRef<HTMLImageElement | null>(null);
   const [previews, setPreviews] = useState<Array<{ fmt: Fmt; dataUrl: string }>>([]);
   const [approved, setApproved] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -249,19 +293,73 @@ export function CollageStudio({
       }
     });
 
-    // Caption band
+    // Caption band — typography follows the selected preset, alignment and scale.
+    const fontPreset = FONTS.find((f) => f.id === font) ?? FONTS[0];
     const capY = H - pad - captionH + gap;
+    const anchorX = align === 'left' ? gridX : align === 'right' ? gridX + gridW : gridX + gridW / 2;
+    const ruleW = Math.round(gridW * 0.18);
+    const ruleX = align === 'left' ? gridX : align === 'right' ? gridX + gridW - ruleW : gridX + (gridW - ruleW) / 2;
     ctx.fillStyle = theme.accent;
-    ctx.fillRect(gridX, capY, Math.round(gridW * 0.18), Math.max(2, Math.round(H * 0.003)));
-    ctx.fillStyle = theme.ink;
-    const titleSize = Math.round(Math.min(W, H) * 0.062);
-    ctx.font = `600 ${titleSize}px Georgia, 'Times New Roman', serif`;
+    ctx.fillRect(ruleX, capY, ruleW, Math.max(2, Math.round(H * 0.003)));
+    ctx.textAlign = align;
     ctx.textBaseline = 'top';
-    ctx.fillText(title.slice(0, 34), gridX, capY + Math.round(captionH * 0.18));
+    ctx.fillStyle = theme.ink;
+    const titleSize = Math.round(Math.min(W, H) * 0.062 * titleScale);
+    ctx.font = `600 ${titleSize}px ${fontPreset.title}`;
+    const headline = uppercaseTitle ? title.toUpperCase() : title;
+    ctx.fillText(headline.slice(0, 34), anchorX, capY + Math.round(captionH * 0.18));
     ctx.fillStyle = theme.accent;
     const subSize = Math.round(titleSize * 0.38);
-    ctx.font = `700 ${subSize}px Helvetica, Arial, sans-serif`;
-    ctx.fillText(subtitle.toUpperCase().slice(0, 48), gridX, capY + Math.round(captionH * 0.18) + titleSize * 1.25);
+    ctx.font = `700 ${subSize}px ${fontPreset.sub}`;
+    ctx.fillText(subtitle.toUpperCase().slice(0, 48), anchorX, capY + Math.round(captionH * 0.18) + titleSize * 1.25);
+    ctx.textAlign = 'left';
+
+    // Optional branding watermark over the artwork area.
+    if (wmMode !== 'off') {
+      const showLogo = wmMode === 'logo' || wmMode === 'both';
+      const showText = wmMode === 'text' || wmMode === 'both';
+      if (showLogo && !logoRef.current) {
+        try {
+          logoRef.current = await loadImage(logoAsset.url);
+        } catch {
+          logoRef.current = null;
+        }
+      }
+      const logo = showLogo ? logoRef.current : null;
+      const unit = Math.min(W, H);
+      const logoW = logo ? Math.round(unit * 0.14 * wmScale) : 0;
+      const logoH = logo ? Math.round(logoW * (logo.height / logo.width)) : 0;
+      const wmFontSize = Math.round(unit * 0.026 * wmScale);
+      ctx.save();
+      ctx.globalAlpha = wmOpacity;
+      ctx.font = `700 ${wmFontSize}px ${fontPreset.sub}`;
+      const blockW = Math.max(logoW, showText ? ctx.measureText(wmText).width : 0);
+      const blockH = logoH + (showText ? wmFontSize * (logo ? 1.6 : 1) : 0);
+      const margin = Math.round(pad * 1.1);
+      const bx =
+        wmPos === 'tl' || wmPos === 'bl'
+          ? gridX + margin
+          : wmPos === 'center'
+            ? gridX + (gridW - blockW) / 2
+            : gridX + gridW - margin - blockW;
+      const by =
+        wmPos === 'tl' || wmPos === 'tr'
+          ? gridY + margin
+          : wmPos === 'center'
+            ? gridY + (gridH - blockH) / 2
+            : gridY + gridH - margin - blockH;
+      if (logo) ctx.drawImage(logo, bx + (blockW - logoW) / 2, by, logoW, logoH);
+      if (showText) {
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = 'rgba(0,0,0,0.45)';
+        ctx.shadowBlur = Math.max(2, Math.round(unit * 0.004));
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText(wmText.slice(0, 40), bx + blockW / 2, by + logoH + (logo ? wmFontSize * 0.4 : 0));
+      }
+      ctx.restore();
+      ctx.textAlign = 'left';
+    }
 
     return canvas.toDataURL('image/jpeg', quality);
   };
@@ -404,6 +502,126 @@ export function CollageStudio({
                 className="h-9 rounded-none border-accent/10 bg-background text-xs"
               />
             </div>
+          </div>
+
+          {/* Text styling */}
+          <div className="space-y-1.5">
+            <Label className="text-[9px] uppercase tracking-widest text-muted-foreground">Text styling</Label>
+            <div className="flex flex-wrap gap-2">
+              {FONTS.map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => setFont(f.id)}
+                  className={`border px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest ${
+                    font === f.id ? 'border-accent bg-accent/10 text-accent' : 'border-accent/10 text-muted-foreground'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              {ALIGNS.map((a) => (
+                <button
+                  key={a.id}
+                  onClick={() => setAlign(a.id)}
+                  className={`border px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest ${
+                    align === a.id ? 'border-accent bg-accent/10 text-accent' : 'border-accent/10 text-muted-foreground'
+                  }`}
+                >
+                  {a.label}
+                </button>
+              ))}
+              <button
+                onClick={() => setUppercaseTitle((v) => !v)}
+                className={`border px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest ${
+                  uppercaseTitle ? 'border-accent bg-accent/10 text-accent' : 'border-accent/10 text-muted-foreground'
+                }`}
+              >
+                Uppercase headline
+              </button>
+              <label className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                Size {Math.round(titleScale * 100)}%
+                <input
+                  type="range"
+                  min={0.7}
+                  max={1.4}
+                  step={0.05}
+                  value={titleScale}
+                  onChange={(e) => setTitleScale(Number(e.target.value))}
+                  className="h-1 w-24 accent-accent"
+                />
+              </label>
+            </div>
+          </div>
+
+          {/* Watermark / branding */}
+          <div className="space-y-1.5">
+            <Label className="text-[9px] uppercase tracking-widest text-muted-foreground">Watermark &amp; branding</Label>
+            <div className="flex flex-wrap gap-2">
+              {WATERMARK_MODES.map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => setWmMode(m.id)}
+                  className={`border px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest ${
+                    wmMode === m.id ? 'border-accent bg-accent/10 text-accent' : 'border-accent/10 text-muted-foreground'
+                  }`}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+            {wmMode !== 'off' && (
+              <div className="space-y-2 border border-accent/10 p-3">
+                {(wmMode === 'text' || wmMode === 'both') && (
+                  <Input
+                    value={wmText}
+                    onChange={(e) => setWmText(e.target.value)}
+                    placeholder="@handle or ministry name"
+                    className="h-9 rounded-none border-accent/10 bg-background text-xs"
+                  />
+                )}
+                <div className="flex flex-wrap gap-2">
+                  {WM_POSITIONS.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => setWmPos(p.id)}
+                      className={`border px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest ${
+                        wmPos === p.id ? 'border-accent bg-accent/10 text-accent' : 'border-accent/10 text-muted-foreground'
+                      }`}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex flex-wrap items-center gap-4">
+                  <label className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                    Opacity {Math.round(wmOpacity * 100)}%
+                    <input
+                      type="range"
+                      min={0.1}
+                      max={1}
+                      step={0.05}
+                      value={wmOpacity}
+                      onChange={(e) => setWmOpacity(Number(e.target.value))}
+                      className="h-1 w-24 accent-accent"
+                    />
+                  </label>
+                  <label className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                    Scale {Math.round(wmScale * 100)}%
+                    <input
+                      type="range"
+                      min={0.5}
+                      max={2}
+                      step={0.1}
+                      value={wmScale}
+                      onChange={(e) => setWmScale(Number(e.target.value))}
+                      className="h-1 w-24 accent-accent"
+                    />
+                  </label>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="space-y-1.5">
