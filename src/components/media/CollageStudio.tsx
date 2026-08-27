@@ -32,6 +32,39 @@ const THEMES = [
   { id: 'noir', label: 'Noir Gold', bg: '#0d0d0f', ink: '#f6f1e6', accent: '#d4af37', frame: '#17171a' },
 ];
 
+/** Typography presets for headline / subline styling. */
+const FONTS = [
+  { id: 'serif', label: 'Editorial', title: `Georgia, 'Times New Roman', serif`, sub: 'Helvetica, Arial, sans-serif' },
+  { id: 'sans', label: 'Modern', title: `Helvetica, Arial, sans-serif`, sub: 'Helvetica, Arial, sans-serif' },
+  { id: 'mono', label: 'Technical', title: `'Courier New', monospace`, sub: `'Courier New', monospace` },
+  { id: 'mixed', label: 'Contrast', title: `Georgia, serif`, sub: `'Courier New', monospace` },
+] as const;
+type FontId = (typeof FONTS)[number]['id'];
+
+const ALIGNS = [
+  { id: 'left', label: 'Left' },
+  { id: 'center', label: 'Center' },
+  { id: 'right', label: 'Right' },
+] as const;
+type AlignId = (typeof ALIGNS)[number]['id'];
+
+const WATERMARK_MODES = [
+  { id: 'off', label: 'No watermark' },
+  { id: 'logo', label: 'Logo' },
+  { id: 'text', label: 'Text' },
+  { id: 'both', label: 'Logo + Text' },
+] as const;
+type WatermarkMode = (typeof WATERMARK_MODES)[number]['id'];
+
+const WM_POSITIONS = [
+  { id: 'tl', label: 'Top left' },
+  { id: 'tr', label: 'Top right' },
+  { id: 'bl', label: 'Bottom left' },
+  { id: 'br', label: 'Bottom right' },
+  { id: 'center', label: 'Center' },
+] as const;
+type WmPosition = (typeof WM_POSITIONS)[number]['id'];
+
 const TEMPLATES = [
   { id: 'mosaic', label: 'Mosaic' },
   { id: 'hero', label: 'Hero Split' },
