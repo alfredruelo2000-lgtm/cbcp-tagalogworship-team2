@@ -47,13 +47,24 @@ export async function getMediaPublic() {
   const { data, error } = await supabase
     .from("media_items")
     .select(`
-      *,
-      media_albums (
-        title
-      )
+      id, title, description, media_type, file_url, thumbnail_url, category,
+      album_id, event_date, tags, duration, featured, sort_order, created_at,
+      media_albums ( id, title )
     `)
     .eq("visibility", "Public")
+    .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+}
+
+export async function getMediaAlbumsPublic() {
+  const { data, error } = await supabase
+    .from("media_albums")
+    .select("id, title, description, cover_image_url, album_date, category, featured")
+    .eq("is_public", true)
+    .order("album_date", { ascending: false, nullsFirst: false });
 
   if (error) throw error;
   return data || [];

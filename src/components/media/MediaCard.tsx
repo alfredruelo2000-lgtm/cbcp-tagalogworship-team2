@@ -1,6 +1,5 @@
 import { MediaItem } from '@/types/media';
-import { Play, Music, FileText, ExternalLink, Clock, Calendar, User } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Play, Music, FileText, ImageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface MediaCardProps {
@@ -9,87 +8,52 @@ interface MediaCardProps {
 }
 
 export function MediaCard({ item, onClick }: MediaCardProps) {
-  const isVideo = item.mediaType === 'Video';
-  const isAudio = item.mediaType === 'Audio';
-  const isPhoto = item.mediaType === 'Photo';
-  const isDocument = item.mediaType === 'Document';
+  const type = item.mediaType;
+  const preview = item.thumbnailUrl || (type === 'Photo' ? item.fileUrl : undefined);
 
   return (
-    <div 
-      className={cn(
-        "group relative overflow-hidden bg-muted/20 border border-accent/5 hover:border-accent/20 transition-all duration-500 cursor-pointer",
-        isPhoto ? "aspect-[4/5] md:aspect-square" : "aspect-video"
-      )}
+    <button
+      type="button"
       onClick={() => onClick?.(item)}
+      className="group relative block w-full overflow-hidden border border-accent/10 bg-muted/20 text-left transition-colors hover:border-accent/30"
     >
-      {/* Thumbnail */}
-      {(isPhoto || isVideo) && item.thumbnailUrl ? (
-        <img 
-          src={item.thumbnailUrl} 
-          alt={item.title}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-          loading="lazy"
-          decoding="async"
-        />
-      ) : (
-        <div className="w-full h-full flex items-center justify-center bg-primary/5">
-          {isAudio && <Music className="w-12 h-12 text-accent/20" />}
-          {isDocument && <FileText className="w-12 h-12 text-accent/20" />}
-        </div>
-      )}
+      <div className="relative aspect-square w-full overflow-hidden">
+        {preview ? (
+          <img
+            src={preview}
+            alt={item.title}
+            loading="lazy"
+            decoding="async"
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-primary/5 text-accent/25">
+            {type === 'Audio' && <Music className="h-8 w-8" />}
+            {type === 'Video' && <Play className="h-8 w-8" />}
+            {type === 'Document' && <FileText className="h-8 w-8" />}
+            {type === 'Photo' && <ImageIcon className="h-8 w-8" />}
+          </div>
+        )}
 
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 p-6 flex flex-col justify-end">
-        <div className="translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-          <Badge variant="outline" className="rounded-none border-white/20 text-white text-[8px] uppercase tracking-widest mb-3">
-            {item.mediaType}
-          </Badge>
-          <h3 className="font-serif text-xl text-white mb-2 leading-tight">{item.title}</h3>
-          
-          <div className="flex items-center gap-4 text-[9px] text-white/60 uppercase tracking-widest">
-            {item.duration && (
-              <span className="flex items-center gap-1">
-                <Clock className="w-3 h-3" /> {item.duration}
-              </span>
-            )}
-            <span className="flex items-center gap-1">
-              <Calendar className="w-3 h-3" /> {new Date(item.eventDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+        {(type === 'Video' || type === 'Audio') && (
+          <span className="absolute inset-0 flex items-center justify-center bg-black/25">
+            <span className="grid h-9 w-9 place-items-center rounded-full bg-background/85 text-accent">
+              <Play className="h-3.5 w-3.5" />
             </span>
-          </div>
-        </div>
+          </span>
+        )}
+
+        <span className="absolute left-1.5 top-1.5 bg-background/85 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em] text-accent backdrop-blur-sm">
+          {type}
+        </span>
       </div>
 
-      {/* Type Indicators */}
-      <div className="absolute top-4 right-4">
-        {isVideo && (
-          <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
-            <Play className="w-4 h-4 text-white fill-white" />
-          </div>
-        )}
-        {isAudio && (
-          <div className="w-10 h-10 rounded-full bg-accent/10 backdrop-blur-md flex items-center justify-center border border-accent/20">
-            <Music className="w-4 h-4 text-accent" />
-          </div>
-        )}
+      <div className={cn('space-y-0.5 px-2.5 py-2')}>
+        <h3 className="truncate font-serif text-[13px] leading-tight text-foreground sm:text-sm">{item.title}</h3>
+        <p className="truncate text-[9px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+          {item.category}
+        </p>
       </div>
-
-      {/* Featured Badge */}
-      {item.featured && (
-        <div className="absolute top-4 left-4">
-          <Badge className="rounded-none bg-accent text-primary text-[8px] font-bold tracking-widest uppercase">
-            Featured
-          </Badge>
-        </div>
-      )}
-
-      {/* Visibility Indicator (for non-public) */}
-      {item.visibility !== 'Public' && (
-        <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Badge variant="secondary" className="rounded-none text-[7px] uppercase tracking-tighter">
-            {item.visibility}
-          </Badge>
-        </div>
-      )}
-    </div>
+    </button>
   );
 }

@@ -71,7 +71,9 @@ export type Database = {
           description: string | null
           featured: boolean | null
           id: string
+          is_public: boolean
           title: string
+          updated_at: string
         }
         Insert: {
           album_date?: string | null
@@ -81,7 +83,9 @@ export type Database = {
           description?: string | null
           featured?: boolean | null
           id?: string
+          is_public?: boolean
           title: string
+          updated_at?: string
         }
         Update: {
           album_date?: string | null
@@ -91,7 +95,9 @@ export type Database = {
           description?: string | null
           featured?: boolean | null
           id?: string
+          is_public?: boolean
           title?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -113,6 +119,7 @@ export type Database = {
           related_resource_id: string | null
           related_service_id: string | null
           related_song_id: string | null
+          sort_order: number
           tags: string[] | null
           thumbnail_url: string | null
           title: string
@@ -135,6 +142,7 @@ export type Database = {
           related_resource_id?: string | null
           related_service_id?: string | null
           related_song_id?: string | null
+          sort_order?: number
           tags?: string[] | null
           thumbnail_url?: string | null
           title: string
@@ -157,6 +165,7 @@ export type Database = {
           related_resource_id?: string | null
           related_service_id?: string | null
           related_song_id?: string | null
+          sort_order?: number
           tags?: string[] | null
           thumbnail_url?: string | null
           title?: string

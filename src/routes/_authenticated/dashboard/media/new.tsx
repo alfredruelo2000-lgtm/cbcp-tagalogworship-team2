@@ -9,7 +9,7 @@ import { useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createMediaItem } from '@/lib/db-resources.functions';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { uploadMediaFile } from '@/lib/media-upload';
 
 export const Route = createFileRoute('/_authenticated/dashboard/media/new')({
   component: UploadMediaPage,
@@ -40,15 +40,11 @@ function UploadMediaPage() {
 
   const handleFileChange = async (file: File | undefined) => {
     if (!file) return;
-    if (file.size > 25 * 1024 * 1024) { toast.error('File must be 25MB or smaller'); return; }
     setSelectedFile(file);
     setIsUploadingFile(true);
-    const path = `media/${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '-')}`;
     try {
-      const { error } = await supabase.storage.from('song-resources').upload(path, file, { upsert: false });
-      if (error) throw error;
-      const { data } = supabase.storage.from('song-resources').getPublicUrl(path);
-      setFormData((prev) => ({ ...prev, file_url: data.publicUrl, media_type: file.type.startsWith('image/') ? 'Photo' : file.type.startsWith('video/') ? 'Video' : 'Audio' }));
+      const uploaded = await uploadMediaFile(file);
+      setFormData((prev) => ({ ...prev, file_url: uploaded.url, media_type: uploaded.mediaType }));
       toast.success('File stored and ready to publish');
     } catch (error: any) { setSelectedFile(null); toast.error('File upload failed: ' + error.message); }
     finally { setIsUploadingFile(false); }

@@ -1,173 +1,187 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getMediaPublic } from '@/lib/db-public.functions';
-import { supabase } from '@/integrations/supabase/client';
+import { getMediaPublic, getMediaAlbumsPublic } from '@/lib/db-public.functions';
 import { MediaGallery } from '@/components/media/MediaGallery';
-import { MediaCard } from '@/components/media/MediaCard';
-import { MediaItem, MediaType, MediaCategory } from '@/types/media';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Search, Filter, Camera, Video, Music, FileText, LayoutGrid } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { MediaItem } from '@/types/media';
+import { Search, Camera, Video, Music, FileText, LayoutGrid } from 'lucide-react';
 
 export const Route = createFileRoute('/_public/media')({
   head: () => ({
     meta: [
-      { title: "Media Library | Radiant Worship" },
-      { name: "description", content: "Browse photos, videos, and ministry moments that reflect the life and worship of our church community." },
+      { title: 'Worship Media | CBCP Tagalog Worship' },
+      {
+        name: 'description',
+        content: 'Photos, videos, audio and ministry moments from the CBCP Tagalog worship team.',
+      },
+      { property: 'og:title', content: 'Worship Media | CBCP Tagalog Worship' },
+      {
+        property: 'og:description',
+        content: 'Browse worship photos, videos and audio from our services, rehearsals and worship nights.',
+      },
+      { property: 'og:type', content: 'website' },
+      { name: 'twitter:card', content: 'summary_large_image' },
     ],
   }),
   component: MediaPage,
 });
 
+const FILTERS = [
+  { id: 'all', label: 'All', icon: LayoutGrid },
+  { id: 'Photo', label: 'Photos', icon: Camera },
+  { id: 'Video', label: 'Videos', icon: Video },
+  { id: 'Audio', label: 'Audio', icon: Music },
+  { id: 'Document', label: 'Files', icon: FileText },
+] as const;
 
 function MediaPage() {
   const [activeTab, setActiveTab] = useState<string>('all');
+  const [albumId, setAlbumId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { data: media = [] } = useQuery({
+  const { data: media = [], isLoading } = useQuery({
     queryKey: ['media-public'],
     queryFn: getMediaPublic,
   });
 
   const { data: albums = [] } = useQuery({
-    queryKey: ['media-albums'],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('media_albums' as any).select('*');
-      if (error) throw error;
-      return data;
-    }
+    queryKey: ['media-albums-public'],
+    queryFn: getMediaAlbumsPublic,
   });
 
-  const filteredItems = useMemo(() => {
-    return (media || []).map((item: any) => ({
-      ...item,
-      mediaType: item.media_type || item.mediaType,
-      fileUrl: item.file_url || item.fileUrl,
-      createdAt: item.created_at || item.createdAt,
-      visibility: (item as any).visibility || 'Public'
-    })).filter((item: any) => {
-      const title = item.title || '';
-      const tags = item.tags || [];
-      const matchesSearch = title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          tags.some((t: string) => t.toLowerCase().includes(searchQuery.toLowerCase()));
-      
-      const mediaType = item.mediaType;
-      if (activeTab === 'all') return matchesSearch;
-      if (activeTab === 'photos') return matchesSearch && mediaType === 'Photo';
-      if (activeTab === 'videos') return matchesSearch && mediaType === 'Video';
-      if (activeTab === 'audio') return matchesSearch && mediaType === 'Audio';
-      if (activeTab === 'files') return matchesSearch && mediaType === 'Document';
-      return matchesSearch;
-    });
-  }, [media, activeTab, searchQuery]);
+  const items = useMemo<MediaItem[]>(
+    () =>
+      (media || []).map((item: any) => ({
+        ...item,
+        mediaType: item.media_type ?? item.mediaType,
+        fileUrl: item.file_url ?? item.fileUrl,
+        thumbnailUrl: item.thumbnail_url ?? item.thumbnailUrl,
+        eventDate: item.event_date ?? item.created_at,
+        albumId: item.album_id ?? undefined,
+        tags: item.tags ?? [],
+      })),
+    [media],
+  );
 
-  const featuredAlbums = albums.filter((a: any) => (a as any).featured);
+  const filtered = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return items.filter((item) => {
+      if (activeTab !== 'all' && item.mediaType !== activeTab) return false;
+      if (albumId && item.albumId !== albumId) return false;
+      if (!q) return true;
+      return (
+        (item.title || '').toLowerCase().includes(q) ||
+        (item.description || '').toLowerCase().includes(q) ||
+        (item.tags || []).some((t) => t.toLowerCase().includes(q))
+      );
+    });
+  }, [items, activeTab, albumId, searchQuery]);
+
+  const counts = useMemo(() => {
+    const map: Record<string, number> = { all: items.length };
+    for (const item of items) map[item.mediaType] = (map[item.mediaType] ?? 0) + 1;
+    return map;
+  }, [items]);
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Header */}
-      <header className="relative pt-32 pb-20 px-6 border-b border-accent/10">
-        <div className="max-w-7xl mx-auto text-center space-y-6">
-          <Badge variant="outline" className="rounded-none border-accent/20 text-accent font-semibold tracking-widest text-[10px] uppercase">
-            Media Library
-          </Badge>
-          <h1 className="font-serif text-5xl md:text-7xl text-foreground leading-tight">
-            Worship Media
-          </h1>
-          <p className="max-w-2xl mx-auto text-muted-foreground leading-relaxed italic font-serif text-lg">
-            "Photos, videos, audio, and ministry moments that reflect the life and worship of our church community."
+      {/* Compact hero */}
+      <header className="border-b border-accent/10 px-5 pb-6 pt-8 sm:px-6 sm:pb-10 sm:pt-14">
+        <div className="mx-auto max-w-7xl space-y-2 text-center sm:space-y-3">
+          <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-accent">Media Library</span>
+          <h1 className="font-serif leading-tight text-foreground text-[clamp(1.75rem,7vw,3rem)]">Worship Media</h1>
+          <p className="mx-auto max-w-xl font-serif text-[13px] italic leading-relaxed text-muted-foreground sm:text-base">
+            Moments from our services, rehearsals and worship nights.
           </p>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-20 space-y-24">
-        {/* Featured Albums Section */}
-        {activeTab === 'all' && (
-          <section className="space-y-12">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-              <div className="space-y-4">
-                <span className="text-[10px] font-bold tracking-[0.3em] text-accent uppercase">Ministry Moments</span>
-                <h2 className="font-serif text-4xl">Featured Albums</h2>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {(featuredAlbums || []).map((album: any) => (
-                <div key={album.id} className="group cursor-pointer space-y-6">
-                  <div className="aspect-[4/5] overflow-hidden border border-accent/10 relative">
-                    <img loading="lazy" decoding="async" 
-                      src={album.cover_image_url || album.coverImageUrl} 
-                      alt={album.title}
-                      className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105"
-                    />
-                    <div className="absolute top-6 right-6">
-                      <Badge className="rounded-none bg-accent text-primary text-[8px] font-bold uppercase tracking-widest">
-                        {album.media_count || album.mediaCount || 0} Items
-                      </Badge>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <span className="text-[9px] font-bold text-accent uppercase tracking-widest">{album.category}</span>
-                    <h3 className="font-serif text-2xl group-hover:text-accent transition-colors">{album.title}</h3>
-                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">{album.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Media Explorer */}
-        <section className="space-y-12">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 border-b border-accent/10 pb-12">
-            <Tabs defaultValue="all" className="w-full lg:w-auto" onValueChange={setActiveTab}>
-              <TabsList className="bg-transparent h-auto p-0 flex flex-wrap gap-x-8 gap-y-4 justify-start">
-                {[
-                  { id: 'all', label: 'All Media', icon: LayoutGrid },
-                  { id: 'photos', label: 'Photos', icon: Camera },
-                  { id: 'videos', label: 'Videos', icon: Video },
-                  { id: 'audio', label: 'Audio', icon: Music },
-                  { id: 'files', label: 'Ministry Files', icon: FileText }
-                ].map((tab) => (
-                  <TabsTrigger 
-                    key={tab.id}
-                    value={tab.id} 
-                    className="bg-transparent p-0 data-[state=active]:bg-transparent shadow-none rounded-none border-none text-[10px] font-bold tracking-[0.2em] uppercase text-muted-foreground data-[state=active]:text-accent relative pb-2 transition-all after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-accent data-[state=active]:after:w-full after:transition-all"
-                  >
-                    <tab.icon className="w-3.5 h-3.5 mr-2 inline-block mb-0.5" />
-                    {tab.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-
-            <div className="relative w-full lg:w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-accent/40" />
-              <Input 
-                placeholder="SEARCH MEDIA..." 
-                className="pl-10 rounded-none border-accent/10 bg-muted/20 text-[10px] tracking-widest font-bold placeholder:text-accent/30"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
+      <main className="mx-auto max-w-7xl px-3 py-5 sm:px-6 sm:py-10">
+        {/* Sticky toolbar */}
+        <div className="sticky top-[3.25rem] z-30 -mx-3 mb-4 space-y-2.5 border-b border-accent/10 bg-background/95 px-3 py-2.5 backdrop-blur sm:-mx-6 sm:px-6 sm:py-3">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-accent/40" />
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="SEARCH MEDIA..."
+              className="h-9 w-full border border-accent/10 bg-muted/20 pl-9 pr-3 text-[10px] font-bold tracking-[0.15em] uppercase placeholder:text-accent/30 focus:border-accent/30 focus:outline-none"
+            />
           </div>
 
-          {filteredItems.length > 0 ? (
-            <MediaGallery items={filteredItems} />
-          ) : (
-            <div className="py-24 text-center border border-dashed border-accent/10">
-              <p className="font-serif italic text-muted-foreground text-xl">No media items found matching your criteria.</p>
-              <button 
-                onClick={() => {setSearchQuery(''); setActiveTab('all');}}
-                className="mt-6 text-[10px] font-bold tracking-[0.2em] uppercase text-accent border-b border-accent/30 pb-1"
+          <div className="-mx-3 flex snap-x gap-1.5 overflow-x-auto px-3 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0">
+            {FILTERS.map((f) => {
+              const isActive = activeTab === f.id;
+              return (
+                <button
+                  key={f.id}
+                  onClick={() => setActiveTab(f.id)}
+                  className={`flex shrink-0 snap-start items-center gap-1.5 border px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.16em] transition-colors ${
+                    isActive
+                      ? 'border-accent bg-accent/10 text-accent'
+                      : 'border-accent/10 text-muted-foreground hover:border-accent/30'
+                  }`}
+                >
+                  <f.icon className="h-3 w-3" />
+                  {f.label}
+                  <span className="text-accent/50">{counts[f.id] ?? 0}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {albums.length > 0 && (
+            <div className="-mx-3 flex snap-x gap-1.5 overflow-x-auto px-3 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0">
+              <button
+                onClick={() => setAlbumId(null)}
+                className={`shrink-0 snap-start border px-3 py-1 text-[9px] font-bold uppercase tracking-[0.16em] ${
+                  albumId === null ? 'border-accent/40 text-accent' : 'border-accent/10 text-muted-foreground'
+                }`}
+              >
+                All Albums
+              </button>
+              {(albums as any[]).map((album) => (
+                <button
+                  key={album.id}
+                  onClick={() => setAlbumId(album.id === albumId ? null : album.id)}
+                  className={`shrink-0 snap-start border px-3 py-1 text-[9px] font-bold uppercase tracking-[0.16em] ${
+                    albumId === album.id ? 'border-accent/40 text-accent' : 'border-accent/10 text-muted-foreground'
+                  }`}
+                >
+                  {album.title}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {isLoading ? (
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4 xl:grid-cols-5">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div key={i} className="aspect-square animate-pulse border border-accent/5 bg-muted/30" />
+            ))}
+          </div>
+        ) : filtered.length > 0 ? (
+          <MediaGallery items={filtered} />
+        ) : (
+          <div className="border border-dashed border-accent/10 px-6 py-16 text-center">
+            <p className="font-serif text-base italic text-muted-foreground sm:text-lg">
+              {items.length === 0 ? 'Media is being prepared. Check back soon.' : 'No media matches your filters.'}
+            </p>
+            {items.length > 0 && (
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setActiveTab('all');
+                  setAlbumId(null);
+                }}
+                className="mt-5 border-b border-accent/30 pb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-accent"
               >
                 Clear Filters
               </button>
-            </div>
-          )}
-        </section>
+            )}
+          </div>
+        )}
       </main>
     </div>
   );
