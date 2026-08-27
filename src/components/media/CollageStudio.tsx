@@ -242,6 +242,62 @@ export function CollageStudio({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const imagesRef = useRef<HTMLImageElement[]>([]);
 
+  useEffect(() => setPresets(loadBrandingPresets()), []);
+
+  const persistPresets = (next: BrandingPreset[]) => {
+    setPresets(next);
+    saveBrandingPresets(next);
+  };
+
+  const currentBranding = {
+    font,
+    align,
+    titleScale,
+    uppercaseTitle,
+    wmMode,
+    wmText,
+    wmPos,
+    wmOpacity,
+    wmScale,
+  };
+
+  const applyPreset = (preset: BrandingPreset) => {
+    setFont(preset.font as FontId);
+    setAlign(preset.align as AlignId);
+    setTitleScale(preset.titleScale);
+    setUppercaseTitle(preset.uppercaseTitle);
+    setWmMode(preset.wmMode as WatermarkMode);
+    setWmText(preset.wmText);
+    setWmPos(preset.wmPos as WmPosition);
+    setWmOpacity(preset.wmOpacity);
+    setWmScale(preset.wmScale);
+    setActivePreset(preset.id);
+    toast.success(`Branding preset "${preset.name}" applied`);
+  };
+
+  const savePreset = () => {
+    const name = presetName.trim();
+    if (!name) {
+      toast.error('Name your branding preset first');
+      return;
+    }
+    const existing = presets.find((p) => p.name.toLowerCase() === name.toLowerCase());
+    const id = existing?.id ?? `bp_${Date.now()}`;
+    const next = existing
+      ? presets.map((p) => (p.id === id ? { ...p, ...currentBranding, name } : p))
+      : [...presets, { id, name, ...currentBranding }];
+    persistPresets(next);
+    setActivePreset(id);
+    setPresetName('');
+    toast.success(existing ? `Updated "${name}"` : `Saved "${name}"`);
+  };
+
+  const deletePreset = (id: string) => {
+    persistPresets(presets.filter((p) => p.id !== id));
+    if (activePreset === id) setActivePreset(null);
+  };
+
+
   const chosen = useMemo(
     () => selected.map((id) => photos.find((p) => p.id === id)).filter(Boolean) as CollagePhoto[],
     [selected, photos],
