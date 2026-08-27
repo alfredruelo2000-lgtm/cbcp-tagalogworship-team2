@@ -619,6 +619,17 @@ export function CollageStudio({
                 <Bookmark className="h-3.5 w-3.5" /> Save current branding
               </Button>
             </div>
+            <label className="flex cursor-pointer items-center gap-2 pt-1">
+              <input
+                type="checkbox"
+                checked={lockBranding}
+                onChange={(e) => setLockBranding(e.target.checked)}
+                className="h-3.5 w-3.5 accent-accent"
+              />
+              <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                Apply this branding preset to every preview and export format
+              </span>
+            </label>
           </div>
 
           {/* Text styling */}
