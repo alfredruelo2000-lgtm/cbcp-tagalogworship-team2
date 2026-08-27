@@ -229,7 +229,11 @@ export function CollageStudio({
   const [wmPos, setWmPos] = useState<WmPosition>('br');
   const [wmOpacity, setWmOpacity] = useState(0.55);
   const [wmScale, setWmScale] = useState(1);
+  const [presets, setPresets] = useState<BrandingPreset[]>([]);
+  const [activePreset, setActivePreset] = useState<string | null>(null);
+  const [presetName, setPresetName] = useState('');
   const logoRef = useRef<HTMLImageElement | null>(null);
+
   const [previews, setPreviews] = useState<Array<{ fmt: Fmt; dataUrl: string }>>([]);
   const [approved, setApproved] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
