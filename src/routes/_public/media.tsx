@@ -3,6 +3,7 @@ import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getMediaPublic, getMediaAlbumsPublic } from '@/lib/db-public.functions';
 import { MediaGallery } from '@/components/media/MediaGallery';
+import { FeaturedCollageBanner } from '@/components/media/FeaturedCollageBanner';
 import { MediaItem } from '@/types/media';
 import { Search, Camera, Video, Music, FileText, LayoutGrid } from 'lucide-react';
 
