@@ -84,6 +84,12 @@ function MediaPage() {
     return map;
   }, [items]);
 
+  const featured = useMemo(
+    () => items.filter((item) => item.featured && item.mediaType === 'Photo').slice(0, 6),
+    [items],
+  );
+
+
   return (
     <div className="min-h-screen bg-background">
       {/* Compact hero */}
