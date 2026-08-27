@@ -232,6 +232,7 @@ export function CollageStudio({
   const [presets, setPresets] = useState<BrandingPreset[]>([]);
   const [activePreset, setActivePreset] = useState<string | null>(null);
   const [presetName, setPresetName] = useState('');
+  const [lockBranding, setLockBranding] = useState(true);
   const logoRef = useRef<HTMLImageElement | null>(null);
 
   const [previews, setPreviews] = useState<Array<{ fmt: Fmt; dataUrl: string }>>([]);
