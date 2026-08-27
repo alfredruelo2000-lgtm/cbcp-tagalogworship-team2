@@ -10,6 +10,8 @@ import {
   updateMediaAlbum,
 } from '@/lib/db-resources.functions';
 import { UploadInterface } from '@/components/media/UploadInterface';
+import { CollageStudio } from '@/components/media/CollageStudio';
+import { createMediaItem } from '@/lib/db-resources.functions';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
