@@ -504,6 +504,126 @@ export function CollageStudio({
             </div>
           </div>
 
+          {/* Text styling */}
+          <div className="space-y-1.5">
+            <Label className="text-[9px] uppercase tracking-widest text-muted-foreground">Text styling</Label>
+            <div className="flex flex-wrap gap-2">
+              {FONTS.map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => setFont(f.id)}
+                  className={`border px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest ${
+                    font === f.id ? 'border-accent bg-accent/10 text-accent' : 'border-accent/10 text-muted-foreground'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              {ALIGNS.map((a) => (
+                <button
+                  key={a.id}
+                  onClick={() => setAlign(a.id)}
+                  className={`border px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest ${
+                    align === a.id ? 'border-accent bg-accent/10 text-accent' : 'border-accent/10 text-muted-foreground'
+                  }`}
+                >
+                  {a.label}
+                </button>
+              ))}
+              <button
+                onClick={() => setUppercaseTitle((v) => !v)}
+                className={`border px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest ${
+                  uppercaseTitle ? 'border-accent bg-accent/10 text-accent' : 'border-accent/10 text-muted-foreground'
+                }`}
+              >
+                Uppercase headline
+              </button>
+              <label className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                Size {Math.round(titleScale * 100)}%
+                <input
+                  type="range"
+                  min={0.7}
+                  max={1.4}
+                  step={0.05}
+                  value={titleScale}
+                  onChange={(e) => setTitleScale(Number(e.target.value))}
+                  className="h-1 w-24 accent-accent"
+                />
+              </label>
+            </div>
+          </div>
+
+          {/* Watermark / branding */}
+          <div className="space-y-1.5">
+            <Label className="text-[9px] uppercase tracking-widest text-muted-foreground">Watermark &amp; branding</Label>
+            <div className="flex flex-wrap gap-2">
+              {WATERMARK_MODES.map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => setWmMode(m.id)}
+                  className={`border px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest ${
+                    wmMode === m.id ? 'border-accent bg-accent/10 text-accent' : 'border-accent/10 text-muted-foreground'
+                  }`}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+            {wmMode !== 'off' && (
+              <div className="space-y-2 border border-accent/10 p-3">
+                {(wmMode === 'text' || wmMode === 'both') && (
+                  <Input
+                    value={wmText}
+                    onChange={(e) => setWmText(e.target.value)}
+                    placeholder="@handle or ministry name"
+                    className="h-9 rounded-none border-accent/10 bg-background text-xs"
+                  />
+                )}
+                <div className="flex flex-wrap gap-2">
+                  {WM_POSITIONS.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => setWmPos(p.id)}
+                      className={`border px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest ${
+                        wmPos === p.id ? 'border-accent bg-accent/10 text-accent' : 'border-accent/10 text-muted-foreground'
+                      }`}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex flex-wrap items-center gap-4">
+                  <label className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                    Opacity {Math.round(wmOpacity * 100)}%
+                    <input
+                      type="range"
+                      min={0.1}
+                      max={1}
+                      step={0.05}
+                      value={wmOpacity}
+                      onChange={(e) => setWmOpacity(Number(e.target.value))}
+                      className="h-1 w-24 accent-accent"
+                    />
+                  </label>
+                  <label className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                    Scale {Math.round(wmScale * 100)}%
+                    <input
+                      type="range"
+                      min={0.5}
+                      max={2}
+                      step={0.1}
+                      value={wmScale}
+                      onChange={(e) => setWmScale(Number(e.target.value))}
+                      className="h-1 w-24 accent-accent"
+                    />
+                  </label>
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="space-y-1.5">
             <Label className="text-[9px] uppercase tracking-widest text-muted-foreground">Design template</Label>
             <div className="flex flex-wrap gap-2">
