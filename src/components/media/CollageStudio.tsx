@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { uploadMediaFile } from '@/lib/media-upload';
+import logoAsset from '@/assets/cbcp-logo.png.asset.json';
 
 type Fmt = { id: string; label: string; w: number; h: number };
 type Cell = [number, number, number, number];
@@ -329,8 +330,6 @@ export function CollageStudio({
       const logoW = logo ? Math.round(unit * 0.14 * wmScale) : 0;
       const logoH = logo ? Math.round(logoW * (logo.height / logo.width)) : 0;
       const wmFontSize = Math.round(unit * 0.026 * wmScale);
-      const textW = showText ? (ctx.measureText(wmText).width, 0) : 0;
-      void textW;
       ctx.save();
       ctx.globalAlpha = wmOpacity;
       ctx.font = `700 ${wmFontSize}px ${fontPreset.sub}`;
@@ -351,7 +350,7 @@ export function CollageStudio({
             : gridY + gridH - margin - blockH;
       if (logo) ctx.drawImage(logo, bx + (blockW - logoW) / 2, by, logoW, logoH);
       if (showText) {
-        ctx.fillStyle = theme.ink === '#f7f3ea' || theme.ink === '#f4e9d8' || theme.ink === '#f6f1e6' ? '#ffffff' : '#ffffff';
+        ctx.fillStyle = '#ffffff';
         ctx.shadowColor = 'rgba(0,0,0,0.45)';
         ctx.shadowBlur = Math.max(2, Math.round(unit * 0.004));
         ctx.textAlign = 'center';
