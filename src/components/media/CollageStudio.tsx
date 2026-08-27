@@ -1,17 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Sparkles, Loader2, Check, X, RefreshCw, Download, Wand2, Bookmark, Trash2 } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
+import { Sparkles, Loader2, Check, X, RefreshCw, Download, Wand2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { uploadMediaFile } from '@/lib/media-upload';
-import {
-  loadBrandingPresets,
-  saveBrandingPresets,
-  type BrandingPreset,
-} from '@/lib/branding-presets';
 import logoAsset from '@/assets/cbcp-logo.png.asset.json';
-
 
 type Fmt = { id: string; label: string; w: number; h: number };
 type Cell = [number, number, number, number];
@@ -229,11 +223,7 @@ export function CollageStudio({
   const [wmPos, setWmPos] = useState<WmPosition>('br');
   const [wmOpacity, setWmOpacity] = useState(0.55);
   const [wmScale, setWmScale] = useState(1);
-  const [presets, setPresets] = useState<BrandingPreset[]>([]);
-  const [activePreset, setActivePreset] = useState<string | null>(null);
-  const [presetName, setPresetName] = useState('');
   const logoRef = useRef<HTMLImageElement | null>(null);
-
   const [previews, setPreviews] = useState<Array<{ fmt: Fmt; dataUrl: string }>>([]);
   const [approved, setApproved] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -241,62 +231,6 @@ export function CollageStudio({
   const [publishing, setPublishing] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const imagesRef = useRef<HTMLImageElement[]>([]);
-
-  useEffect(() => setPresets(loadBrandingPresets()), []);
-
-  const persistPresets = (next: BrandingPreset[]) => {
-    setPresets(next);
-    saveBrandingPresets(next);
-  };
-
-  const currentBranding = {
-    font,
-    align,
-    titleScale,
-    uppercaseTitle,
-    wmMode,
-    wmText,
-    wmPos,
-    wmOpacity,
-    wmScale,
-  };
-
-  const applyPreset = (preset: BrandingPreset) => {
-    setFont(preset.font as FontId);
-    setAlign(preset.align as AlignId);
-    setTitleScale(preset.titleScale);
-    setUppercaseTitle(preset.uppercaseTitle);
-    setWmMode(preset.wmMode as WatermarkMode);
-    setWmText(preset.wmText);
-    setWmPos(preset.wmPos as WmPosition);
-    setWmOpacity(preset.wmOpacity);
-    setWmScale(preset.wmScale);
-    setActivePreset(preset.id);
-    toast.success(`Branding preset "${preset.name}" applied`);
-  };
-
-  const savePreset = () => {
-    const name = presetName.trim();
-    if (!name) {
-      toast.error('Name your branding preset first');
-      return;
-    }
-    const existing = presets.find((p) => p.name.toLowerCase() === name.toLowerCase());
-    const id = existing?.id ?? `bp_${Date.now()}`;
-    const next = existing
-      ? presets.map((p) => (p.id === id ? { ...p, ...currentBranding, name } : p))
-      : [...presets, { id, name, ...currentBranding }];
-    persistPresets(next);
-    setActivePreset(id);
-    setPresetName('');
-    toast.success(existing ? `Updated "${name}"` : `Saved "${name}"`);
-  };
-
-  const deletePreset = (id: string) => {
-    persistPresets(presets.filter((p) => p.id !== id));
-    if (activePreset === id) setActivePreset(null);
-  };
-
 
   const chosen = useMemo(
     () => selected.map((id) => photos.find((p) => p.id === id)).filter(Boolean) as CollagePhoto[],
@@ -570,58 +504,7 @@ export function CollageStudio({
             </div>
           </div>
 
-          {/* Branding presets */}
-          <div className="space-y-1.5">
-            <Label className="text-[9px] uppercase tracking-widest text-muted-foreground">Branding presets</Label>
-            <div className="flex flex-wrap gap-2">
-              {presets.length === 0 && (
-                <span className="text-[9px] uppercase tracking-widest text-muted-foreground">
-                  No saved presets yet
-                </span>
-              )}
-              {presets.map((p) => (
-                <span
-                  key={p.id}
-                  className={`flex items-center gap-1 border ${
-                    activePreset === p.id ? 'border-accent bg-accent/10 text-accent' : 'border-accent/10 text-muted-foreground'
-                  }`}
-                >
-                  <button
-                    onClick={() => applyPreset(p)}
-                    className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest"
-                  >
-                    {p.name}
-                  </button>
-                  <button
-                    onClick={() => deletePreset(p.id)}
-                    aria-label={`Delete preset ${p.name}`}
-                    className="px-1.5 py-1.5 text-muted-foreground hover:text-destructive"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </button>
-                </span>
-              ))}
-            </div>
-            <div className="flex flex-wrap items-center gap-2 pt-1">
-              <Input
-                value={presetName}
-                onChange={(e) => setPresetName(e.target.value)}
-                placeholder="Preset name (e.g. Sunday Social)"
-                className="h-9 w-56 rounded-none border-accent/10 bg-background text-xs"
-              />
-              <Button
-                type="button"
-                onClick={savePreset}
-                variant="outline"
-                className="h-9 gap-2 rounded-none border-accent/20 text-[9px] font-bold uppercase tracking-widest"
-              >
-                <Bookmark className="h-3.5 w-3.5" /> Save current branding
-              </Button>
-            </div>
-          </div>
-
           {/* Text styling */}
-
           <div className="space-y-1.5">
             <Label className="text-[9px] uppercase tracking-widest text-muted-foreground">Text styling</Label>
             <div className="flex flex-wrap gap-2">
