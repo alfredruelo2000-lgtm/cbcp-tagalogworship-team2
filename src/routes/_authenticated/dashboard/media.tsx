@@ -233,6 +233,8 @@ function MediaLibraryPage() {
               file_url: collage.file_url,
               thumbnail_url: collage.thumbnail_url,
               visibility: 'Public',
+              featured: true,
+              tags: ['collage'],
               file_size: collage.fileSize,
               file_type: 'JPG',
               album_id: uploadAlbum,
