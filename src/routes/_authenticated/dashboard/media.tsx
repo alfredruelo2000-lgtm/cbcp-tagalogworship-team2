@@ -107,6 +107,14 @@ function MediaLibraryPage() {
     onError: (error: any) => toast.error(`Album update failed: ${error.message}`),
   });
 
+  const collagePhotos = useMemo(
+    () =>
+      (mediaItems as any[])
+        .filter((item) => item.media_type === 'Photo' && (item.thumbnail_url || item.file_url))
+        .map((item) => ({ id: item.id, title: item.title, url: item.thumbnail_url || item.file_url })),
+    [mediaItems],
+  );
+
   const filteredMedia = useMemo(
     () =>
       (mediaItems as any[]).filter((item) => {
