@@ -570,7 +570,58 @@ export function CollageStudio({
             </div>
           </div>
 
+          {/* Branding presets */}
+          <div className="space-y-1.5">
+            <Label className="text-[9px] uppercase tracking-widest text-muted-foreground">Branding presets</Label>
+            <div className="flex flex-wrap gap-2">
+              {presets.length === 0 && (
+                <span className="text-[9px] uppercase tracking-widest text-muted-foreground">
+                  No saved presets yet
+                </span>
+              )}
+              {presets.map((p) => (
+                <span
+                  key={p.id}
+                  className={`flex items-center gap-1 border ${
+                    activePreset === p.id ? 'border-accent bg-accent/10 text-accent' : 'border-accent/10 text-muted-foreground'
+                  }`}
+                >
+                  <button
+                    onClick={() => applyPreset(p)}
+                    className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest"
+                  >
+                    {p.name}
+                  </button>
+                  <button
+                    onClick={() => deletePreset(p.id)}
+                    aria-label={`Delete preset ${p.name}`}
+                    className="px-1.5 py-1.5 text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <Input
+                value={presetName}
+                onChange={(e) => setPresetName(e.target.value)}
+                placeholder="Preset name (e.g. Sunday Social)"
+                className="h-9 w-56 rounded-none border-accent/10 bg-background text-xs"
+              />
+              <Button
+                type="button"
+                onClick={savePreset}
+                variant="outline"
+                className="h-9 gap-2 rounded-none border-accent/20 text-[9px] font-bold uppercase tracking-widest"
+              >
+                <Bookmark className="h-3.5 w-3.5" /> Save current branding
+              </Button>
+            </div>
+          </div>
+
           {/* Text styling */}
+
           <div className="space-y-1.5">
             <Label className="text-[9px] uppercase tracking-widest text-muted-foreground">Text styling</Label>
             <div className="flex flex-wrap gap-2">
