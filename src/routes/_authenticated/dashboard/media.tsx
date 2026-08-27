@@ -222,6 +222,29 @@ function MediaLibraryPage() {
         </section>
       )}
 
+      <CollageStudio
+        photos={collagePhotos}
+        onPublished={async (collage) => {
+          try {
+            await createMediaItem({
+              title: collage.title,
+              media_type: 'Photo',
+              category: 'Worship Service',
+              file_url: collage.file_url,
+              thumbnail_url: collage.thumbnail_url,
+              visibility: 'Public',
+              file_size: collage.fileSize,
+              file_type: 'JPG',
+              album_id: uploadAlbum,
+            });
+            toast.success('Collage published to Worship Media');
+            refresh();
+          } catch (error: any) {
+            toast.error(`Publish failed: ${error.message}`);
+          }
+        }}
+      />
+
       {/* Filters */}
       <div className="space-y-2.5 border border-accent/5 bg-muted/20 p-3">
         <div className="relative">
