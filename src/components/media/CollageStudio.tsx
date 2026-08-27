@@ -78,7 +78,7 @@ export function CollageStudio({
   const [selected, setSelected] = useState<string[]>([]);
   const [title, setTitle] = useState('Worship Highlights');
   const [subtitle, setSubtitle] = useState('CBCP Tagalog Worship Team');
-  const [theme, setTheme] = useState(THEMES[0]);
+  const [theme, setTheme] = useState(THEMES[0]!);
   const [previews, setPreviews] = useState<Array<{ fmt: Fmt; dataUrl: string }>>([]);
   const [approved, setApproved] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -115,7 +115,8 @@ export function CollageStudio({
       const y = gridY + cy * gridH + (cy > 0 ? gap / 2 : 0);
       const w = cw * gridW - (cx > 0 ? gap / 2 : 0) - (cx + cw < 1 ? gap / 2 : 0);
       const h = ch * gridH - (cy > 0 ? gap / 2 : 0) - (cy + ch < 1 ? gap / 2 : 0);
-      drawCover(ctx, imgs[i], x, y, w, h);
+      const img = imgs[i];
+      if (img) drawCover(ctx, img, x, y, w, h);
     });
 
     // Caption band
