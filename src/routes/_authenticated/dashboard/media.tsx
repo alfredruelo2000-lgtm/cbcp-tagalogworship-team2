@@ -283,13 +283,13 @@ function MediaLibraryPage() {
                   {editing?.id === item.id ? (
                     <div className="flex items-center gap-1.5">
                       <Input
-                        value={editing.title}
+                        value={editing?.title ?? ''}
                         onChange={(e) => setEditing({ id: item.id, title: e.target.value })}
                         className="h-7 rounded-none border-accent/20 bg-background text-xs"
                       />
                       <button
                         onClick={() => {
-                          patchItem.mutate({ id: item.id, patch: { title: editing.title.trim() || item.title } });
+                          patchItem.mutate({ id: item.id, patch: { title: editing?.title.trim() || item.title } });
                           setEditing(null);
                         }}
                         className="text-accent"
