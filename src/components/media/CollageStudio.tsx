@@ -292,19 +292,75 @@ export function CollageStudio({
       }
     });
 
-    // Caption band
+    // Caption band — typography follows the selected preset, alignment and scale.
+    const fontPreset = FONTS.find((f) => f.id === font) ?? FONTS[0];
     const capY = H - pad - captionH + gap;
+    const anchorX = align === 'left' ? gridX : align === 'right' ? gridX + gridW : gridX + gridW / 2;
+    const ruleW = Math.round(gridW * 0.18);
+    const ruleX = align === 'left' ? gridX : align === 'right' ? gridX + gridW - ruleW : gridX + (gridW - ruleW) / 2;
     ctx.fillStyle = theme.accent;
-    ctx.fillRect(gridX, capY, Math.round(gridW * 0.18), Math.max(2, Math.round(H * 0.003)));
-    ctx.fillStyle = theme.ink;
-    const titleSize = Math.round(Math.min(W, H) * 0.062);
-    ctx.font = `600 ${titleSize}px Georgia, 'Times New Roman', serif`;
+    ctx.fillRect(ruleX, capY, ruleW, Math.max(2, Math.round(H * 0.003)));
+    ctx.textAlign = align;
     ctx.textBaseline = 'top';
-    ctx.fillText(title.slice(0, 34), gridX, capY + Math.round(captionH * 0.18));
+    ctx.fillStyle = theme.ink;
+    const titleSize = Math.round(Math.min(W, H) * 0.062 * titleScale);
+    ctx.font = `600 ${titleSize}px ${fontPreset.title}`;
+    const headline = uppercaseTitle ? title.toUpperCase() : title;
+    ctx.fillText(headline.slice(0, 34), anchorX, capY + Math.round(captionH * 0.18));
     ctx.fillStyle = theme.accent;
     const subSize = Math.round(titleSize * 0.38);
-    ctx.font = `700 ${subSize}px Helvetica, Arial, sans-serif`;
-    ctx.fillText(subtitle.toUpperCase().slice(0, 48), gridX, capY + Math.round(captionH * 0.18) + titleSize * 1.25);
+    ctx.font = `700 ${subSize}px ${fontPreset.sub}`;
+    ctx.fillText(subtitle.toUpperCase().slice(0, 48), anchorX, capY + Math.round(captionH * 0.18) + titleSize * 1.25);
+    ctx.textAlign = 'left';
+
+    // Optional branding watermark over the artwork area.
+    if (wmMode !== 'off') {
+      const showLogo = wmMode === 'logo' || wmMode === 'both';
+      const showText = wmMode === 'text' || wmMode === 'both';
+      if (showLogo && !logoRef.current) {
+        try {
+          logoRef.current = await loadImage(logoAsset.url);
+        } catch {
+          logoRef.current = null;
+        }
+      }
+      const logo = showLogo ? logoRef.current : null;
+      const unit = Math.min(W, H);
+      const logoW = logo ? Math.round(unit * 0.14 * wmScale) : 0;
+      const logoH = logo ? Math.round(logoW * (logo.height / logo.width)) : 0;
+      const wmFontSize = Math.round(unit * 0.026 * wmScale);
+      const textW = showText ? (ctx.measureText(wmText).width, 0) : 0;
+      void textW;
+      ctx.save();
+      ctx.globalAlpha = wmOpacity;
+      ctx.font = `700 ${wmFontSize}px ${fontPreset.sub}`;
+      const blockW = Math.max(logoW, showText ? ctx.measureText(wmText).width : 0);
+      const blockH = logoH + (showText ? wmFontSize * (logo ? 1.6 : 1) : 0);
+      const margin = Math.round(pad * 1.1);
+      const bx =
+        wmPos === 'tl' || wmPos === 'bl'
+          ? gridX + margin
+          : wmPos === 'center'
+            ? gridX + (gridW - blockW) / 2
+            : gridX + gridW - margin - blockW;
+      const by =
+        wmPos === 'tl' || wmPos === 'tr'
+          ? gridY + margin
+          : wmPos === 'center'
+            ? gridY + (gridH - blockH) / 2
+            : gridY + gridH - margin - blockH;
+      if (logo) ctx.drawImage(logo, bx + (blockW - logoW) / 2, by, logoW, logoH);
+      if (showText) {
+        ctx.fillStyle = theme.ink === '#f7f3ea' || theme.ink === '#f4e9d8' || theme.ink === '#f6f1e6' ? '#ffffff' : '#ffffff';
+        ctx.shadowColor = 'rgba(0,0,0,0.45)';
+        ctx.shadowBlur = Math.max(2, Math.round(unit * 0.004));
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText(wmText.slice(0, 40), bx + blockW / 2, by + logoH + (logo ? wmFontSize * 0.4 : 0));
+      }
+      ctx.restore();
+      ctx.textAlign = 'left';
+    }
 
     return canvas.toDataURL('image/jpeg', quality);
   };
