@@ -213,6 +213,16 @@ export function CollageStudio({
   const [theme, setTheme] = useState(THEMES[0]!);
   const [template, setTemplate] = useState<TemplateId>('mosaic');
   const [enhance, setEnhance] = useState(true);
+  const [font, setFont] = useState<FontId>('serif');
+  const [align, setAlign] = useState<AlignId>('left');
+  const [titleScale, setTitleScale] = useState(1);
+  const [uppercaseTitle, setUppercaseTitle] = useState(false);
+  const [wmMode, setWmMode] = useState<WatermarkMode>('off');
+  const [wmText, setWmText] = useState('@cbcptagalogworship');
+  const [wmPos, setWmPos] = useState<WmPosition>('br');
+  const [wmOpacity, setWmOpacity] = useState(0.55);
+  const [wmScale, setWmScale] = useState(1);
+  const logoRef = useRef<HTMLImageElement | null>(null);
   const [previews, setPreviews] = useState<Array<{ fmt: Fmt; dataUrl: string }>>([]);
   const [approved, setApproved] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
