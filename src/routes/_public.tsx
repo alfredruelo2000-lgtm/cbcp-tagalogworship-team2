@@ -40,7 +40,7 @@ function PublicLayout() {
         ) : <Outlet />}
       </main>
       {(() => {
-        const isPracticeSurface = ['/songs', '/setlists', '/team'].some(
+        const isPracticeSurface = ['/songs', '/setlists', '/team', '/media'].some(
           (prefix) => location.pathname === prefix || location.pathname.startsWith(`${prefix}/`),
         );
 

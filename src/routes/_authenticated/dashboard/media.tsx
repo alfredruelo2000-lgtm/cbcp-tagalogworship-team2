@@ -10,6 +10,8 @@ import {
   updateMediaAlbum,
 } from '@/lib/db-resources.functions';
 import { UploadInterface } from '@/components/media/UploadInterface';
+import { CollageStudio } from '@/components/media/CollageStudio';
+import { createMediaItem } from '@/lib/db-resources.functions';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -104,6 +106,14 @@ function MediaLibraryPage() {
     onSuccess: refresh,
     onError: (error: any) => toast.error(`Album update failed: ${error.message}`),
   });
+
+  const collagePhotos = useMemo(
+    () =>
+      (mediaItems as any[])
+        .filter((item) => item.media_type === 'Photo' && (item.thumbnail_url || item.file_url))
+        .map((item) => ({ id: item.id, title: item.title, url: item.thumbnail_url || item.file_url })),
+    [mediaItems],
+  );
 
   const filteredMedia = useMemo(
     () =>
@@ -211,6 +221,29 @@ function MediaLibraryPage() {
           )}
         </section>
       )}
+
+      <CollageStudio
+        photos={collagePhotos}
+        onPublished={async (collage) => {
+          try {
+            await createMediaItem({
+              title: collage.title,
+              media_type: 'Photo',
+              category: 'Worship Service',
+              file_url: collage.file_url,
+              thumbnail_url: collage.thumbnail_url,
+              visibility: 'Public',
+              file_size: collage.fileSize,
+              file_type: 'JPG',
+              album_id: uploadAlbum,
+            });
+            toast.success('Collage published to Worship Media');
+            refresh();
+          } catch (error: any) {
+            toast.error(`Publish failed: ${error.message}`);
+          }
+        }}
+      />
 
       {/* Filters */}
       <div className="space-y-2.5 border border-accent/5 bg-muted/20 p-3">
