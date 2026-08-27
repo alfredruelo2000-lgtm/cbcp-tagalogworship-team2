@@ -9,7 +9,7 @@ import { useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createMediaItem } from '@/lib/db-resources.functions';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { uploadMediaFile } from '@/lib/media-upload';
 
 export const Route = createFileRoute('/_authenticated/dashboard/media/new')({
   component: UploadMediaPage,
