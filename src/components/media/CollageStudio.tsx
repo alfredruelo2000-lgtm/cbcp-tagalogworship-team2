@@ -1,11 +1,17 @@
-import { useMemo, useRef, useState } from 'react';
-import { Sparkles, Loader2, Check, X, RefreshCw, Download, Wand2 } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Sparkles, Loader2, Check, X, RefreshCw, Download, Wand2, Bookmark, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { uploadMediaFile } from '@/lib/media-upload';
+import {
+  loadBrandingPresets,
+  saveBrandingPresets,
+  type BrandingPreset,
+} from '@/lib/branding-presets';
 import logoAsset from '@/assets/cbcp-logo.png.asset.json';
+
 
 type Fmt = { id: string; label: string; w: number; h: number };
 type Cell = [number, number, number, number];
