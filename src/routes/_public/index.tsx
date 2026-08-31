@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { HeroSection } from "@/components/layout/HeroSection";
 import { ScriptureBlock } from "@/components/ui/ScriptureBlock";
 import { MinistryIntro } from "@/components/home/MinistryIntro";
@@ -53,6 +53,13 @@ function Index() {
   const isMobile = useIsMobile();
   const { isVisible, orderedKeys, isFetched } = usePublicSectionVisibility();
   const navigate = useNavigate();
+
+  // The offline IndexedDB cache restores before hydration on reloads, which
+  // would make the first client render differ from the server HTML. Render
+  // persisted-cache-driven sections only after mount so both trees match.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const homeHidden = isFetched && !isVisible('home');
   const firstAvailable = orderedKeys.find((key) => key !== 'home' && isVisible(key));
 
