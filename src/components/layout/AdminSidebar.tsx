@@ -17,7 +17,8 @@ import {
   Menu,
   X,
   User,
-  Activity
+  Activity,
+  DatabaseBackup
 } from 'lucide-react';
 import { pickLogo, useBranding } from "@/lib/branding";
 import { cn } from '@/lib/utils';
@@ -95,6 +96,7 @@ export function AdminSidebar() {
     ...(isMinistryAdmin ? [{ section: "Administration", items: [
         { to: "/dashboard/users", icon: <Users size={18} />, label: "User Accounts" },
         { to: "/dashboard/activity", icon: <Activity size={18} />, label: "Activity Log" },
+        { to: "/dashboard/backup", icon: <DatabaseBackup size={18} />, label: "Backup & Restore" },
         { to: "/dashboard/settings", icon: <Settings size={18} />, label: "Settings" }
     ]}] : []),
     { section: "Account", items: [
