@@ -11,6 +11,7 @@ import { getSettings, updateSetting } from '@/lib/db-settings.functions';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import BrandControlCenter from '@/components/branding/BrandControlCenter';
+import AIDesignStudio from '@/components/branding/AIDesignStudio';
 
 type SectionDefinition = { key: string; name: string; route: string | null; reserve?: boolean };
 
@@ -219,6 +220,9 @@ function SettingsPage() {
 
            <TabsContent value="branding" className="space-y-6 animate-in slide-in-from-left-4 duration-500">
              <BrandControlCenter />
+             <div className="border-t border-accent/10 pt-8">
+               <AIDesignStudio />
+             </div>
            </TabsContent>
          </div>
       </Tabs>

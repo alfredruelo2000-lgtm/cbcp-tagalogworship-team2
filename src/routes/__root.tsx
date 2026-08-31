@@ -14,6 +14,7 @@ import NotFound from "@/components/layout/NotFound";
 import { PostLoginRedirect } from "@/components/auth/PostLoginRedirect";
 import { BrandEntrance } from "@/components/layout/BrandEntrance";
 import { BrandingSync } from "@/components/branding/BrandingSync";
+import { DesignThemeSync } from "@/components/branding/DesignThemeSync";
 import { setupPwa } from "@/lib/pwa";
 import { usePublicRealtime } from "@/lib/use-public-realtime";
 
@@ -141,6 +142,7 @@ function RootComponent() {
         <RealtimeSync />
         <PostLoginRedirect />
         <BrandingSync />
+        <DesignThemeSync />
         <BrandEntrance />
         <Outlet />
         <Toaster position="top-center" />
