@@ -219,6 +219,9 @@ function SettingsPage() {
 
            <TabsContent value="branding" className="space-y-6 animate-in slide-in-from-left-4 duration-500">
              <BrandControlCenter />
+             <div className="border-t border-accent/10 pt-8">
+               <AIDesignStudio />
+             </div>
            </TabsContent>
          </div>
       </Tabs>
