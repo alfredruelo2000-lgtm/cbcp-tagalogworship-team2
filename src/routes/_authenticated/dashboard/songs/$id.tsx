@@ -444,6 +444,25 @@ function EditSongPage() {
                 </Select>
               </div>
 
+              <div className="space-y-2">
+                <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Visibility</Label>
+                <Select
+                  value={formData.visibility || (formData.isPublic ? 'Public' : 'Team Only')}
+                  onValueChange={(v) => { updateField('visibility', v); updateField('isPublic', v === 'Public'); }}
+                >
+                  <SelectTrigger className="rounded-none border-accent/10 bg-background">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-none">
+                    <SelectItem value="Public">Public (Website &amp; App)</SelectItem>
+                    <SelectItem value="Team Only">Team Only</SelectItem>
+                    <SelectItem value="Private">Private</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+
+
               <div className="flex items-center justify-between p-4 bg-muted/20 border border-accent/5">
                 <div className="space-y-0.5">
                   <Label className="text-[10px] font-bold uppercase tracking-widest text-accent flex items-center gap-2">
