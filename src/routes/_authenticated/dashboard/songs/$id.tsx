@@ -259,7 +259,47 @@ function EditSongPage() {
                 </div>
               </div>
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Original Key</Label>
+                <Select value={formData.defaultKey || 'C'} onValueChange={(v) => updateField('defaultKey', v)}>
+                  <SelectTrigger className="rounded-none border-accent/10 bg-background">
+                    <SelectValue placeholder="Key" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-none max-h-72">
+                    {['C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'G#', 'Ab', 'A', 'A#', 'Bb', 'B',
+                      'Am', 'A#m', 'Bbm', 'Bm', 'Cm', 'C#m', 'Dm', 'D#m', 'Ebm', 'Em', 'Fm', 'F#m', 'Gm', 'G#m'].map(k => (
+                      <SelectItem key={k} value={k}>{k}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[9px] uppercase tracking-widest text-muted-foreground/70">Chart transposes from this key</p>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Tempo (BPM)</Label>
+                <Input
+                  type="number"
+                  placeholder="72"
+                  className="rounded-none border-accent/10 bg-background"
+                  value={formData.bpm ?? ''}
+                  onChange={(e) => updateField('bpm', e.target.value ? parseInt(e.target.value) : undefined)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Time Signature</Label>
+                <Select value={formData.timeSignature || '4/4'} onValueChange={(v) => updateField('timeSignature', v)}>
+                  <SelectTrigger className="rounded-none border-accent/10 bg-background">
+                    <SelectValue placeholder="Meter" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-none">
+                    {['4/4', '3/4', '6/8', '2/4', '12/8'].map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </section>
+
 
           <section className="space-y-6">
             <div className="flex items-center justify-between border-b border-accent/10 pb-2">
