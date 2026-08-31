@@ -904,10 +904,16 @@ function SongDetailPage() {
                      className={`break-inside-avoid-column space-y-1 p-1 transition-all cursor-pointer ${isLooped ? 'bg-accent/10 border-l-4 border-accent shadow-sm' : 'hover:bg-gray-50/50'}`}
                   >
                     {header && (
-                      <div className="inline-block bg-accent text-primary px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] rounded-sm mb-2">
-                        {header[1]}
+                      <div className="flex items-baseline gap-2 mb-2">
+                        <span className="inline-block bg-accent text-primary px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] rounded-sm">
+                          {header.label}{header.note ? ` (${header.note})` : ''}
+                        </span>
+                        {header.repeat && (
+                          <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground">{header.repeat}</span>
+                        )}
                       </div>
                     )}
+
                     <div className="space-y-1">
                       {displayLines.map((line, lIdx) => (
                         <div 
