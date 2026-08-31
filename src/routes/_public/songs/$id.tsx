@@ -877,9 +877,9 @@ function SongDetailPage() {
               <h2 className="hidden print:block font-serif text-2xl text-black">{song.title}</h2>
               <div className="space-y-3 sm:space-y-4" style={{ fontSize: `${fontSize}px` }}>
               {sections.map((section, sIdx) => {
-                const lines = section.split('\n');
-                const header = lines[0]?.match(/^\[(.*)\]$/);
-                const displayLines = header ? lines.slice(1) : lines;
+                const header = section.header;
+                const displayLines = section.lines;
+
                 const isLooped = loopMode && (loopStart === sIdx || (loopStart !== null && loopEnd !== null && sIdx >= loopStart && sIdx <= loopEnd));
 
                 return (
