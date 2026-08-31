@@ -10,7 +10,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Save, Music, Type, Languages, Tags, Star, Info, Loader2, Upload, FileText, Trash2, Eye, History, Wand2, RotateCcw } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import { updateSong, getSongById, getSongVersions, restoreSongVersion, enhanceChordParsing, SongVersion } from '@/lib/db-songs.functions';
+import { updateSong, getSongById, getSongVersions, restoreSongVersion, SongVersion } from '@/lib/db-songs.functions';
+import { formatSongText } from '@/lib/song-format';
+
 import { cacheSongChart } from '@/lib/offline';
 import { isPublicSong, songKeys, syncSongCaches } from '@/lib/song-data';
 import { toast } from 'sonner';
