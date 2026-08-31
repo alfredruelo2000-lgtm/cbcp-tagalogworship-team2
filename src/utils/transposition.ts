@@ -1,38 +1,56 @@
 export const KEYS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+const FLAT_KEYS = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+/** Keys conventionally written with flats. */
+const FLAT_PREFERRING = new Set(['F', 'Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb', 'Dm', 'Gm', 'Cm', 'Fm', 'Bbm', 'Ebm']);
 
-export function transposeChord(chord: string, semitones: number): string {
+/**
+ * Transpose one chord symbol. Handles slash/bass chords, double accidentals,
+ * unicode accidentals and every extension (maj7, m7b5, sus4, add9, 6/9, °, Δ…),
+ * and spells the result with sharps or flats to match the target key.
+ */
+export function transposeChord(chord: string, semitones: number, targetKey?: string): string {
   if (!chord) return chord;
-  
-  const match = chord.match(/^([A-G][#b]?)(.*)$/);
+  const trimmed = chord.trim();
+  if (!trimmed) return chord;
+
+  // Split on the LAST slash only when what follows is a bass note (C/G, G6/9 keeps 6/9).
+  const bassMatch = trimmed.match(/^(.*)\/([A-G](?:#{1,2}|b{1,2}|♯|♭)?)$/);
+  if (bassMatch && bassMatch[1]) {
+    return `${transposeChord(bassMatch[1], semitones, targetKey)}/${transposeChord(bassMatch[2]!, semitones, targetKey)}`;
+  }
+
+  const match = trimmed.match(/^([A-G](?:#{1,2}|b{1,2}|♯|♭)?)(.*)$/);
   if (!match || !match[1]) return chord;
-  
-  const baseNote = match[1];
-  const suffix = match[2] || '';
-  
-  const normalized = normalizeNote(baseNote);
-  const index = KEYS.indexOf(normalized);
-  
+
+  const index = KEYS.indexOf(normalizeNote(match[1]));
   if (index === -1) return chord;
-  
-  let newIndex = (index + semitones) % 12;
+
+  let newIndex = (index + (semitones % 12)) % 12;
   if (newIndex < 0) newIndex += 12;
-  
-  const newNote = KEYS[newIndex];
+
+  const useFlats = targetKey ? FLAT_PREFERRING.has(normalizeKeyLabel(targetKey)) : /b|♭/.test(match[1]);
+  const table = useFlats ? FLAT_KEYS : KEYS;
+  const newNote = table[newIndex];
   if (!newNote) return chord;
-  
-  return newNote + suffix;
+
+  return newNote + (match[2] || '');
+}
+
+function normalizeKeyLabel(key: string): string {
+  return key.trim().replace(/♯/g, '#').replace(/♭/g, 'b').replace(/\s+/g, '');
 }
 
 function normalizeNote(note: string): string {
-  switch (note) {
-    case 'Bb': return 'A#';
-    case 'Db': return 'C#';
-    case 'Eb': return 'D#';
-    case 'Gb': return 'F#';
-    case 'Ab': return 'G#';
-    default: return note;
-  }
+  const n = note.replace(/♯/g, '#').replace(/♭/g, 'b');
+  const flats: Record<string, string> = { Bb: 'A#', Db: 'C#', Eb: 'D#', Gb: 'F#', Ab: 'G#', Cb: 'B', Fb: 'E' };
+  if (flats[n]) return flats[n]!;
+  const doubles: Record<string, string> = { 'C##': 'D', 'D##': 'E', 'F##': 'G', 'G##': 'A', 'A##': 'B', Bbb: 'A', Ebb: 'D', Abb: 'G', Dbb: 'C', Gbb: 'F' };
+  if (doubles[n]) return doubles[n]!;
+  if (n === 'E#') return 'F';
+  if (n === 'B#') return 'C';
+  return n;
 }
+
 
 export function getSemitoneDifference(fromKey: string, toKey: string): number {
   const from = normalizeNote(fromKey.replace('m', ''));
