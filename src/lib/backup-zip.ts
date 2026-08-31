@@ -102,9 +102,16 @@ export interface BuildInput {
 const SECRET_KEY_PATTERN = /(password|secret|api[_-]?key|service[_-]?role|refresh[_-]?token|access[_-]?token|client[_-]?secret)/i;
 
 /** Final guard: fail loudly rather than ship a credential inside a backup. */
+const SAFE_KEYS = new Set(["secretsExcluded", "secrets_excluded", "secretsScrubbed"]);
+
 function assertNoSecrets(json: string, where: string) {
-  const suspicious = json.match(/"([^"]{0,40}(password|secret|service_role|api_key|refresh_token|access_token)[^"]{0,20})"\s*:/i);
-  if (suspicious) throw new Error(`Aborted: possible secret field "${suspicious[1]}" found in ${where}`);
+  const pattern = /"([^"]{0,40}(password|secret|service_role|api_key|refresh_token|access_token)[^"]{0,20})"\s*:/gi;
+  for (const match of json.matchAll(pattern)) {
+    const key = match[1]!;
+    // Metadata flags that merely mention secrets are not secrets themselves.
+    if (SAFE_KEYS.has(key)) continue;
+    throw new Error(`Aborted: possible secret field "${key}" found in ${where}`);
+  }
 }
 
 export async function buildBackupZip(input: BuildInput): Promise<BuiltBackup> {
@@ -118,7 +125,6 @@ export async function buildBackupZip(input: BuildInput): Promise<BuiltBackup> {
     checksums[path] = await sha256Hex(text);
   };
   const addJson = async (path: string, value: unknown) => {
-    console.debug("[backup] json", path);
     const json = JSON.stringify(value, null, 2);
     assertNoSecrets(json, path);
     await addText(path, json);
