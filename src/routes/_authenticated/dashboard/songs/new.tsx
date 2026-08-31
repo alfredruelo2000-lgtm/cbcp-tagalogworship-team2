@@ -10,7 +10,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Save, Music, Type, Languages, Tags, Star, Info, Loader2, Upload, FileText, Trash2, Hash, Eye, Wand2 } from 'lucide-react';
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createSong, enhanceChordParsing } from '@/lib/db-songs.functions';
+import { createSong } from '@/lib/db-songs.functions';
+import { formatSongText } from '@/lib/song-format';
+
 import { toast } from 'sonner';
 import { WorshipSong } from '@/types/songs';
 import { cacheSongChart } from '@/lib/offline';
@@ -143,9 +145,10 @@ function AddSongPage() {
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target?.result as string;
-      updateField('lyrics', text);
-      toast.success('Lyrics imported from file');
+      updateField('lyrics', formatSongText(text));
+      toast.success('Lyrics imported and auto-formatted');
     };
+
     reader.readAsText(file);
   };
 
@@ -326,18 +329,16 @@ function AddSongPage() {
                   variant="ghost" 
                   size="sm"
                   onClick={() => {
-                    const enhanced = enhanceChordParsing(formData.lyrics || '');
+                    const enhanced = formatSongText(formData.lyrics || '');
                     updateField('lyrics', enhanced);
-                    toast.success('Chords enhanced and formatted');
+                    toast.success('Sections highlighted and chords formatted');
                   }}
                   className="h-7 rounded-none text-[9px] uppercase tracking-widest font-bold text-accent hover:text-accent hover:bg-accent/5"
                 >
                   <Wand2 className="w-3 h-3 mr-1" />
-                  Make sure the one-click reformat updates lyrics/chords in the editor and persists my changes to the database.
-
-Add automatic cleanup for inconsistent chord punctuation so recognized chords are reformatted correctly on save.
-
+                  Auto-Format
                 </Button>
+
               </div>
             </div>
             

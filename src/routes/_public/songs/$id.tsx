@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { KEYS, transposeChord, getSemitoneDifference, chordToNumber } from '@/utils/transposition';
+import { splitSongSections, shortSectionLabel, looksLikeChordLine, isChordToken } from '@/lib/song-format';
+
 import { WorshipSong } from '@/types/songs';
 import { toast } from 'sonner';
 import { AddToSetlistButton } from '@/components/setlists/AddToSetlistDialog';
@@ -432,35 +434,23 @@ function SongDetailPage() {
     return () => document.removeEventListener('visibilitychange', onVisibility);
   }, []);
 
-  const sections = useMemo(() => song?.lyrics?.split('\n\n') || [], [song?.lyrics]);
-  // Section labels come from the song itself: [Chorus], "Verse 1:", "PRE-CHORUS" etc.
+  // Sections are detected from the song text itself: "[Chorus]", "Verse 1:",
+  // "INTRO 4X", "Bridge 2X", "Instrumental", "Postlude" … all get highlighted.
+  const sections = useMemo(() => splitSongSections(song?.lyrics || ''), [song?.lyrics]);
   const sectionLabels = useMemo(() => {
-    const keywords = 'intro|verse|pre-?chorus|chorus|refrain|bridge|interlude|instrumental|solo|tag|vamp|turnaround|outro|ending|coda|breakdown|hook';
     const counters: Record<string, number> = {};
     return sections.map((section, index) => {
-      const first = (section.split('\n')[0] || '').trim();
-      const bracket = first.match(/^\[(.+)\]$/);
-      const inline = first.match(new RegExp(`^((?:${keywords})\\s*[0-9]*)\\s*:?$`, 'i'));
-      let name = (bracket?.[1] || inline?.[1] || '').trim();
+      let name = section.header?.label ?? '';
       if (!name) {
         const kind = index === 0 ? 'Verse' : 'Part';
         counters[kind] = (counters[kind] || 0) + 1;
         name = `${kind} ${counters[kind]}`;
       }
-      const lower = name.toLowerCase();
-      const digits = name.match(/\d+/)?.[0] ?? '';
-      let short = name;
-      if (lower.startsWith('pre')) short = `PC${digits}`;
-      else if (lower.startsWith('chorus')) short = `Ch${digits}`;
-      else if (lower.startsWith('verse')) short = `V${digits}`;
-      else if (lower.startsWith('bridge')) short = `Br${digits}`;
-      else if (lower.startsWith('intro')) short = 'Intro';
-      else if (lower.startsWith('outro') || lower.startsWith('ending')) short = 'Outro';
-      else if (name.length > 8) short = `${name.slice(0, 7)}…`;
-      return { name, short };
+      return { name, short: shortSectionLabel(name) };
     });
   }, [sections]);
   const sectionNames = useMemo(() => sectionLabels.map((s) => s.name), [sectionLabels]);
+
   const jumpToSection = (index: number) => { setCurrentSection(index); document.getElementById(`section-${index}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
 
   useEffect(() => {
@@ -532,20 +522,41 @@ function SongDetailPage() {
     setCurrentKey(KEYS[newIdx] + (isMinor ? 'm' : ''));
   };
 
+  const escapeHtml = (value: string) =>
+    value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
   const processLine = (content: string) => {
     if (!content) return '';
-    
-    // If it's a chord line (contains [Chord])
-    if (content.includes('[') && content.includes(']')) {
-      return content.replace(/\[([^\]]+)\]/g, (_, chord) => {
-        const transposed = transposeChord(chord, semitones);
+
+    // Bracket chords on the fly for charts saved before auto-format existed.
+    const source = content.includes('[') && content.includes(']')
+      ? content
+      : looksLikeChordLine(content)
+        ? content.replace(/\S+/g, (token) => (isChordToken(token) ? `[${token}]` : token))
+        : content;
+
+    if (source.includes('[') && source.includes(']')) {
+      const hasLyricText = source.replace(/\[[^\]]*\]/g, '').trim().length > 0;
+      let html = '';
+      let cursor = 0;
+      const regex = /\[([^\]]+)\]/g;
+      let match: RegExpExecArray | null;
+      while ((match = regex.exec(source)) !== null) {
+        const between = source.slice(cursor, match.index);
+        if (between && (showLyrics || !hasLyricText)) html += escapeHtml(between);
+        const transposed = transposeChord(match[1] ?? '', semitones, currentKey);
         const finalChord = numberNotation ? chordToNumber(transposed, currentKey) : transposed;
-        return showChords ? `<span class="${chordColor} font-bold">${finalChord}</span>` : '';
-      });
+        if (showChords) html += `<span class="${chordColor} font-bold">${escapeHtml(finalChord)}</span>`;
+        cursor = match.index + match[0].length;
+      }
+      const tail = source.slice(cursor);
+      if (tail && (showLyrics || !hasLyricText)) html += escapeHtml(tail);
+      return html;
     }
-    
-    return showLyrics ? content : '';
+
+    return showLyrics ? escapeHtml(source) : '';
   };
+
 
   
 
@@ -887,9 +898,9 @@ function SongDetailPage() {
               <h2 className="hidden print:block font-serif text-2xl text-black">{song.title}</h2>
               <div className="space-y-3 sm:space-y-4" style={{ fontSize: `${fontSize}px` }}>
               {sections.map((section, sIdx) => {
-                const lines = section.split('\n');
-                const header = lines[0]?.match(/^\[(.*)\]$/);
-                const displayLines = header ? lines.slice(1) : lines;
+                const header = section.header;
+                const displayLines = section.lines;
+
                 const isLooped = loopMode && (loopStart === sIdx || (loopStart !== null && loopEnd !== null && sIdx >= loopStart && sIdx <= loopEnd));
 
                 return (
@@ -914,10 +925,16 @@ function SongDetailPage() {
                      className={`break-inside-avoid-column space-y-1 p-1 transition-all cursor-pointer ${isLooped ? 'bg-accent/10 border-l-4 border-accent shadow-sm' : 'hover:bg-gray-50/50'}`}
                   >
                     {header && (
-                      <div className="inline-block bg-accent text-primary px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] rounded-sm mb-2">
-                        {header[1]}
+                      <div className="flex items-baseline gap-2 mb-2">
+                        <span className="inline-block bg-accent text-primary px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] rounded-sm">
+                          {header.label}{header.note ? ` (${header.note})` : ''}
+                        </span>
+                        {header.repeat && (
+                          <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground">{header.repeat}</span>
+                        )}
                       </div>
                     )}
+
                     <div className="space-y-1">
                       {displayLines.map((line, lIdx) => (
                         <div 

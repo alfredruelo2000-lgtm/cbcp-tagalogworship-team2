@@ -10,7 +10,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Save, Music, Type, Languages, Tags, Star, Info, Loader2, Upload, FileText, Trash2, Eye, History, Wand2, RotateCcw } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import { updateSong, getSongById, getSongVersions, restoreSongVersion, enhanceChordParsing, SongVersion } from '@/lib/db-songs.functions';
+import { updateSong, getSongById, getSongVersions, restoreSongVersion, SongVersion } from '@/lib/db-songs.functions';
+import { formatSongText } from '@/lib/song-format';
+
 import { cacheSongChart } from '@/lib/offline';
 import { isPublicSong, songKeys, syncSongCaches } from '@/lib/song-data';
 import { toast } from 'sonner';
@@ -145,11 +147,12 @@ function EditSongPage() {
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target?.result as string;
-      updateField('lyrics', text);
-      toast.success('Lyrics imported from file');
+      updateField('lyrics', formatSongText(text));
+      toast.success('Lyrics imported and auto-formatted');
     };
     reader.readAsText(file);
   };
+
 
   if (loading || authPending || songLoading) {
     return (
@@ -256,7 +259,47 @@ function EditSongPage() {
                 </div>
               </div>
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Original Key</Label>
+                <Select value={formData.defaultKey || 'C'} onValueChange={(v) => updateField('defaultKey', v)}>
+                  <SelectTrigger className="rounded-none border-accent/10 bg-background">
+                    <SelectValue placeholder="Key" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-none max-h-72">
+                    {['C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'G#', 'Ab', 'A', 'A#', 'Bb', 'B',
+                      'Am', 'A#m', 'Bbm', 'Bm', 'Cm', 'C#m', 'Dm', 'D#m', 'Ebm', 'Em', 'Fm', 'F#m', 'Gm', 'G#m'].map(k => (
+                      <SelectItem key={k} value={k}>{k}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[9px] uppercase tracking-widest text-muted-foreground/70">Chart transposes from this key</p>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Tempo (BPM)</Label>
+                <Input
+                  type="number"
+                  placeholder="72"
+                  className="rounded-none border-accent/10 bg-background"
+                  value={formData.bpm ?? ''}
+                  onChange={(e) => updateField('bpm', e.target.value ? parseInt(e.target.value) : undefined)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Time Signature</Label>
+                <Select value={formData.timeSignature || '4/4'} onValueChange={(v) => updateField('timeSignature', v)}>
+                  <SelectTrigger className="rounded-none border-accent/10 bg-background">
+                    <SelectValue placeholder="Meter" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-none">
+                    {['4/4', '3/4', '6/8', '2/4', '12/8'].map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </section>
+
 
           <section className="space-y-6">
             <div className="flex items-center justify-between border-b border-accent/10 pb-2">
@@ -284,15 +327,16 @@ function EditSongPage() {
                   variant="ghost" 
                   size="sm"
                   onClick={() => {
-                    const enhanced = enhanceChordParsing(formData.lyrics || '');
+                    const enhanced = formatSongText(formData.lyrics || '');
                     updateField('lyrics', enhanced);
-                    toast.success('Chords enhanced and formatted');
+                    toast.success('Sections highlighted and chords formatted');
                   }}
                   className="h-7 rounded-none text-[9px] uppercase tracking-widest font-bold text-accent hover:text-accent hover:bg-accent/5"
                 >
                   <Wand2 className="w-3 h-3 mr-1" />
-                  Format Chords
+                  Auto-Format
                 </Button>
+
               </div>
             </div>
             
@@ -399,6 +443,25 @@ function EditSongPage() {
                   </SelectContent>
                 </Select>
               </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Visibility</Label>
+                <Select
+                  value={formData.visibility || (formData.isPublic ? 'Public' : 'Team Only')}
+                  onValueChange={(v) => { updateField('visibility', v); updateField('isPublic', v === 'Public'); }}
+                >
+                  <SelectTrigger className="rounded-none border-accent/10 bg-background">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-none">
+                    <SelectItem value="Public">Public (Website &amp; App)</SelectItem>
+                    <SelectItem value="Team Only">Team Only</SelectItem>
+                    <SelectItem value="Private">Private</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+
 
               <div className="flex items-center justify-between p-4 bg-muted/20 border border-accent/5">
                 <div className="space-y-0.5">
