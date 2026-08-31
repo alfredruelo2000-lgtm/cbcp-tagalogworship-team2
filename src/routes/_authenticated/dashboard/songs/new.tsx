@@ -145,9 +145,10 @@ function AddSongPage() {
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target?.result as string;
-      updateField('lyrics', text);
-      toast.success('Lyrics imported from file');
+      updateField('lyrics', formatSongText(text));
+      toast.success('Lyrics imported and auto-formatted');
     };
+
     reader.readAsText(file);
   };
 
