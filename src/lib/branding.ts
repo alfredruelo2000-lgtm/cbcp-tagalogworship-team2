@@ -61,7 +61,7 @@ export interface BrandMotion {
 export interface BrandingConfig {
   name: string;
   tagline: string;
-  logos: Partial<Record<BrandSlot, string>>;
+  logos: Partial<Record<BrandSlot, string | undefined>>;
   display: BrandDisplay;
   palette: BrandPalette;
   motion: BrandMotion;

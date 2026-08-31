@@ -71,7 +71,7 @@ export default function BrandControlCenter() {
   const versionsStored = useQuery({ queryKey: ['branding-versions'], queryFn: () => getSettingByKey(BRANDING_VERSIONS_KEY) });
 
   const publishedConfig = useMemo(() => mergeBranding(published.data?.value), [published.data]);
-  const versions: BrandVersion[] = Array.isArray(versionsStored.data?.value) ? (versionsStored.data?.value as BrandVersion[]) : [];
+  const versions: BrandVersion[] = Array.isArray(versionsStored.data?.value) ? (versionsStored.data?.value as unknown as BrandVersion[]) : [];
 
   const [draft, setDraft] = useState<BrandingConfig>(DEFAULT_BRANDING);
   const [hydrated, setHydrated] = useState(false);
