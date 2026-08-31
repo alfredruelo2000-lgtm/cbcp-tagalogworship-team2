@@ -137,14 +137,14 @@ function Index() {
        </section>
        </>}
 
-       {isVisible('songs') && featuredSongs.length > 0 && <section className="bg-muted/20 px-5 py-12 sm:px-6 sm:py-20 lg:py-24">
+       {mounted && isVisible('songs') && featuredSongs.length > 0 && <section className="bg-muted/20 px-5 py-12 sm:px-6 sm:py-20 lg:py-24">
          <div className="mx-auto max-w-7xl">
            <div className="mb-6 flex flex-col justify-between gap-3 sm:mb-12 md:flex-row md:items-end md:gap-6"><div className="space-y-2 sm:space-y-4"><span className="text-[10px] font-bold tracking-[0.3em] text-accent uppercase">Our Song Library</span><h2 className="font-serif text-foreground text-[clamp(1.6rem,6.5vw,2.25rem)]">Songs We Worship With</h2></div><Link to="/songs" className="text-[10px] font-bold tracking-[0.2em] text-accent hover:text-accent/80 uppercase border-b border-accent/30 pb-1 transition-all">View Song Library</Link></div>
            <div className="flex flex-col md:grid md:grid-cols-3 md:gap-10">{featuredSongs.map((song: any) => <SongCard key={song.id} song={song} viewMode={isMobile ? "list" : "grid"} />)}</div>
          </div>
        </section>}
 
-       {isVisible('setlists') && <WorshipSetlist />}
+       {mounted && isVisible('setlists') && <WorshipSetlist />}
        {isVisible('team') && <TeamPreview />}
        {isVisible('resources') && <ResourcePreview />}
        {isVisible('media') && <GalleryPreview />}
