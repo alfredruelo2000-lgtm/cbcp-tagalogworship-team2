@@ -522,20 +522,41 @@ function SongDetailPage() {
     setCurrentKey(KEYS[newIdx] + (isMinor ? 'm' : ''));
   };
 
+  const escapeHtml = (value: string) =>
+    value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
   const processLine = (content: string) => {
     if (!content) return '';
-    
-    // If it's a chord line (contains [Chord])
-    if (content.includes('[') && content.includes(']')) {
-      return content.replace(/\[([^\]]+)\]/g, (_, chord) => {
-        const transposed = transposeChord(chord, semitones);
+
+    // Bracket chords on the fly for charts saved before auto-format existed.
+    const source = content.includes('[') && content.includes(']')
+      ? content
+      : looksLikeChordLine(content)
+        ? content.replace(/\S+/g, (token) => (isChordToken(token) ? `[${token}]` : token))
+        : content;
+
+    if (source.includes('[') && source.includes(']')) {
+      const hasLyricText = source.replace(/\[[^\]]*\]/g, '').trim().length > 0;
+      let html = '';
+      let cursor = 0;
+      const regex = /\[([^\]]+)\]/g;
+      let match: RegExpExecArray | null;
+      while ((match = regex.exec(source)) !== null) {
+        const between = source.slice(cursor, match.index);
+        if (between && (showLyrics || !hasLyricText)) html += escapeHtml(between);
+        const transposed = transposeChord(match[1] ?? '', semitones, currentKey);
         const finalChord = numberNotation ? chordToNumber(transposed, currentKey) : transposed;
-        return showChords ? `<span class="${chordColor} font-bold">${finalChord}</span>` : '';
-      });
+        if (showChords) html += `<span class="${chordColor} font-bold">${escapeHtml(finalChord)}</span>`;
+        cursor = match.index + match[0].length;
+      }
+      const tail = source.slice(cursor);
+      if (tail && (showLyrics || !hasLyricText)) html += escapeHtml(tail);
+      return html;
     }
-    
-    return showLyrics ? content : '';
+
+    return showLyrics ? escapeHtml(source) : '';
   };
+
 
   
 
