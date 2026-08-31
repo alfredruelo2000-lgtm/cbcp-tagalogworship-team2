@@ -41,7 +41,7 @@ const conceptOut = z.object({
   light: palette,
   dark: palette,
   fonts: z.object({ heading: z.string().max(120), body: z.string().max(120), chord: z.string().max(160) }),
-  layout: z.object({
+  layout: z.preprocess(normalizeLayout, z.object({
     radius: z.number().min(0).max(28),
     shadow: z.enum(['none', 'soft', 'medium', 'strong']),
     density: z.enum(['compact', 'comfortable', 'spacious']),
@@ -52,7 +52,7 @@ const conceptOut = z.object({
     image: z.enum(['natural', 'soft', 'duotone']),
     motion: z.enum(['none', 'subtle', 'expressive']),
     mobile: z.enum(['compact', 'balanced', 'airy']),
-  }),
+  })),
   scores: z
     .object({
       professional: z.number().min(0).max(100),
