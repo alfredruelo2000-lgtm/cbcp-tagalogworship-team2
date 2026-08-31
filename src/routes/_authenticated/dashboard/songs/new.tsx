@@ -326,18 +326,16 @@ function AddSongPage() {
                   variant="ghost" 
                   size="sm"
                   onClick={() => {
-                    const enhanced = enhanceChordParsing(formData.lyrics || '');
+                    const enhanced = formatSongText(formData.lyrics || '');
                     updateField('lyrics', enhanced);
-                    toast.success('Chords enhanced and formatted');
+                    toast.success('Sections highlighted and chords formatted');
                   }}
                   className="h-7 rounded-none text-[9px] uppercase tracking-widest font-bold text-accent hover:text-accent hover:bg-accent/5"
                 >
                   <Wand2 className="w-3 h-3 mr-1" />
-                  Make sure the one-click reformat updates lyrics/chords in the editor and persists my changes to the database.
-
-Add automatic cleanup for inconsistent chord punctuation so recognized chords are reformatted correctly on save.
-
+                  Auto-Format
                 </Button>
+
               </div>
             </div>
             
