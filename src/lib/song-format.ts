@@ -134,7 +134,7 @@ const QUALITY = [
 ].join('|');
 // e.g. C, Am7, F#m7b5, Bbmaj9, Dsus4, G6/9, Cadd9, E7#9, Ab°7, Gmaj7/B, C2, F2
 const EXT = `(?:(?:${QUALITY})|[0-9]|[#b♯♭]|\\(|\\)|\\+|-|Δ|°|ø|no|omit)`;
-const CHORD_BODY = `${NOTE}${EXT}*(?:/${NOTE}${EXT}*)?`;
+const CHORD_BODY = `${NOTE}${EXT}*(?:/(?:[0-9]+|${NOTE}${EXT}*))*`;
 const CHORD_CORE = new RegExp(`^${CHORD_BODY}$`);
 const NON_CHORD_TOKENS = /^(?:N\.?C\.?|NC|x\d+|\d+x|\||\|\||:\||\|:|%|\/|-|~|\*)$/i;
 
