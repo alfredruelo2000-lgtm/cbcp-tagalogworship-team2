@@ -59,6 +59,7 @@ function SidebarItem({ to, icon, label, collapsed, active, onNavigate }: Sidebar
 export function AdminSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { branding } = useBranding();
   const { signOut, isMinistryAdmin } = useAuth();
   const location = useLocation();
 

@@ -132,8 +132,8 @@ function LoginPage() {
       <div className="w-full max-w-md space-y-12">
         <div className="text-center space-y-4">
           <div className="flex justify-center">
-            <div className="w-16 h-16 bg-primary flex items-center justify-center rounded-none mb-4">
-              <Shield className="w-8 h-8 text-accent" />
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-none bg-primary p-2">
+              <img src={pickLogo(branding, "light")} alt={branding.name} className="max-h-12 max-w-12 object-contain" />
             </div>
           </div>
           <Badge variant="outline" className="rounded-none uppercase text-[10px] tracking-widest border-accent/20 text-accent">
