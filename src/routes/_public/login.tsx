@@ -9,6 +9,7 @@ import { lovable } from '@/integrations/lovable/index';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { setPostLoginRedirect } from '@/components/auth/PostLoginRedirect';
+import { pickLogo, useBranding } from '@/lib/branding';
 
 const loginSearchSchema = z.object({
   redirect: z.string().optional(),
@@ -106,6 +107,8 @@ function LoginPage() {
       setLoading(false);
     }
   };
+
+  const { branding } = useBranding();
 
   const handleForgotPassword = async () => {
     if (!email) {
