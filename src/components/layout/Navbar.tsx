@@ -4,23 +4,31 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { usePublicSectionVisibility } from "@/lib/public-section-visibility";
-import logoAsset from "@/assets/cbcp-logo.png.asset.json";
+import { pickLogo, useBranding } from "@/lib/branding";
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const { session, isMinistryAdmin } = useAuth();
   const showDashboard = Boolean(session);
   const { navItems } = usePublicSectionVisibility();
+  const { branding } = useBranding();
 
   return (
     <>
     <nav className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:h-20 lg:px-8">
-        <Link to="/" className="flex min-w-0 items-center gap-2" onClick={() => setIsOpen(false)}>
-          <img src={logoAsset.url} alt="CBCP Tagalog Worship Team" className="h-10 w-10 shrink-0 object-contain lg:h-12 lg:w-12" />
-          <span className="hidden font-serif text-lg font-semibold leading-tight text-foreground sm:block">
-            CBCP <span className="text-accent">Tagalog</span><br />Worship Team
-          </span>
+        <Link to="/" className="flex min-w-0 items-center gap-2" onClick={() => setIsOpen(false)} style={{ padding: branding.display.padding }}>
+          <img
+            src={pickLogo(branding, branding.display.iconOnly ? "mark" : "dark")}
+            alt={branding.name}
+            className="shrink-0 object-contain"
+            style={{ height: branding.display.size, maxWidth: branding.display.maxWidth }}
+          />
+          {!branding.display.iconOnly && (
+            <span className="hidden font-serif text-lg font-semibold leading-tight text-foreground sm:block">
+              CBCP <span className="text-accent">Tagalog</span><br />Worship Team
+            </span>
+          )}
         </Link>
 
         {/* Desktop Navigation */}

@@ -10,6 +10,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getSettings, updateSetting } from '@/lib/db-settings.functions';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import BrandControlCenter from '@/components/branding/BrandControlCenter';
 
 type SectionDefinition = { key: string; name: string; route: string | null; reserve?: boolean };
 
@@ -114,7 +115,7 @@ function SettingsPage() {
       </header>
 
       <Tabs defaultValue="identity" className="w-full">
-        <TabsList className="bg-transparent border-b border-accent/10 w-full justify-start rounded-none h-auto p-0 gap-8">
+        <TabsList className="bg-transparent border-b border-accent/10 w-full justify-start rounded-none h-auto p-0 gap-6 overflow-x-auto flex-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
            <TabsTrigger value="identity" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent text-[10px] uppercase font-bold tracking-widest px-0 py-4">Identity</TabsTrigger>
            <TabsTrigger value="worship" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent text-[10px] uppercase font-bold tracking-widest px-0 py-4">Worship</TabsTrigger>
            <TabsTrigger value="homepage" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent text-[10px] uppercase font-bold tracking-widest px-0 py-4">Homepage Sections</TabsTrigger>
@@ -122,7 +123,7 @@ function SettingsPage() {
            <TabsTrigger value="notifications" className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent text-[10px] uppercase font-bold tracking-widest px-0 py-4">Notifications</TabsTrigger>
          </TabsList>
 
-        <div className="mt-12 max-w-4xl">
+        <div className="mt-12 max-w-6xl">
           <TabsContent value="identity" className="space-y-8 animate-in slide-in-from-left-4 duration-500">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
               <section className="space-y-6">
@@ -214,6 +215,10 @@ function SettingsPage() {
                })}
              </div>
 
+           </TabsContent>
+
+           <TabsContent value="branding" className="space-y-6 animate-in slide-in-from-left-4 duration-500">
+             <BrandControlCenter />
            </TabsContent>
          </div>
       </Tabs>

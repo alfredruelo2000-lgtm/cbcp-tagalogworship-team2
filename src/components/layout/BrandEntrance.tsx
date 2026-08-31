@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import logoAsset from "@/assets/cbcp-logo.png.asset.json";
+import { pickLogo, useBranding } from "@/lib/branding";
 
 export function BrandEntrance() {
   const [visible, setVisible] = useState(false);
+  const { branding } = useBranding();
 
   useEffect(() => {
     if (sessionStorage.getItem("cbcp-entrance-seen") === "1") return;
@@ -16,11 +17,19 @@ export function BrandEntrance() {
 
   if (!visible) return null;
 
+  const { motion } = branding;
+  const motionClass = motion.preset === "none" || !motion.autoplay ? "" : `brand-motion brand-motion--${motion.preset}`;
+
   return (
-    <div className="brand-entrance" role="status" aria-label="CBCP Tagalog Worship Team">
+    <div className="brand-entrance" role="status" aria-label={branding.name}>
       <div className="brand-entrance__content">
-        <img src={logoAsset.url} alt="CBCP Tagalog Worship Team logo" className="brand-entrance__logo" />
-        <p className="brand-entrance__name">CBCP Tagalog Worship Team</p>
+        <img
+          src={pickLogo(branding, "splash")}
+          alt={`${branding.name} logo`}
+          className={`brand-entrance__logo ${motionClass}`}
+          style={{ animationDuration: `${motion.durationMs}ms` }}
+        />
+        <p className="brand-entrance__name">{branding.name}</p>
       </div>
     </div>
   );

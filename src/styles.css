@@ -330,3 +330,23 @@ summary {
 @keyframes brand-entrance-in { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: scale(1); } }
 @keyframes brand-entrance-out { to { opacity: 0; visibility: hidden; } }
 @media (prefers-reduced-motion: reduce) { .brand-entrance, .brand-entrance__content { animation: none; } .brand-entrance { opacity: 0; visibility: hidden; } }
+
+/* Motion logo presets — shared by the Brand Control Center preview and the live entrance. */
+.brand-motion { animation-duration: 1400ms; animation-timing-function: cubic-bezier(.16,.84,.32,1); animation-fill-mode: both; }
+.brand-motion--gentle-fade { animation-name: brand-motion-fade; }
+.brand-motion--soft-reveal { animation-name: brand-motion-reveal; }
+.brand-motion--subtle-glow { animation-name: brand-motion-glow; }
+.brand-motion--mark-to-name { animation-name: brand-motion-mark; }
+.brand-motion--elegant-scale { animation-name: brand-motion-scale; }
+.brand-motion--light-reveal { animation-name: brand-motion-light; }
+@keyframes brand-motion-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes brand-motion-reveal { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes brand-motion-glow {
+  from { opacity: 0; filter: drop-shadow(0 0 0 transparent); }
+  60% { opacity: 1; filter: drop-shadow(0 0 1.6rem color-mix(in oklch, var(--color-accent) 55%, transparent)); }
+  to { opacity: 1; filter: drop-shadow(0 0 .6rem color-mix(in oklch, var(--color-accent) 30%, transparent)); }
+}
+@keyframes brand-motion-mark { from { opacity: 0; transform: scale(.72); } 55% { opacity: 1; transform: scale(1.04); } to { opacity: 1; transform: scale(1); } }
+@keyframes brand-motion-scale { from { opacity: 0; transform: scale(1.12); } to { opacity: 1; transform: scale(1); } }
+@keyframes brand-motion-light { from { opacity: 0; clip-path: inset(0 100% 0 0); } to { opacity: 1; clip-path: inset(0 0 0 0); } }
+@media (prefers-reduced-motion: reduce) { .brand-motion { animation: none !important; } }

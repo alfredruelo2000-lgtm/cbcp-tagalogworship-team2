@@ -13,6 +13,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import NotFound from "@/components/layout/NotFound";
 import { PostLoginRedirect } from "@/components/auth/PostLoginRedirect";
 import { BrandEntrance } from "@/components/layout/BrandEntrance";
+import { BrandingSync } from "@/components/branding/BrandingSync";
 import { setupPwa } from "@/lib/pwa";
 import { usePublicRealtime } from "@/lib/use-public-realtime";
 
@@ -139,6 +140,7 @@ function RootComponent() {
       <AuthProvider>
         <RealtimeSync />
         <PostLoginRedirect />
+        <BrandingSync />
         <BrandEntrance />
         <Outlet />
         <Toaster position="top-center" />
