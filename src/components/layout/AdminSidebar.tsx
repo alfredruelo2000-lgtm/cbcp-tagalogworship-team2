@@ -122,12 +122,18 @@ export function AdminSidebar() {
       >
         <div className="flex flex-col h-full py-8">
           <div className={cn("px-6 mb-12 flex items-center", collapsed ? "justify-center" : "justify-between")}>
-            {!collapsed && (
-              <div className="animate-in fade-in duration-500">
-                <span className="font-serif text-xl text-accent tracking-tighter">Radiant</span>
-                <span className="block text-[8px] font-bold text-muted-foreground uppercase tracking-[0.3em]">Management</span>
+            {collapsed ? (
+              <img src={pickLogo(branding, "mark")} alt={branding.name} className="h-9 w-9 object-contain" />
+            ) : (
+              <div className="flex min-w-0 items-center gap-3 animate-in fade-in duration-500">
+                <img src={pickLogo(branding, "mark")} alt={branding.name} className="h-9 w-9 shrink-0 object-contain" />
+                <div className="min-w-0">
+                  <span className="block truncate font-serif text-lg text-accent tracking-tighter">{branding.name}</span>
+                  <span className="block text-[8px] font-bold text-muted-foreground uppercase tracking-[0.3em]">Management</span>
+                </div>
               </div>
             )}
+
             <Button
               type="button"
               variant="ghost"
