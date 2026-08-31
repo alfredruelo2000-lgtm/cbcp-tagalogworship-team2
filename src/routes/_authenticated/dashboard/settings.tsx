@@ -11,6 +11,7 @@ import { getSettings, updateSetting } from '@/lib/db-settings.functions';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import BrandControlCenter from '@/components/branding/BrandControlCenter';
+import AIDesignStudio from '@/components/branding/AIDesignStudio';
 
 type SectionDefinition = { key: string; name: string; route: string | null; reserve?: boolean };
 
