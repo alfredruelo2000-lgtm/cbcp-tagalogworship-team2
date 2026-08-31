@@ -33,6 +33,88 @@ const palette = z.object({
   primary: hex, primaryForeground: hex, accent: hex, accentForeground: hex,
   muted: hex, mutedForeground: hex, border: hex,
 });
+/**
+ * The model often answers layout fields with descriptive prose
+ * ("soft shadows, clean borders") or CSS values instead of the token enum.
+ * Normalize loosely so a good concept is never thrown away.
+ */
+const LAYOUT_HINTS: Record<string, Array<[string, string[]]>> = {
+  shadow: [
+    ['none', ['none', 'flat', 'no shadow']],
+    ['strong', ['strong', 'dramatic', 'deep', 'heavy', '24px', '32px']],
+    ['medium', ['medium', 'moderate', '12px', '16px']],
+    ['soft', ['soft', 'subtle', 'light', 'gentle']],
+  ],
+  density: [
+    ['compact', ['compact', 'condensed', 'tight', 'dense']],
+    ['spacious', ['spacious', 'airy', 'generous', 'roomy', 'ample']],
+    ['comfortable', ['comfortable', 'balanced', 'default', 'medium']],
+  ],
+  nav: [
+    ['glass', ['glass', 'blur', 'translucent', 'frosted']],
+    ['bordered', ['border', 'underline', 'divider', 'rule']],
+    ['minimal', ['minimal', 'transparent', 'clean', 'bare', 'text-only']],
+    ['solid', ['solid', 'filled', 'navy', 'dark bar', 'top bar', 'sidebar', 'drawer', 'tabs', 'hamburger']],
+  ],
+  button: [
+    ['pill', ['pill', 'fully rounded', 'capsule', 'round-full']],
+    ['outline', ['outline', 'ghost', 'bordered', 'text button']],
+    ['square', ['square', 'sharp', 'rectangular', 'no radius', 'edged']],
+    ['rounded', ['rounded', 'soft corner', 'slightly rounded', 'filled']],
+  ],
+  card: [
+    ['editorial', ['editorial', 'magazine', 'typographic']],
+    ['elevated', ['elevated', 'shadow', 'raised', 'floating']],
+    ['flat', ['flat', 'no border', 'seamless']],
+    ['bordered', ['border', 'outlined', 'hairline', 'clean']],
+  ],
+  hero: [
+    ['cinematic', ['cinematic', 'full-width', 'fullscreen', 'immersive', 'overlay', 'image']],
+    ['compact', ['compact', 'small', 'tight', 'condensed']],
+    ['editorial', ['editorial', 'typograph', 'magazine', 'text']],
+  ],
+  image: [
+    ['duotone', ['duotone', 'tinted', 'monochrome', 'gradient overlay']],
+    ['soft', ['soft', 'rounded', 'muted', 'desaturat', 'blur']],
+    ['natural', ['natural', 'sharp', 'square', 'plain', 'full color']],
+  ],
+  motion: [
+    ['none', ['none', 'static', 'no animation']],
+    ['expressive', ['expressive', 'bold', 'playful', 'dramatic', 'zoom', 'parallax']],
+    ['subtle', ['subtle', 'gentle', 'fade', 'quick', 'instant', 'slide', 'ease']],
+  ],
+  mobile: [
+    ['airy', ['airy', 'generous', 'ample', 'large', 'touch-friendly', 'spacious']],
+    ['balanced', ['balanced', 'moderate', 'default', 'single-column']],
+    ['compact', ['compact', 'dense', 'condensed', 'tight', 'efficient']],
+  ],
+};
+
+function normalizeLayout(raw: unknown) {
+  if (!raw || typeof raw !== 'object') return raw;
+  const input = raw as Record<string, unknown>;
+  const out: Record<string, unknown> = { ...input };
+
+  const radius = input['radius'];
+  if (typeof radius === 'string') {
+    const parsed = Number.parseFloat(radius.replace(/[^0-9.]/g, ''));
+    out['radius'] = Number.isFinite(parsed) ? Math.min(28, Math.max(0, radius.includes('rem') ? parsed * 16 : parsed)) : 10;
+  } else if (typeof radius !== 'number' || !Number.isFinite(radius)) {
+    out['radius'] = 10;
+  } else {
+    out['radius'] = Math.min(28, Math.max(0, radius));
+  }
+
+  for (const [field, hints] of Object.entries(LAYOUT_HINTS)) {
+    const value = input[field];
+    const text = typeof value === 'string' ? value.toLowerCase() : '';
+    const exact = hints.find(([token]) => token === text);
+    const match = exact ?? hints.find(([, keywords]) => keywords.some((keyword) => text.includes(keyword)));
+    out[field] = match ? match[0] : hints[hints.length - 1]![0];
+  }
+  return out;
+}
+
 const conceptOut = z.object({
   name: z.string().max(60),
   direction: z.string().max(400),
@@ -41,7 +123,7 @@ const conceptOut = z.object({
   light: palette,
   dark: palette,
   fonts: z.object({ heading: z.string().max(120), body: z.string().max(120), chord: z.string().max(160) }),
-  layout: z.object({
+  layout: z.preprocess(normalizeLayout, z.object({
     radius: z.number().min(0).max(28),
     shadow: z.enum(['none', 'soft', 'medium', 'strong']),
     density: z.enum(['compact', 'comfortable', 'spacious']),
@@ -52,7 +134,7 @@ const conceptOut = z.object({
     image: z.enum(['natural', 'soft', 'duotone']),
     motion: z.enum(['none', 'subtle', 'expressive']),
     mobile: z.enum(['compact', 'balanced', 'airy']),
-  }),
+  })),
   scores: z
     .object({
       professional: z.number().min(0).max(100),
