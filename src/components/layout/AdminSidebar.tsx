@@ -19,6 +19,7 @@ import {
   User,
   Activity
 } from 'lucide-react';
+import { pickLogo, useBranding } from "@/lib/branding";
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
