@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Mail, Instagram, Youtube, Facebook, ChevronDown } from "lucide-react";
-import logoAsset from "@/assets/cbcp-logo.png.asset.json";
+import { pickLogo, useBranding } from "@/lib/branding";
 
 const NAV_LINKS = ["Home", "Worship", "Songs", "Setlists", "Team"];
 const RESOURCE_LINKS = ["Media Library", "Chord Charts", "Service Times", "About Us", "Contact"];
@@ -39,6 +39,7 @@ export function MiniFooter() {
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
+  const { branding } = useBranding();
 
   return (
     <footer className="w-full border-t border-border bg-foreground pb-6 pt-8 text-background lg:pb-12 lg:pt-32">
@@ -47,7 +48,7 @@ export function Footer() {
           {/* Brand & Mission */}
           <div className="space-y-3 lg:space-y-6">
             <Link to="/" className="flex items-center gap-2">
-              <img src={logoAsset.url} alt="CBCP Tagalog Worship Team" loading="lazy" decoding="async" className="h-10 w-10 object-contain lg:h-16 lg:w-16" />
+              <img src={pickLogo(branding, "light")} alt={branding.name} loading="lazy" decoding="async" className="h-10 w-10 object-contain lg:h-16 lg:w-16" />
               <span className="font-serif text-sm font-semibold leading-tight text-background lg:text-lg">CBCP <span className="text-accent">Tagalog</span><br />Worship Team</span>
             </Link>
             <p className="hidden max-w-xs text-sm leading-relaxed text-background/60 sm:block">
