@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { KEYS, transposeChord, getSemitoneDifference, chordToNumber } from '@/utils/transposition';
+import { splitSongSections, shortSectionLabel } from '@/lib/song-format';
+
 import { WorshipSong } from '@/types/songs';
 import { toast } from 'sonner';
 import { AddToSetlistButton } from '@/components/setlists/AddToSetlistDialog';
