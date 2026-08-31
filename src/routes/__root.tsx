@@ -141,6 +141,7 @@ function RootComponent() {
         <RealtimeSync />
         <PostLoginRedirect />
         <BrandingSync />
+        <DesignThemeSync />
         <BrandEntrance />
         <Outlet />
         <Toaster position="top-center" />
