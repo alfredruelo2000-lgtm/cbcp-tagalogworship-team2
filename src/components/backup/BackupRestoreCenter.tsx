@@ -216,6 +216,7 @@ export default function BackupRestoreCenter() {
       try {
         setStage(0, "active");
         const exported = await exportFn({ data: { modules: selected } });
+        console.debug("[backup] export done");
         setStage(1, "active");
         setStage(3, "active");
 
@@ -230,6 +231,7 @@ export default function BackupRestoreCenter() {
             await Promise.all(
               batches.slice(i, i + CONCURRENCY).map(async (batch) => {
                 const res = await filesFn({ data: { files: batch.map((f) => ({ bucket: f.bucket, path: f.path })) } });
+                console.debug("[backup] batch", batch[0]?.path);
                 for (const item of res.files) {
                   const target = batch.find((f) => f.bucket === item.bucket && f.path === item.path);
                   if (!target) continue;
@@ -254,6 +256,7 @@ export default function BackupRestoreCenter() {
           }
         }
 
+        console.debug("[backup] files done");
         setStage(5, "active");
         setStage(6, "active");
         setStage(7, "active");
