@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getSongPublicById, getSongsPublic } from '@/lib/db-public.functions';
 import { songKeys } from '@/lib/song-data';
@@ -12,8 +12,12 @@ import { splitSongSections, shortSectionLabel, looksLikeChordLine, isChordToken 
 import { extractChords, keyPrefersFlats, renderChordToken } from '@/lib/chords';
 import { ChordCardDialog, ChordsPanel } from '@/components/songs/ChordTools';
 import { MoreSheet, PerformanceToolbar } from '@/components/songs/ViewerControls';
-import { TYPEFACE_STACKS, useViewerSettings } from '@/hooks/use-viewer-settings';
+import { HIGHLIGHT_ALPHA, TYPEFACE_STACKS, useViewerSettings } from '@/hooks/use-viewer-settings';
 import { useAutoScroll } from '@/hooks/use-auto-scroll';
+
+const TunerDialog = lazy(() =>
+  import('@/components/songs/Tuner').then((module) => ({ default: module.TunerDialog })),
+);
 
 import { WorshipSong } from '@/types/songs';
 import { toast } from 'sonner';
@@ -129,7 +133,8 @@ function SongDetailPage() {
 
   // ----- Viewer chrome state -----
   const [moreOpen, setMoreOpen] = useState(false);
-  const [chordIndex, setChordIndex] = useState<number | null>(null);
+  const [selectedChord, setSelectedChord] = useState<string | null>(null);
+  const [tunerOpen, setTunerOpen] = useState(false);
   const [chordPanelOpen, setChordPanelOpen] = useState(false);
   const [autoScroll, setAutoScroll] = useState(false);
   const [currentSection, setCurrentSection] = useState(0);
@@ -243,7 +248,17 @@ function SongDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.keepAwake]);
 
-  useAutoScroll(autoScroll, settings.scrollSpeed);
+  const { paused: scrollPaused, resume: resumeScroll } = useAutoScroll(
+    autoScroll,
+    settings.scrollSpeed,
+    settings.autoResume,
+  );
+
+  // Moving to another song in the setlist only keeps scrolling when asked to.
+  useEffect(() => {
+    if (!settings.continueScrollBetweenSongs) setAutoScroll(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -358,9 +373,27 @@ function SongDetailPage() {
   const escapeHtml = (value: string) =>
     value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-  const chordClass = settings.highlight
-    ? `${settings.chordColor} font-bold rounded-sm bg-accent/15 px-0.5`
-    : `${settings.chordColor} font-bold`;
+  // Chord colour + highlight style are per-mode preferences applied inline so any
+  // hex (including a custom picker value) works in light and dark reading modes.
+  const chordHex = settings.dark ? settings.chordColorDark : settings.chordColorLight;
+  const alpha = HIGHLIGHT_ALPHA[settings.highlightStrength];
+  const rgba = (() => {
+    const value = chordHex.replace('#', '');
+    if (value.length !== 6) return `rgba(200,30,30,${alpha})`;
+    const [r, g, b] = [0, 2, 4].map((i) => parseInt(value.slice(i, i + 2), 16));
+    return `rgba(${r},${g},${b},${alpha})`;
+  })();
+  const chordClass = settings.highlightStyle === 'badge'
+    ? 'font-bold rounded px-1 py-0.5'
+    : settings.highlightStyle === 'soft'
+      ? 'font-bold rounded-sm px-0.5'
+      : 'font-bold';
+  const chordStyle =
+    settings.highlightStyle === 'none'
+      ? ''
+      : settings.highlightStyle === 'text'
+        ? `color:${chordHex}`
+        : `color:${chordHex};background-color:${rgba}`;
 
   const processLine = (content: string) => {
     if (!content) return '';
@@ -384,8 +417,7 @@ function SongDetailPage() {
         const rendered = displayChord(match[1] ?? '');
         const label = settings.numberNotation ? chordToNumber(rendered, currentKey) : rendered;
         if (settings.showChords) {
-          const panelIndex = songChords.indexOf(rendered);
-          html += `<button type="button" data-chord="${escapeHtml(rendered)}" data-chord-index="${panelIndex}" class="${chordClass} cursor-pointer align-baseline">${escapeHtml(label)}</button>`;
+          html += `<button type="button" data-chord="${escapeHtml(rendered)}" style="${chordStyle}" class="${chordClass} cursor-pointer align-baseline">${escapeHtml(label)}</button>`;
         }
         cursor = match.index + match[0].length;
       }
@@ -398,10 +430,10 @@ function SongDetailPage() {
   };
 
   const onSheetClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    const target = (event.target as HTMLElement).closest('[data-chord-index]');
+    const target = (event.target as HTMLElement).closest('[data-chord]');
     if (!target) return;
-    const index = Number(target.getAttribute('data-chord-index'));
-    if (Number.isFinite(index) && index >= 0) setChordIndex(index);
+    const chord = target.getAttribute('data-chord');
+    if (chord) setSelectedChord(chord);
   };
 
   const handleShare = () => {
@@ -459,7 +491,9 @@ function SongDetailPage() {
           chords={songChords}
           instrument={settings.instrument}
           leftHanded={settings.leftHanded}
-          onSelect={setChordIndex}
+          tuning={settings.ukuleleTuning === 'low-g' ? 'low-g' : 'standard'}
+          useFlats={useFlats}
+          onSelect={setSelectedChord}
         />
       )}
 
@@ -556,7 +590,9 @@ function SongDetailPage() {
         update={update}
         currentKey={currentKey}
         autoScroll={autoScroll}
+        scrollPaused={scrollPaused}
         onAutoScroll={setAutoScroll}
+        onResumeScroll={resumeScroll}
         onTranspose={handleKeyChange}
         onOpenMore={() => setMoreOpen(true)}
         dimmed={fullView && controlsMinimized && !moreOpen}
@@ -571,6 +607,9 @@ function SongDetailPage() {
         currentKey={currentKey}
         keys={KEYS}
         onKeyChange={setCurrentKey}
+        autoScroll={autoScroll}
+        onAutoScroll={setAutoScroll}
+        onOpenTuner={() => { setMoreOpen(false); setTunerOpen(true); }}
         extra={(
           <>
             <section className="mb-4 space-y-3 border-b border-border pb-4">
@@ -619,15 +658,25 @@ function SongDetailPage() {
         )}
       />
 
-      {chordIndex !== null && (
+      {selectedChord !== null && (
         <ChordCardDialog
-          chords={songChords}
-          index={chordIndex}
-          instrument={settings.instrument}
-          leftHanded={settings.leftHanded}
-          onIndexChange={setChordIndex}
-          onClose={() => setChordIndex(null)}
+          chord={selectedChord}
+          settings={settings}
+          update={update}
+          useFlats={useFlats}
+          onClose={() => setSelectedChord(null)}
         />
+      )}
+
+      {tunerOpen && (
+        <Suspense fallback={null}>
+          <TunerDialog
+            open={tunerOpen}
+            onClose={() => setTunerOpen(false)}
+            calibration={settings.tunerCalibration}
+            onCalibrationChange={(hz) => update({ tunerCalibration: hz })}
+          />
+        </Suspense>
       )}
     </div>
   );

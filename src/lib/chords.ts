@@ -218,3 +218,36 @@ export function extractChords(text: string): string[] {
   }
   return out;
 }
+
+/** Note names of a chord's tones (root first), spelled for the current view. */
+export function chordNoteNames(chord: ParsedChord, useFlats = false): string[] {
+  const names = chord.intervals.map((i) => pcToNote(chord.rootPc + i, useFlats));
+  if (chord.bassPc !== null) {
+    const bass = pcToNote(chord.bassPc, useFlats);
+    return [bass, ...names.filter((n) => n !== bass)];
+  }
+  return names;
+}
+
+export type Inversion = 0 | 1 | 2;
+
+/**
+ * Piano voicing. Inversions rotate the lowest chord tones up an octave; a
+ * slash chord always keeps its written bass note underneath.
+ */
+export function chordPianoVoicing(chord: ParsedChord, inversion: Inversion = 0, octave = 4): number[] {
+  const base = 12 * (octave + 1) + (((chord.rootPc % 12) + 12) % 12);
+  let notes = chord.intervals.map((i) => base + i);
+  const rotations = Math.min(inversion, Math.max(0, notes.length - 1));
+  for (let r = 0; r < rotations; r++) {
+    const lowest = notes.shift()!;
+    notes.push(lowest + 12);
+  }
+  notes = notes.sort((a, b) => a - b);
+  if (chord.bassPc !== null) {
+    let bass = 12 * octave + (((chord.bassPc % 12) + 12) % 12);
+    while (bass >= notes[0]!) bass -= 12;
+    notes.unshift(bass);
+  }
+  return notes;
+}
