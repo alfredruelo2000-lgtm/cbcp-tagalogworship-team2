@@ -103,6 +103,7 @@ export function useAutoScroll(active: boolean, speed: number, autoResumeSeconds 
       frame.current = null;
       last.current = null;
       expected.current = null;
+      root.style.scrollBehavior = previousBehavior;
       window.removeEventListener('wheel', pause);
       window.removeEventListener('touchstart', pause);
       window.removeEventListener('touchmove', pause);
