@@ -248,7 +248,17 @@ function SongDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.keepAwake]);
 
-  useAutoScroll(autoScroll, settings.scrollSpeed);
+  const { paused: scrollPaused, resume: resumeScroll } = useAutoScroll(
+    autoScroll,
+    settings.scrollSpeed,
+    settings.autoResume,
+  );
+
+  // Moving to another song in the setlist only keeps scrolling when asked to.
+  useEffect(() => {
+    if (!settings.continueScrollBetweenSongs) setAutoScroll(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   // Keyboard shortcuts
   useEffect(() => {
