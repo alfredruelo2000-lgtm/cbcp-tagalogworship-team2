@@ -580,7 +580,9 @@ function SongDetailPage() {
         update={update}
         currentKey={currentKey}
         autoScroll={autoScroll}
+        scrollPaused={scrollPaused}
         onAutoScroll={setAutoScroll}
+        onResumeScroll={resumeScroll}
         onTranspose={handleKeyChange}
         onOpenMore={() => setMoreOpen(true)}
         dimmed={fullView && controlsMinimized && !moreOpen}
@@ -595,6 +597,9 @@ function SongDetailPage() {
         currentKey={currentKey}
         keys={KEYS}
         onKeyChange={setCurrentKey}
+        autoScroll={autoScroll}
+        onAutoScroll={setAutoScroll}
+        onOpenTuner={() => { setMoreOpen(false); setTunerOpen(true); }}
         extra={(
           <>
             <section className="mb-4 space-y-3 border-b border-border pb-4">
