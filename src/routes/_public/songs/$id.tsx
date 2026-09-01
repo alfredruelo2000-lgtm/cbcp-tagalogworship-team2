@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getSongPublicById, getSongsPublic } from '@/lib/db-public.functions';
 import { songKeys } from '@/lib/song-data';
@@ -12,8 +12,12 @@ import { splitSongSections, shortSectionLabel, looksLikeChordLine, isChordToken 
 import { extractChords, keyPrefersFlats, renderChordToken } from '@/lib/chords';
 import { ChordCardDialog, ChordsPanel } from '@/components/songs/ChordTools';
 import { MoreSheet, PerformanceToolbar } from '@/components/songs/ViewerControls';
-import { TYPEFACE_STACKS, useViewerSettings } from '@/hooks/use-viewer-settings';
+import { HIGHLIGHT_ALPHA, TYPEFACE_STACKS, useViewerSettings } from '@/hooks/use-viewer-settings';
 import { useAutoScroll } from '@/hooks/use-auto-scroll';
+
+const TunerDialog = lazy(() =>
+  import('@/components/songs/Tuner').then((module) => ({ default: module.TunerDialog })),
+);
 
 import { WorshipSong } from '@/types/songs';
 import { toast } from 'sonner';
