@@ -133,7 +133,8 @@ function SongDetailPage() {
 
   // ----- Viewer chrome state -----
   const [moreOpen, setMoreOpen] = useState(false);
-  const [chordIndex, setChordIndex] = useState<number | null>(null);
+  const [selectedChord, setSelectedChord] = useState<string | null>(null);
+  const [tunerOpen, setTunerOpen] = useState(false);
   const [chordPanelOpen, setChordPanelOpen] = useState(false);
   const [autoScroll, setAutoScroll] = useState(false);
   const [currentSection, setCurrentSection] = useState(0);
