@@ -138,6 +138,8 @@ function evaluate(
   if (baseFret === 0) score += 4; // open shapes are the ones players know
   if (rootPc === lowestPc) score += 4;
   if (barre) score += 1;
+  // A ukulele is strummed across all four strings, so muted strings are a last resort.
+  if (instrument === 'ukulele') score -= (tuning.length - sounding.length) * 5;
 
   return {
     shape: { frets: [...frets], baseFret, barre, midi: sounding.map((s) => s.midi) },
