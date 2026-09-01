@@ -18,6 +18,7 @@ export function useAutoScroll(active: boolean, speed: number, autoResumeSeconds 
   const last = useRef<number | null>(null);
   const remainder = useRef(0);
   const expected = useRef<number | null>(null);
+  const tolerance = useRef(6);
 
   const resume = useCallback(() => {
     pausedRef.current = false;
