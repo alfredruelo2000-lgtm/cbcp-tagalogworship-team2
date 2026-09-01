@@ -641,15 +641,25 @@ function SongDetailPage() {
         )}
       />
 
-      {chordIndex !== null && (
+      {selectedChord !== null && (
         <ChordCardDialog
-          chords={songChords}
-          index={chordIndex}
-          instrument={settings.instrument}
-          leftHanded={settings.leftHanded}
-          onIndexChange={setChordIndex}
-          onClose={() => setChordIndex(null)}
+          chord={selectedChord}
+          settings={settings}
+          update={update}
+          useFlats={useFlats}
+          onClose={() => setSelectedChord(null)}
         />
+      )}
+
+      {tunerOpen && (
+        <Suspense fallback={null}>
+          <TunerDialog
+            open={tunerOpen}
+            onClose={() => setTunerOpen(false)}
+            calibration={settings.tunerCalibration}
+            onCalibrationChange={(hz) => update({ tunerCalibration: hz })}
+          />
+        </Suspense>
       )}
     </div>
   );
