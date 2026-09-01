@@ -87,7 +87,8 @@ export function useAutoScroll(active: boolean, speed: number, autoResumeSeconds 
       const step = Math.floor(remainder.current);
       if (step >= 1) {
         remainder.current -= step;
-        window.scrollBy(0, step);
+        tolerance.current = step + 6;
+        window.scrollTo({ top: window.scrollY + step, behavior: 'auto' });
         expected.current = window.scrollY;
       }
     };
