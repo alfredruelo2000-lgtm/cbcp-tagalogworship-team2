@@ -407,8 +407,7 @@ function SongDetailPage() {
         const rendered = displayChord(match[1] ?? '');
         const label = settings.numberNotation ? chordToNumber(rendered, currentKey) : rendered;
         if (settings.showChords) {
-          const panelIndex = songChords.indexOf(rendered);
-          html += `<button type="button" data-chord="${escapeHtml(rendered)}" data-chord-index="${panelIndex}" class="${chordClass} cursor-pointer align-baseline">${escapeHtml(label)}</button>`;
+          html += `<button type="button" data-chord="${escapeHtml(rendered)}" style="${chordStyle}" class="${chordClass} cursor-pointer align-baseline">${escapeHtml(label)}</button>`;
         }
         cursor = match.index + match[0].length;
       }
@@ -421,10 +420,10 @@ function SongDetailPage() {
   };
 
   const onSheetClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    const target = (event.target as HTMLElement).closest('[data-chord-index]');
+    const target = (event.target as HTMLElement).closest('[data-chord]');
     if (!target) return;
-    const index = Number(target.getAttribute('data-chord-index'));
-    if (Number.isFinite(index) && index >= 0) setChordIndex(index);
+    const chord = target.getAttribute('data-chord');
+    if (chord) setSelectedChord(chord);
   };
 
   const handleShare = () => {
