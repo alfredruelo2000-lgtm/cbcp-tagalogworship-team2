@@ -134,8 +134,8 @@ function evaluate(
   score += sounding.length * 3; // fuller voicings sound better
   score += pcs.size * 3; // include the chord's colour tones
   score -= fretSum; // easy, low shapes win
-  score -= baseFret * 2; // stay near the nut
-  if (baseFret === 0) score += 4; // open shapes are the ones players know
+  score -= maxFret; // stay near the nut
+  if (maxFret <= 3) score += 4; // open shapes are the ones players know
   if (rootPc === lowestPc) score += 4;
   if (barre) score += 1;
   // A ukulele is strummed across all four strings, so muted strings are a last resort.
