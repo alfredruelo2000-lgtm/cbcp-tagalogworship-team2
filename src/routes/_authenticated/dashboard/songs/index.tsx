@@ -10,7 +10,9 @@ import {
   Eye,
   ArrowUpDown,
   Trash2,
-  X
+  X,
+  EyeOff,
+  Globe
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,7 +43,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { getSongs, archiveSong, deleteSong } from '@/lib/db-songs.functions';
+import { getSongs, archiveSong, deleteSong, setSongPublished, setLanguagePublished } from '@/lib/db-songs.functions';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { cn } from "@/lib/utils";
@@ -73,8 +75,19 @@ function SongManagementPage() {
     return ['All', ...Array.from(themes).sort()];
   }, [songs]);
 
-  const languages = ['All', 'Tagalog', 'English', 'Other', 'Unclassified'];
-  const displayLanguage = (value?: string) => value === 'Filipino/Tagalog' ? 'Tagalog' : value === 'Cebuano/Bisaya' ? 'Other' : value || 'Unclassified';
+  const languages = ['All', 'Tagalog', 'English', 'Cebuano', 'Other'];
+  const displayLanguage = (value?: string) =>
+    value === 'Filipino/Tagalog' ? 'Tagalog'
+    : value === 'Cebuano/Bisaya' ? 'Cebuano'
+    : value === 'English' ? 'English'
+    : 'Other';
+  // Stored enum values behind each admin-facing language group (used for bulk publish/hide).
+  const LANGUAGE_VALUES: Record<string, string[]> = {
+    Tagalog: ['Filipino/Tagalog'],
+    English: ['English'],
+    Cebuano: ['Cebuano/Bisaya'],
+    Other: ['Other'],
+  };
 
   const languageCounts = useMemo(() => Object.fromEntries(languages.map(lang => [lang, lang === 'All' ? songs.length : songs.filter(song => displayLanguage(song.language) === lang).length])), [songs]);
 
@@ -136,6 +149,33 @@ function SongManagementPage() {
     onSettled: () => {
       void Promise.all([queryClient.invalidateQueries({ queryKey: songKeys.adminList }), queryClient.invalidateQueries({ queryKey: songKeys.publicList })]);
     }
+  });
+
+  const publishMutation = useMutation({
+    mutationFn: ({ id, isPublic }: { id: string; isPublic: boolean }) => setSongPublished(id, isPublic),
+    onSuccess: (saved) => {
+      syncSongCaches(queryClient, saved);
+      toast.success(saved.isPublic ? 'Song published to the public library' : 'Song hidden from the public library');
+    },
+    onError: () => toast.error('Could not change this song\'s visibility'),
+    onSettled: () => void Promise.all([
+      queryClient.invalidateQueries({ queryKey: songKeys.adminList }),
+      queryClient.invalidateQueries({ queryKey: songKeys.publicList }),
+    ]),
+  });
+
+  const bulkLanguageMutation = useMutation({
+    mutationFn: ({ language, isPublic }: { language: string; isPublic: boolean }) =>
+      setLanguagePublished(LANGUAGE_VALUES[language] ?? [], isPublic),
+    onSuccess: (saved, { language, isPublic }) => {
+      saved.forEach((song) => syncSongCaches(queryClient, song));
+      toast.success(`${saved.length} ${language} song${saved.length === 1 ? '' : 's'} ${isPublic ? 'published' : 'hidden'}`);
+    },
+    onError: () => toast.error('Could not update this language group'),
+    onSettled: () => void Promise.all([
+      queryClient.invalidateQueries({ queryKey: songKeys.adminList }),
+      queryClient.invalidateQueries({ queryKey: songKeys.publicList }),
+    ]),
   });
 
   const handleArchive = (id: string) => {
@@ -215,6 +255,39 @@ function SongManagementPage() {
         </div>
       </div>
 
+      {/* Bulk publish / hide by language */}
+      <div className="flex flex-col gap-3 border border-accent/5 bg-muted/10 p-6 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-accent">Publish by language</p>
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Show or hide a whole language group on the public song library.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {languages.filter((l) => l !== 'All').map((language) => (
+            <div key={language} className="flex items-center border border-accent/10">
+              <span className="px-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{language} ({languageCounts[language] ?? 0})</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={bulkLanguageMutation.isPending}
+                onClick={() => bulkLanguageMutation.mutate({ language, isPublic: true })}
+                className="rounded-none px-3 text-[9px] font-bold uppercase tracking-widest text-accent"
+              >
+                <Globe className="mr-1.5 h-3 w-3" /> Publish
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={bulkLanguageMutation.isPending}
+                onClick={() => bulkLanguageMutation.mutate({ language, isPublic: false })}
+                className="rounded-none px-3 text-[9px] font-bold uppercase tracking-widest text-muted-foreground"
+              >
+                <EyeOff className="mr-1.5 h-3 w-3" /> Hide
+              </Button>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Songs Table */}
       <div className="border border-accent/5 bg-background overflow-x-auto">
         <Table>
@@ -255,6 +328,9 @@ function SongManagementPage() {
                     </div>
                   </div>
                 </TableCell>
+                <TableCell className="py-6 px-6">
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">{displayLanguage(song.language)}</span>
+                </TableCell>
                 <TableCell className="py-6 px-6 text-center">
                   <div className="inline-flex flex-col items-center">
                     <span className="text-[10px] font-bold text-accent">{song.defaultKey}</span>
@@ -287,11 +363,12 @@ function SongManagementPage() {
                   )}>
                     {song.status}
                   </Badge>
-                  {song.visibility !== 'Public' && (
-                    <Badge variant="outline" className="ml-2 rounded-none border-accent/20 text-accent/60 text-[7px] font-bold uppercase tracking-widest">
-                      {song.visibility}
-                    </Badge>
-                  )}
+                  <Badge variant="outline" className={cn(
+                    "ml-2 rounded-none text-[7px] font-bold uppercase tracking-widest",
+                    song.isPublic ? "border-accent/40 text-accent" : "border-muted-foreground/30 text-muted-foreground",
+                  )}>
+                    {song.isPublic ? 'Published' : 'Hidden'}
+                  </Badge>
                 </TableCell>
                 <TableCell className="py-6 px-6 text-right">
                   <DropdownMenu>
@@ -311,6 +388,15 @@ function SongManagementPage() {
                         <Link to="/dashboard/songs/$id" params={{ id: song.id }}>
                           <Edit className="w-3 h-3 mr-2" /> Edit Song
                         </Link>
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem
+                        onClick={() => publishMutation.mutate({ id: song.id, isPublic: !song.isPublic })}
+                        className="text-[10px] uppercase tracking-widest font-bold focus:bg-accent focus:text-primary cursor-pointer"
+                      >
+                        {song.isPublic
+                          ? <><EyeOff className="w-3 h-3 mr-2" /> Hide From Public</>
+                          : <><Globe className="w-3 h-3 mr-2" /> Publish To Public</>}
                       </DropdownMenuItem>
 
                       <DropdownMenuSeparator className="bg-accent/10" />
