@@ -73,10 +73,10 @@ export function useAutoScroll(active: boolean, speed: number, autoResumeSeconds 
     const previousBehavior = root.style.scrollBehavior;
     root.style.scrollBehavior = 'auto';
 
-    window.addEventListener('wheel', pause, { passive: true });
-    window.addEventListener('touchstart', pause, { passive: true });
-    window.addEventListener('touchmove', pause, { passive: true });
-    window.addEventListener('mousedown', pause);
+    window.addEventListener('wheel', onGesture, { passive: true });
+    window.addEventListener('touchstart', onGesture, { passive: true });
+    window.addEventListener('touchmove', onGesture, { passive: true });
+    window.addEventListener('mousedown', onGesture);
     window.addEventListener('keydown', onKey);
     window.addEventListener('scroll', onScroll, { passive: true });
 
@@ -114,10 +114,10 @@ export function useAutoScroll(active: boolean, speed: number, autoResumeSeconds 
       last.current = null;
       expected.current = null;
       root.style.scrollBehavior = previousBehavior;
-      window.removeEventListener('wheel', pause);
-      window.removeEventListener('touchstart', pause);
-      window.removeEventListener('touchmove', pause);
-      window.removeEventListener('mousedown', pause);
+      window.removeEventListener('wheel', onGesture);
+      window.removeEventListener('touchstart', onGesture);
+      window.removeEventListener('touchmove', onGesture);
+      window.removeEventListener('mousedown', onGesture);
       window.removeEventListener('keydown', onKey);
       window.removeEventListener('scroll', onScroll);
     };
