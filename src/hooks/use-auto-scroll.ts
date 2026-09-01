@@ -1,66 +1,91 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-const SPEEDS = [8, 14, 22, 32, 44]; // pixels per second
+/** Pixels per second for speeds 1–5. All five move visibly. */
+export const SCROLL_SPEEDS = [10, 18, 30, 46, 68];
 
 /**
- * Auto-scroll that never fights the reader: a manual swipe or wheel gesture
- * yields immediately, then scrolling resumes from wherever the user landed.
+ * One continuous rAF engine with a sub-pixel accumulator, so even speed 1 moves
+ * steadily and every speed behaves the same on 60 Hz and 120 Hz screens.
+ *
+ * Any manual gesture pauses immediately and stays paused until Resume, unless
+ * the reader opted into automatic resume after a few seconds.
  */
-export function useAutoScroll(active: boolean, speed: number, resumeDelay = 1600) {
-  const [yielding, setYielding] = useState(false);
-  const yieldUntil = useRef(0);
+export function useAutoScroll(active: boolean, speed: number, autoResumeSeconds = 0) {
+  const [paused, setPaused] = useState(false);
+  const pausedRef = useRef(false);
+  const resumeAt = useRef<number | null>(null);
   const frame = useRef<number | null>(null);
   const last = useRef<number | null>(null);
+  const remainder = useRef(0);
   const expected = useRef<number | null>(null);
+
+  const resume = useCallback(() => {
+    pausedRef.current = false;
+    resumeAt.current = null;
+    remainder.current = 0;
+    last.current = null;
+    expected.current = null;
+    setPaused(false);
+  }, []);
 
   useEffect(() => {
     if (!active) {
-      setYielding(false);
+      pausedRef.current = false;
+      resumeAt.current = null;
+      setPaused(false);
       return;
     }
 
-    const nudge = () => {
-      yieldUntil.current = performance.now() + resumeDelay;
-      setYielding(true);
+    const pause = () => {
+      if (!pausedRef.current) {
+        pausedRef.current = true;
+        setPaused(true);
+      }
+      expected.current = null;
+      remainder.current = 0;
+      resumeAt.current = autoResumeSeconds > 0 ? performance.now() + autoResumeSeconds * 1000 : null;
     };
 
-    // Any input that moves the page hands control back to the user.
-    const onWheel = () => nudge();
-    const onTouch = () => nudge();
     const onKey = (event: KeyboardEvent) => {
-      if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End'].includes(event.key)) nudge();
+      if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(event.key)) pause();
     };
-    // A scroll we did not cause (native momentum, scrollbar drag) also yields.
+    // A scroll we did not cause (momentum, scrollbar drag) also hands control back.
     const onScroll = () => {
-      if (expected.current === null) return;
-      if (Math.abs(window.scrollY - expected.current) > 6) nudge();
+      if (pausedRef.current || expected.current === null) return;
+      if (Math.abs(window.scrollY - expected.current) > 2) pause();
     };
 
-    window.addEventListener('wheel', onWheel, { passive: true });
-    window.addEventListener('touchmove', onTouch, { passive: true });
-    window.addEventListener('touchstart', onTouch, { passive: true });
+    window.addEventListener('wheel', pause, { passive: true });
+    window.addEventListener('touchstart', pause, { passive: true });
+    window.addEventListener('touchmove', pause, { passive: true });
+    window.addEventListener('mousedown', pause);
     window.addEventListener('keydown', onKey);
     window.addEventListener('scroll', onScroll, { passive: true });
 
     const tick = (time: number) => {
+      frame.current = requestAnimationFrame(tick);
       const previous = last.current ?? time;
       last.current = time;
-      const paused = time < yieldUntil.current || document.hidden;
-      if (paused) {
-        expected.current = null;
-        if (!yielding) setYielding(true);
-      } else {
-        if (yielding) setYielding(false);
-        const pxPerSecond = SPEEDS[Math.min(5, Math.max(1, speed)) - 1] ?? 22;
-        const delta = Math.min(120, time - previous);
-        const target = window.scrollY + (pxPerSecond * delta) / 1000;
-        window.scrollTo({ top: target, behavior: 'auto' });
+
+      if (pausedRef.current) {
+        if (resumeAt.current !== null && time >= resumeAt.current) resume();
+        return;
+      }
+      if (document.hidden) return;
+
+      const pxPerSecond = SCROLL_SPEEDS[Math.min(5, Math.max(1, Math.round(speed))) - 1] ?? 30;
+      const delta = Math.min(100, time - previous);
+      remainder.current += (pxPerSecond * delta) / 1000;
+      const step = Math.floor(remainder.current);
+      if (step >= 1) {
+        remainder.current -= step;
+        window.scrollBy(0, step);
         expected.current = window.scrollY;
       }
-      frame.current = requestAnimationFrame(tick);
     };
 
     last.current = null;
+    remainder.current = 0;
     expected.current = null;
     frame.current = requestAnimationFrame(tick);
 
@@ -69,15 +94,14 @@ export function useAutoScroll(active: boolean, speed: number, resumeDelay = 1600
       frame.current = null;
       last.current = null;
       expected.current = null;
-      window.removeEventListener('wheel', onWheel);
-      window.removeEventListener('touchmove', onTouch);
-      window.removeEventListener('touchstart', onTouch);
+      window.removeEventListener('wheel', pause);
+      window.removeEventListener('touchstart', pause);
+      window.removeEventListener('touchmove', pause);
+      window.removeEventListener('mousedown', pause);
       window.removeEventListener('keydown', onKey);
       window.removeEventListener('scroll', onScroll);
     };
-    // `yielding` is intentionally excluded: it is an output of the loop, not an input.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, speed, resumeDelay]);
+  }, [active, speed, autoResumeSeconds, resume]);
 
-  return { yielding };
+  return { paused, resume };
 }
