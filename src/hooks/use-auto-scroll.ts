@@ -47,6 +47,16 @@ export function useAutoScroll(active: boolean, speed: number, autoResumeSeconds 
       resumeAt.current = autoResumeSeconds > 0 ? performance.now() + autoResumeSeconds * 1000 : null;
     };
 
+    // Touching the toolbar, chord cards or any control is not "reading ahead":
+    // only gestures on the sheet itself hand scrolling back to the user.
+    const isControl = (target: EventTarget | null) =>
+      target instanceof Element &&
+      !!target.closest('.song-reader-ui, button, a, [role="dialog"], input, select, textarea, [role="slider"]');
+    const onGesture = (event: Event) => {
+      if (isControl(event.target)) return;
+      pause();
+    };
+
     const onKey = (event: KeyboardEvent) => {
       if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(event.key)) pause();
     };
