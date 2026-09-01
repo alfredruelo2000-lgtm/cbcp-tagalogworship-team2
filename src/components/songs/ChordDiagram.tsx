@@ -47,7 +47,10 @@ function FretDiagram({
     );
   }
 
-  const start = shape.baseFret > 1 ? shape.baseFret : 1;
+  // Open strings anchor the diagram at the nut; otherwise show the position number.
+  const maxFret = Math.max(...shape.frets.map((f) => f ?? 0));
+  const hasOpen = shape.frets.some((f) => f === 0);
+  const start = hasOpen || maxFret <= 4 ? 1 : shape.baseFret;
   const x = (index: number) => padX + gapX * (leftHanded ? stringCount - 1 - index : index);
   const y = (fret: number) => padY + gapY * (fret - 0.5);
 

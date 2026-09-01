@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { ChordDiagram, type DiagramInstrument } from '@/components/songs/ChordDiagram';
 import { playChord } from '@/lib/chord-audio';
-import { ChevronLeft, ChevronRight, Play, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Play } from 'lucide-react';
 
 interface CardProps {
   chords: string[];
@@ -29,9 +29,6 @@ export function ChordCardDialog({ chords, index, instrument, leftHanded, onIndex
             </p>
             <p className="font-serif text-3xl font-bold text-primary">{chord}</p>
           </div>
-          <Button variant="ghost" size="sm" onClick={onClose} className="h-9 w-9 p-0" aria-label="Close chord">
-            <X className="h-4 w-4" />
-          </Button>
         </div>
 
         <div className="my-3 grid place-items-center overflow-x-auto py-2">
