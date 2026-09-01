@@ -50,10 +50,17 @@ export function useAutoScroll(active: boolean, speed: number, autoResumeSeconds 
       if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(event.key)) pause();
     };
     // A scroll we did not cause (momentum, scrollbar drag) also hands control back.
+    // Tolerance covers one engine step so a fast speed never mistakes itself for the user.
     const onScroll = () => {
       if (pausedRef.current || expected.current === null) return;
-      if (Math.abs(window.scrollY - expected.current) > 2) pause();
+      if (Math.abs(window.scrollY - expected.current) > tolerance.current) pause();
     };
+
+    // The site scrolls smoothly for anchor jumps; during autoscroll each frame must
+    // land immediately or the animated lag looks like a manual scroll and self-pauses.
+    const root = document.documentElement;
+    const previousBehavior = root.style.scrollBehavior;
+    root.style.scrollBehavior = 'auto';
 
     window.addEventListener('wheel', pause, { passive: true });
     window.addEventListener('touchstart', pause, { passive: true });
