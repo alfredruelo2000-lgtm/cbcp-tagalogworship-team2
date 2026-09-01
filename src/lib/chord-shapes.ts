@@ -68,7 +68,7 @@ function searchShape(chordText: string, instrument: 'guitar' | 'ukulele'): FretS
     const frets: (number | null)[] = new Array(tuning.length).fill(null);
     const walk = (index: number) => {
       if (index === tuning.length) {
-        const evaluated = evaluate(frets, tuning, tones, rootPc, requiredBass, chord);
+        const evaluated = evaluate(frets, tuning, tones, rootPc, requiredBass, chord, instrument);
         if (evaluated && (!best || evaluated.score > best.score)) {
           best = { shape: evaluated.shape, score: evaluated.score };
         }
@@ -93,6 +93,7 @@ function evaluate(
   rootPc: number,
   requiredBass: number,
   chord: ParsedChord,
+  instrument: 'guitar' | 'ukulele',
 ): { shape: FretShape; score: number } | null {
   const sounding: { index: number; fret: number; midi: number }[] = [];
   frets.forEach((fret, index) => {
@@ -113,7 +114,9 @@ function evaluate(
   for (const pc of pcs) if (!tones.has(pc)) return null;
 
   const lowestPc = sounding[0]!.midi % 12;
-  if (lowestPc !== requiredBass) return null;
+  // Re-entrant ukulele tuning has no true bass string, so only the guitar
+  // enforces the slash-chord / root bass note on the lowest string.
+  if (instrument === 'guitar' ? lowestPc !== requiredBass : !pcs.has(requiredBass)) return null;
 
   const fretted = sounding.filter((s) => s.fret > 0);
   const baseFret = fretted.length ? Math.min(...fretted.map((s) => s.fret)) : 0;
@@ -126,14 +129,15 @@ function evaluate(
   if (!barre && fretted.length > 4) return null;
   if (distinctFingers > 4) return null;
 
+  const fretSum = fretted.reduce((total, s) => total + s.fret, 0);
   let score = 0;
-  score += sounding.length * 6; // fuller voicings sound better
-  score += pcs.size * 4; // include colour tones
-  score -= baseFret * 3; // stay near the nut
-  score -= fretted.length; // fewer fingers is easier
-  if (rootPc === lowestPc) score += 6;
-  if (baseFret === 0) score += 6;
-  if (barre) score += 2;
+  score += sounding.length * 3; // fuller voicings sound better
+  score += pcs.size * 3; // include the chord's colour tones
+  score -= fretSum; // easy, low shapes win
+  score -= baseFret * 2; // stay near the nut
+  if (baseFret === 0) score += 4; // open shapes are the ones players know
+  if (rootPc === lowestPc) score += 4;
+  if (barre) score += 1;
 
   return {
     shape: { frets: [...frets], baseFret, barre, midi: sounding.map((s) => s.midi) },
