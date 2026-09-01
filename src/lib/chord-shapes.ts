@@ -161,24 +161,25 @@ function assignFingers(
     .sort((a, b) => a.fret - b.fret || a.index - b.index);
 
   let next = 1;
-  const byFret = new Map<number, number>(); // fret -> finger reused for barres
+  // fret -> { finger, index } of the last note fingered on that fret
+  const byFret = new Map<number, { finger: number; index: number }>();
   for (const entry of fretted) {
     if (barre && entry.fret === baseFret) {
       fingers[entry.index] = 1;
-      byFret.set(entry.fret, 1);
+      byFret.set(entry.fret, { finger: 1, index: entry.index });
       continue;
     }
     if (barre && next < 2) next = 2;
     const existing = byFret.get(entry.fret);
-    // Two notes on the same fret away from the barre still need separate fingers
-    // unless they are adjacent strings (a small partial barre).
-    if (existing && existing < 4) {
-      fingers[entry.index] = existing;
+    // One finger only covers two notes on the same fret when the strings touch
+    // (a real partial barre); otherwise the hand needs a separate finger.
+    if (existing && existing.finger < 4 && Math.abs(existing.index - entry.index) === 1) {
+      fingers[entry.index] = existing.finger;
       continue;
     }
     const finger = Math.min(4, next);
     fingers[entry.index] = finger;
-    byFret.set(entry.fret, finger);
+    byFret.set(entry.fret, { finger, index: entry.index });
     next = finger + 1;
   }
   return fingers;
