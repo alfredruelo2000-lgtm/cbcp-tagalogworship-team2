@@ -481,7 +481,9 @@ function SongDetailPage() {
           chords={songChords}
           instrument={settings.instrument}
           leftHanded={settings.leftHanded}
-          onSelect={setChordIndex}
+          tuning={settings.ukuleleTuning === 'low-g' ? 'low-g' : 'standard'}
+          useFlats={useFlats}
+          onSelect={setSelectedChord}
         />
       )}
 
