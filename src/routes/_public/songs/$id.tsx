@@ -91,14 +91,16 @@ function SongDetailPage() {
   const canSaveSetlistKey = Boolean(sequence.current) && canEdit(sequence.setlist ?? null);
   const setlistItemKey = sequence.current?.selected_key ?? null;
 
-  // Opening (or swiping to) a setlist song adopts that song's setlist key — never the library default.
+  // Opening (or swiping to) a setlist song adopts that song's setlist key — never the library
+  // default. Outside a setlist the song's own key wins, including when it arrives after the
+  // first render (the chart is fetched, so the initial state cannot know it yet).
   useEffect(() => {
     const fromUrl = new URLSearchParams(window.location.search).get('key');
     const local = setlistId && sequence.current ? getLocalSetlistKey(setlistId, sequence.current.id) : null;
     const nextKey = local || setlistItemKey || fromUrl || song?.defaultKey;
     if (nextKey) setCurrentKey(nextKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, setlistItemKey, setlistId, sequence.current?.id]);
+  }, [id, setlistItemKey, setlistId, sequence.current?.id, song?.defaultKey]);
 
   // Any later key change sticks to this setlist item (device-local instantly, server when allowed).
   const savedSetlistKey = useRef<string | null>(null);

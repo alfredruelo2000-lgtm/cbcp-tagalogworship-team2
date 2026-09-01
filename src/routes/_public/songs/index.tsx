@@ -12,8 +12,14 @@ import { songKeys } from '@/lib/song-data';
 type SortOption = 'title-asc' | 'title-desc' | 'recent' | 'most-used' | 'artist';
 type ViewMode = 'grid' | 'list';
 type GroupMode = 'none' | 'language' | 'alphabetical';
-const languages = ['All', 'Tagalog', 'English', 'Other'] as const;
-const displayLanguage = (value?: string) => value === 'Filipino/Tagalog' ? 'Tagalog' : value === 'Cebuano/Bisaya' ? 'Other' : value || 'Unclassified';
+const languages = ['All', 'Tagalog', 'English', 'Cebuano', 'Other'] as const;
+const displayLanguage = (value?: string) =>
+  value === 'Filipino/Tagalog' ? 'Tagalog'
+  : value === 'Cebuano/Bisaya' ? 'Cebuano'
+  : value === 'English' ? 'English'
+  : 'Other';
+// Language sections read Tagalog first, then English, Cebuano, and anything else.
+const LANGUAGE_ORDER = ['Tagalog', 'English', 'Cebuano', 'Other'];
 
 export const Route = createFileRoute('/_public/songs/')({
   head: () => ({ meta: [
@@ -33,7 +39,7 @@ function SongLibraryPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [viewTouched, setViewTouched] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>('title-asc');
-  const [groupBy, setGroupBy] = useState<GroupMode>('none');
+  const [groupBy, setGroupBy] = useState<GroupMode>('language');
   const [languageFilter, setLanguageFilter] = useState('All');
   const [themeFilter, setThemeFilter] = useState('All');
   const [keyFilter, setKeyFilter] = useState('All');
@@ -54,7 +60,11 @@ function SongLibraryPage() {
     if (groupBy === 'none') return [{ label: '', songs: filteredSongs }];
     const map = new Map<string, any[]>();
     filteredSongs.forEach((song: any) => { const label = groupBy === 'language' ? displayLanguage(song.language) : (song.title?.charAt(0) || '#').toUpperCase(); map.set(label, [...(map.get(label) || []), song]); });
-    return Array.from(map, ([label, items]) => ({ label, songs: items })).sort((a, b) => a.label.localeCompare(b.label));
+    return Array.from(map, ([label, items]) => ({ label, songs: items })).sort((a, b) => {
+      if (groupBy !== 'language') return a.label.localeCompare(b.label);
+      const rank = (label: string) => { const i = LANGUAGE_ORDER.indexOf(label); return i === -1 ? LANGUAGE_ORDER.length : i; };
+      return rank(a.label) - rank(b.label) || a.label.localeCompare(b.label);
+    });
   }, [filteredSongs, groupBy]);
   const letters = Array.from(new Set(songs.map((s: any) => (s.title?.charAt(0) || '#').toUpperCase()))).sort();
   const reset = () => { setSearch(''); setLanguageFilter('All'); setThemeFilter('All'); setKeyFilter('All'); setSortBy('title-asc'); };
