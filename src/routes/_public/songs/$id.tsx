@@ -363,9 +363,27 @@ function SongDetailPage() {
   const escapeHtml = (value: string) =>
     value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-  const chordClass = settings.highlight
-    ? `${settings.chordColor} font-bold rounded-sm bg-accent/15 px-0.5`
-    : `${settings.chordColor} font-bold`;
+  // Chord colour + highlight style are per-mode preferences applied inline so any
+  // hex (including a custom picker value) works in light and dark reading modes.
+  const chordHex = settings.dark ? settings.chordColorDark : settings.chordColorLight;
+  const alpha = HIGHLIGHT_ALPHA[settings.highlightStrength];
+  const rgba = (() => {
+    const value = chordHex.replace('#', '');
+    if (value.length !== 6) return `rgba(200,30,30,${alpha})`;
+    const [r, g, b] = [0, 2, 4].map((i) => parseInt(value.slice(i, i + 2), 16));
+    return `rgba(${r},${g},${b},${alpha})`;
+  })();
+  const chordClass = settings.highlightStyle === 'badge'
+    ? 'font-bold rounded px-1 py-0.5'
+    : settings.highlightStyle === 'soft'
+      ? 'font-bold rounded-sm px-0.5'
+      : 'font-bold';
+  const chordStyle =
+    settings.highlightStyle === 'none'
+      ? ''
+      : settings.highlightStyle === 'text'
+        ? `color:${chordHex}`
+        : `color:${chordHex};background-color:${rgba}`;
 
   const processLine = (content: string) => {
     if (!content) return '';
