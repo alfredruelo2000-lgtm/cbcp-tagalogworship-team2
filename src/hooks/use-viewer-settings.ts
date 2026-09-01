@@ -108,8 +108,9 @@ function readLegacy(): Partial<ViewerSettings> {
 
 function migrate(parsed: Partial<ViewerSettings>): Partial<ViewerSettings> {
   const next = { ...parsed };
-  if (!next.chordColorLight && next.chordColor && LEGACY_COLORS[next.chordColor]) {
-    next.chordColorLight = LEGACY_COLORS[next.chordColor];
+  const legacyHex = next.chordColor ? LEGACY_COLORS[next.chordColor] : undefined;
+  if (!next.chordColorLight && legacyHex) {
+    next.chordColorLight = legacyHex;
   }
   if (next.highlightStyle === undefined && next.highlight !== undefined) {
     next.highlightStyle = next.highlight ? 'soft' : 'text';
