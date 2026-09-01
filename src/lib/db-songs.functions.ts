@@ -99,8 +99,10 @@ export async function updateSong(input: { data: { id: string, song: Partial<Wors
     scripture_references: song.scriptureReferences,
     song_type: song.songType,
     status: song.status,
-    is_public: song.visibility === 'Public' || song.isPublic,
-    featured: song.featured,
+    // Visibility is authoritative when present: switching to Team Only/Private must
+    // unpublish, so never OR it with the previous isPublic value.
+    is_public: song.visibility !== undefined ? song.visibility === 'Public' : song.isPublic,
+    featured: song.featured === undefined ? undefined : Boolean(song.featured),
     audio_url: (song as any).audioUrl || song.externalResources?.audioUrl,
     sheet_music_url: (song as any).sheetMusicUrl || song.externalResources?.sheetMusicUrl,
      external_resources: song.externalResources,
