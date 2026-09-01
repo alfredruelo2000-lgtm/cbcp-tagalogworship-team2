@@ -128,6 +128,33 @@ export async function updateSong(input: { data: { id: string, song: Partial<Wors
   return mapSongRow(data as Record<string, any>);
 }
 
+/** Publishes or hides a single song on the public site. */
+export async function setSongPublished(id: string, isPublic: boolean): Promise<WorshipSong> {
+  const { data, error } = await supabase
+    .from('songs')
+    .update({ is_public: isPublic, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select(SONG_LIST_SELECT)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) throw new Error('Song could not be updated. Please refresh and try again.');
+  return mapSongRow(data as unknown as Record<string, any>);
+}
+
+/** Publishes or hides every song in one language group at once. */
+export async function setLanguagePublished(languages: string[], isPublic: boolean): Promise<WorshipSong[]> {
+  const { data, error } = await supabase
+    .from('songs')
+    .update({ is_public: isPublic, updated_at: new Date().toISOString() })
+    .in('language', languages as any)
+    .select(SONG_LIST_SELECT);
+
+  if (error) throw error;
+  const rows = (data ?? []) as unknown as Record<string, any>[];
+  return rows.map((row) => mapSongRow(row));
+}
+
 export async function deleteSong(input: { data: string } | string) {
   const id = typeof input === 'string' ? input : input.data;
   const { error } = await supabase
