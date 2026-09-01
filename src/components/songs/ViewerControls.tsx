@@ -62,7 +62,7 @@ export function PerformanceToolbar({
           icon={<Sparkles className="h-4 w-4" />}
         />
         <ToolButton
-          label={autoScroll ? `Scroll ${settings.scrollSpeed}` : 'Autoscroll'}
+          label={autoScroll ? `Scroll ${settings.scrollSpeed}` : 'Scroll'}
           active={autoScroll}
           onClick={() => onAutoScroll(!autoScroll)}
           icon={<ALargeSmall className="h-4 w-4" />}
@@ -99,7 +99,7 @@ function IconButton({ label, onClick, children }: { label: string; onClick: () =
     <button
       onClick={onClick}
       aria-label={label}
-      className="grid h-11 w-11 place-items-center rounded-none text-primary transition-colors hover:bg-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+      className="grid h-11 w-9 place-items-center sm:w-11 rounded-none text-primary transition-colors hover:bg-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
     >
       {children}
     </button>
@@ -113,7 +113,7 @@ function ToolButton({
     <button
       onClick={onClick}
       aria-pressed={active}
-      className={`flex min-h-11 min-w-[3.25rem] shrink-0 flex-col items-center justify-center gap-0.5 px-1.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${active ? 'bg-accent/20 text-primary' : 'text-primary hover:bg-muted'}`}
+      className={`flex min-h-11 min-w-12 shrink-0 flex-col items-center justify-center gap-0.5 px-1.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${active ? 'bg-accent/20 text-primary' : 'text-primary hover:bg-muted'}`}
     >
       {icon}
       <span className="text-[9px] font-bold uppercase tracking-widest">{label}</span>
